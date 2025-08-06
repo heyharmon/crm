@@ -117,6 +117,12 @@ const deleteOrganization = async (id) => {
                                 >
                                     Rating {{ getSortIcon('score') }}
                                 </th>
+                                <th
+                                    @click="handleSort('website_rating')"
+                                    class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider cursor-pointer hover:bg-neutral-100"
+                                >
+                                    Website Rating {{ getSortIcon('website_rating') }}
+                                </th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -152,6 +158,20 @@ const deleteOrganization = async (id) => {
                                         <span class="ml-1">{{ organization.score }}</span>
                                         <span v-if="organization.reviews" class="text-neutral-500 ml-1">({{ organization.reviews }})</span>
                                     </div>
+                                    <span v-else>-</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
+                                    <span
+                                        v-if="organization.website_rating"
+                                        :class="{
+                                            'text-green-600 bg-green-100': organization.website_rating === 'good',
+                                            'text-yellow-600 bg-yellow-100': organization.website_rating === 'okay',
+                                            'text-red-600 bg-red-100': organization.website_rating === 'bad'
+                                        }"
+                                        class="px-2 py-1 rounded-full text-xs font-medium capitalize"
+                                    >
+                                        {{ organization.website_rating }}
+                                    </span>
                                     <span v-else>-</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">

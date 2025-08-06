@@ -21,6 +21,7 @@ class Organization extends Model
         'state',
         'country_code',
         'website',
+        'website_rating',
         'phone',
         'category',
         'map_url',

@@ -57,6 +57,14 @@ const openWebsite = (website) => {
         window.open(website, '_blank')
     }
 }
+
+const updateWebsiteRating = async (organizationId, rating) => {
+    try {
+        await organizationStore.updateOrganization(organizationId, { website_rating: rating })
+    } catch (error) {
+        console.error('Error updating website rating:', error)
+    }
+}
 </script>
 
 <template>
@@ -140,6 +148,20 @@ const openWebsite = (website) => {
 
                             <div v-if="organization.phone" class="text-sm text-neutral-600 mb-3">
                                 {{ organization.phone }}
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="block text-xs font-medium text-neutral-700 mb-1">Website Rating</label>
+                                <select
+                                    :value="organization.website_rating || ''"
+                                    @change="updateWebsiteRating(organization.id, $event.target.value || null)"
+                                    class="w-full text-xs border border-neutral-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="">Not rated</option>
+                                    <option value="good">Good</option>
+                                    <option value="okay">Okay</option>
+                                    <option value="bad">Bad</option>
+                                </select>
                             </div>
 
                             <div class="flex space-x-2">

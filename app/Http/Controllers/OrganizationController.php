@@ -15,9 +15,9 @@ class OrganizationController extends Controller
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
-                  ->orWhere('category', 'LIKE', "%{$search}%")
-                  ->orWhere('city', 'LIKE', "%{$search}%")
-                  ->orWhere('state', 'LIKE', "%{$search}%");
+                    ->orWhere('category', 'LIKE', "%{$search}%")
+                    ->orWhere('city', 'LIKE', "%{$search}%")
+                    ->orWhere('state', 'LIKE', "%{$search}%");
             });
         }
         if ($request->filled('city')) {
@@ -31,7 +31,7 @@ class OrganizationController extends Controller
         }
         $sortBy = $request->get('sort_by', 'name');
         $sortDirection = $request->get('sort_direction', 'asc');
-        $allowedSorts = ['name', 'city', 'state', 'category', 'score', 'reviews', 'created_at'];
+        $allowedSorts = ['name', 'city', 'state', 'category', 'score', 'reviews', 'website_rating', 'created_at'];
         if (in_array($sortBy, $allowedSorts)) {
             $query->orderBy($sortBy, $sortDirection);
         }
@@ -56,6 +56,7 @@ class OrganizationController extends Controller
             'state' => 'nullable|string|max:100',
             'country_code' => 'nullable|string|size:2',
             'website' => 'nullable|url|max:500',
+            'website_rating' => 'nullable|in:good,okay,bad',
             'phone' => 'nullable|string|max:50',
             'category' => 'nullable|string|max:100',
             'notes' => 'nullable|string|max:2000',
@@ -67,7 +68,7 @@ class OrganizationController extends Controller
     public function update(Request $request, Organization $organization)
     {
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => 'sometimes|required|string|max:255',
             'banner' => 'nullable|url|max:500',
             'score' => 'nullable|numeric|min:0|max:5',
             'reviews' => 'nullable|integer|min:0',
@@ -76,6 +77,7 @@ class OrganizationController extends Controller
             'state' => 'nullable|string|max:100',
             'country_code' => 'nullable|string|size:2',
             'website' => 'nullable|url|max:500',
+            'website_rating' => 'nullable|in:good,okay,bad',
             'phone' => 'nullable|string|max:50',
             'category' => 'nullable|string|max:100',
             'notes' => 'nullable|string|max:2000',
