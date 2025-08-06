@@ -7,7 +7,7 @@ use App\Models\ApifyRun;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class ApifyImportController extends Controller
+class GoogleMapsScraperController extends Controller
 {
     public function startImport(Request $request)
     {

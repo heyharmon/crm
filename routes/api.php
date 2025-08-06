@@ -5,7 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\OrganizationController;
-use App\Http\Controllers\ApifyImportController;
+use App\Http\Controllers\GoogleMapsScraperController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -32,8 +32,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Apify import routes
     Route::prefix('apify')->group(function () {
-        Route::post('start-import', [ApifyImportController::class, 'startImport']);
-        Route::get('imports', [ApifyImportController::class, 'getImports']);
-        Route::get('imports/{apifyRun}', [ApifyImportController::class, 'getImport']);
+        Route::post('start-import', [GoogleMapsScraperController::class, 'startImport']);
+        Route::get('imports', [GoogleMapsScraperController::class, 'getImports']);
+        Route::get('imports/{apifyRun}', [GoogleMapsScraperController::class, 'getImport']);
     });
 });
