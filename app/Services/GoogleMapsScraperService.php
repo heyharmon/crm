@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 
 class GoogleMapsScraperService extends BaseApifyService
 {
-    private const ACTOR_ID = 'compass/crawler-google-places';
+    private const ACTOR_ID = 'compass~crawler-google-places';
 
     public function startScraping(array $params, int $userId): ApifyRun
     {
@@ -42,7 +42,7 @@ class GoogleMapsScraperService extends BaseApifyService
         return [
             'searchStringsArray' => [$params['search_term'] ?? ''],
             'locationQuery' => $params['location'] ?? '',
-            'maxPlaces' => $params['max_places'] ?? 100,
+            'maxCrawledPlacesPerSearch' => $params['max_places'] ?? 100,
             'minStars' => $params['min_rating'] ?? 3,
             'skipClosedPlaces' => $params['skip_closed'] ?? true,
             'includeWebsites' => true,
