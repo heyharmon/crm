@@ -26,20 +26,41 @@ const resetFilters = () => {
     emit('reset-filters')
 }
 
+// Multi-sort: maintain an ordered list of "field:direction" in filters.sort
+const parseSort = (entry) => {
+    if (!entry || typeof entry !== 'string') return { field: '', direction: 'desc' }
+    const [field, dir] = entry.split(':')
+    return { field, direction: dir === 'asc' ? 'asc' : 'desc' }
+}
+
+const getSortList = () => (Array.isArray(props.filters.sort) ? [...props.filters.sort] : [])
+
 const handleSort = (column) => {
-    if (props.filters.sort_by === column) {
-        updateFilter('sort_direction', props.filters.sort_direction === 'asc' ? 'desc' : 'asc')
+    const list = getSortList()
+    const idx = list.findIndex((s) => parseSort(s).field === column)
+
+    if (idx >= 0) {
+        // Cycle: desc -> asc -> off
+        const { direction } = parseSort(list[idx])
+        if (direction === 'desc') {
+            list[idx] = `${column}:asc`
+        } else {
+            // remove to disable sorting on third click
+            list.splice(idx, 1)
+        }
     } else {
-        emit('update:filters', {
-            sort_by: column,
-            sort_direction: 'asc'
-        })
+        // First click should add with descending by default
+        list.push(`${column}:desc`)
     }
+
+    emit('update:filters', { sort: list })
 }
 
 const getSortIcon = (column) => {
-    if (props.filters.sort_by !== column) return '↕️'
-    return props.filters.sort_direction === 'asc' ? '↑' : '↓'
+    const list = getSortList()
+    const item = list.find((s) => parseSort(s).field === column)
+    if (!item) return ''
+    return parseSort(item).direction === 'asc' ? '↑' : '↓'
 }
 </script>
 
@@ -83,22 +104,34 @@ const getSortIcon = (column) => {
             <div>
                 <label class="block text-sm font-medium mb-2">Sort By</label>
                 <div class="flex flex-wrap gap-2">
-                    <Button @click="handleSort('name')" :variant="filters.sort_by === 'name' ? 'default' : 'outline'" size="sm">
+                    <Button @click="handleSort('name')" :variant="(filters.sort || []).some((s) => s.startsWith('name:')) ? 'default' : 'outline'" size="sm">
                         Name {{ getSortIcon('name') }}
                     </Button>
-                    <Button @click="handleSort('category')" :variant="filters.sort_by === 'category' ? 'default' : 'outline'" size="sm">
+                    <Button
+                        @click="handleSort('category')"
+                        :variant="(filters.sort || []).some((s) => s.startsWith('category:')) ? 'default' : 'outline'"
+                        size="sm"
+                    >
                         Category {{ getSortIcon('category') }}
                     </Button>
-                    <Button @click="handleSort('city')" :variant="filters.sort_by === 'city' ? 'default' : 'outline'" size="sm">
+                    <Button @click="handleSort('city')" :variant="(filters.sort || []).some((s) => s.startsWith('city:')) ? 'default' : 'outline'" size="sm">
                         Location {{ getSortIcon('city') }}
                     </Button>
-                    <Button @click="handleSort('score')" :variant="filters.sort_by === 'score' ? 'default' : 'outline'" size="sm">
+                    <Button @click="handleSort('score')" :variant="(filters.sort || []).some((s) => s.startsWith('score:')) ? 'default' : 'outline'" size="sm">
                         Score {{ getSortIcon('score') }}
                     </Button>
-                    <Button @click="handleSort('reviews')" :variant="filters.sort_by === 'reviews' ? 'default' : 'outline'" size="sm">
+                    <Button
+                        @click="handleSort('reviews')"
+                        :variant="(filters.sort || []).some((s) => s.startsWith('reviews:')) ? 'default' : 'outline'"
+                        size="sm"
+                    >
                         Reviews {{ getSortIcon('reviews') }}
                     </Button>
-                    <Button @click="handleSort('website_rating')" :variant="filters.sort_by === 'website_rating' ? 'default' : 'outline'" size="sm">
+                    <Button
+                        @click="handleSort('website_rating')"
+                        :variant="(filters.sort || []).some((s) => s.startsWith('website_rating:')) ? 'default' : 'outline'"
+                        size="sm"
+                    >
                         Website Rating {{ getSortIcon('website_rating') }}
                     </Button>
                 </div>

@@ -16,8 +16,8 @@ export const useOrganizationStore = defineStore('organization', {
             city: '',
             state: '',
             category: '',
-            sort_by: 'name',
-            sort_direction: 'asc'
+            // Multi-sort: ordered list of "field:direction"; empty by default (no sorting)
+            sort: []
         },
         isLoading: false,
         error: null
@@ -133,8 +133,7 @@ export const useOrganizationStore = defineStore('organization', {
                 city: '',
                 state: '',
                 category: '',
-                sort_by: 'name',
-                sort_direction: 'asc'
+                sort: []
             }
         }
     }

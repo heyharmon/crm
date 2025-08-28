@@ -29,11 +29,30 @@ class OrganizationController extends Controller
         if ($request->filled('category')) {
             $query->byCategory($request->get('category'));
         }
-        $sortBy = $request->get('sort_by', 'name');
-        $sortDirection = $request->get('sort_direction', 'asc');
         $allowedSorts = ['name', 'city', 'state', 'category', 'score', 'reviews', 'website_rating', 'created_at'];
-        if (in_array($sortBy, $allowedSorts)) {
-            $query->orderBy($sortBy, $sortDirection);
+
+        // Support multi-sort via sort[]="field:direction"
+        $sorts = $request->input('sort', []);
+        if (!is_array($sorts)) {
+            $sorts = [$sorts];
+        }
+
+        if (count($sorts) > 0) {
+            foreach ($sorts as $s) {
+                if (!is_string($s)) continue;
+                [$field, $dir] = array_pad(explode(':', $s), 2, 'desc');
+                $dir = strtolower($dir) === 'asc' ? 'asc' : 'desc';
+                if (in_array($field, $allowedSorts)) {
+                    $query->orderBy($field, $dir);
+                }
+            }
+        } else {
+            // Fallback to single sort params (no default sort)
+            $sortBy = $request->get('sort_by');
+            $sortDirection = $request->get('sort_direction', 'asc');
+            if ($sortBy && in_array($sortBy, $allowedSorts)) {
+                $query->orderBy($sortBy, $sortDirection);
+            }
         }
         $organizations = $query->paginate(20);
         return response()->json($organizations);
