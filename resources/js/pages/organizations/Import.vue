@@ -136,6 +136,7 @@ const refreshImports = async () => {
                     No imports yet. Start your first import above!
                 </div>
 
+                <!-- List imports -->
                 <div v-else class="divide-y divide-neutral-200">
                     <div v-for="importRun in apifyImportStore.imports" :key="importRun.id" class="p-6">
                         <div class="flex justify-between items-start">
@@ -149,13 +150,7 @@ const refreshImports = async () => {
                                     </span>
                                 </div>
 
-                                <div class="text-sm text-neutral-900 mb-2">
-                                    <strong>Search:</strong> "{{ importRun.input_data.searchStringsArray[0] }}" in {{ importRun.input_data.locationQuery }}
-                                </div>
-
                                 <div class="text-sm text-neutral-600 space-x-4">
-                                    <span>Max: {{ importRun.input_data.maxPlaces }}</span>
-                                    <span>Min Rating: {{ importRun.input_data.minStars }}</span>
                                     <span v-if="importRun.items_processed > 0"> Processed: {{ importRun.items_processed }} </span>
                                     <span v-if="importRun.items_imported > 0"> Imported: {{ importRun.items_imported }} </span>
                                     <span v-if="importRun.items_updated > 0"> Updated: {{ importRun.items_updated }} </span>
