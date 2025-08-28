@@ -103,7 +103,8 @@ const startWebScraping = async (organization) => {
                                 <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Name</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Category</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Location</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Rating</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Score</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Reviews</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Website Rating</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Pages</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Actions</th>
@@ -139,8 +140,13 @@ const startWebScraping = async (organization) => {
                                     <div v-if="organization.score" class="flex items-center">
                                         <span class="text-yellow-400">★</span>
                                         <span class="ml-1">{{ organization.score }}</span>
-                                        <span v-if="organization.reviews" class="text-neutral-500 ml-1">({{ organization.reviews }})</span>
                                     </div>
+                                    <span v-else>-</span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
+                                    <span v-if="organization.reviews !== null && organization.reviews !== undefined">
+                                        {{ organization.reviews }}
+                                    </span>
                                     <span v-else>-</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">

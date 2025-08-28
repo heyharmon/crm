@@ -93,7 +93,10 @@ const getSortIcon = (column) => {
                         Location {{ getSortIcon('city') }}
                     </Button>
                     <Button @click="handleSort('score')" :variant="filters.sort_by === 'score' ? 'default' : 'outline'" size="sm">
-                        Rating {{ getSortIcon('score') }}
+                        Score {{ getSortIcon('score') }}
+                    </Button>
+                    <Button @click="handleSort('reviews')" :variant="filters.sort_by === 'reviews' ? 'default' : 'outline'" size="sm">
+                        Reviews {{ getSortIcon('reviews') }}
                     </Button>
                     <Button @click="handleSort('website_rating')" :variant="filters.sort_by === 'website_rating' ? 'default' : 'outline'" size="sm">
                         Website Rating {{ getSortIcon('website_rating') }}
