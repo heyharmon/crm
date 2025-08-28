@@ -4,6 +4,7 @@ import { useOrganizationStore } from '@/stores/organizationStore'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Button from '@/components/ui/Button.vue'
 import OrganizationFilters from '@/components/OrganizationFilters.vue'
+import api from '@/services/api'
 
 const organizationStore = useOrganizationStore()
 
@@ -51,6 +52,29 @@ const deleteOrganization = async (id) => {
         await organizationStore.deleteOrganization(id)
     } catch (error) {
         console.error('Error deleting organization:', error)
+    }
+}
+
+const startWebScraping = async (organization) => {
+    if (!organization.website) {
+        alert('This organization does not have a website to scrape.')
+        return
+    }
+
+    if (!confirm(`Start web scraping for ${organization.name}?`)) return
+
+    try {
+        const response = await api.post('/web-scraper/start', {
+            organization_id: organization.id,
+            max_pages: 50,
+            max_depth: 2
+        })
+        alert(response.data.message)
+        // Refresh the organizations to get updated page counts
+        await organizationStore.fetchOrganizations()
+    } catch (error) {
+        console.error('Error starting web scraping:', error)
+        alert('Failed to start web scraping. Please try again.')
     }
 }
 </script>
@@ -123,6 +147,7 @@ const deleteOrganization = async (id) => {
                                 >
                                     Website Rating {{ getSortIcon('website_rating') }}
                                 </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Pages</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Actions</th>
                             </tr>
                         </thead>
@@ -174,6 +199,9 @@ const deleteOrganization = async (id) => {
                                     </span>
                                     <span v-else>-</span>
                                 </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
+                                    {{ organization.pages_count || 0 }}
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
                                         <router-link
@@ -188,6 +216,13 @@ const deleteOrganization = async (id) => {
                                         >
                                             Edit
                                         </router-link>
+                                        <button
+                                            v-if="organization.website"
+                                            @click="startWebScraping(organization)"
+                                            class="text-purple-600 hover:text-purple-900"
+                                        >
+                                            Scrape
+                                        </button>
                                         <button @click="deleteOrganization(organization.id)" class="text-red-600 hover:text-red-900">Delete</button>
                                     </div>
                                 </td>

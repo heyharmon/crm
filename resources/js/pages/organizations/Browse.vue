@@ -27,30 +27,30 @@ const handlePageChange = (page) => {
     organizationStore.fetchOrganizations(page)
 }
 
-// const getScreenshotUrl = (website) => {
-//     if (!website) return null
-//     const baseUrl = 'https://api.apiflash.com/v1/urltoimage'
-//     const accessKey = '3725d3868ee3426e82b2a3b9eebde219'
-//     return `${baseUrl}?access_key=${accessKey}&wait_until=page_loaded&no_cookie_banners=true&url=${encodeURIComponent(website)}`
-// }
-
 const getScreenshotUrl = (website) => {
     if (!website) return null
-    return `https://api.screenshotone.com/take?
-	access_key=sPbeJ5nS_-OXgA
-	&url=${encodeURIComponent(website)}
-	&format=jpg
-	&block_ads=true
-	&block_cookie_banners=true
-	&block_banners_by_heuristics=false
-	&block_trackers=true
-	&delay=0
-	&timeout=60
-    &wait_until=load
-	&response_type=by_format
-    &ignore_host_errors=true
-	&image_quality=80`
+    const baseUrl = 'https://api.apiflash.com/v1/urltoimage'
+    const accessKey = '3725d3868ee3426e82b2a3b9eebde219'
+    return `${baseUrl}?access_key=${accessKey}&wait_until=page_loaded&no_cookie_banners=true&url=${encodeURIComponent(website)}`
 }
+
+// const getScreenshotUrl = (website) => {
+//     if (!website) return null
+//     return `https://api.screenshotone.com/take?
+// 	access_key=sPbeJ5nS_-OXgA
+// 	&url=${encodeURIComponent(website)}
+// 	&format=jpg
+// 	&block_ads=true
+// 	&block_cookie_banners=true
+// 	&block_banners_by_heuristics=false
+// 	&block_trackers=true
+// 	&delay=0
+// 	&timeout=60
+//     &wait_until=load
+// 	&response_type=by_format
+//     &ignore_host_errors=true
+// 	&image_quality=80`
+// }
 
 const openWebsite = (website) => {
     if (website) {

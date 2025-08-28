@@ -40,7 +40,7 @@ class BaseApifyService
 
     public function runActor(string $actorId, array $input): array
     {
-        $response = $this->makeRequest('POST', "/acts/{$actorId}/runs", $input);
+        $response = $this->makeRequest('POST', "/actor-tasks/{$actorId}/runs", $input);
         return $response->json()['data'];
     }
 

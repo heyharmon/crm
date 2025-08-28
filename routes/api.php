@@ -6,6 +6,7 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\GoogleMapsScraperController;
+use App\Http\Controllers\WebScraperController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -35,5 +36,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('start-import', [GoogleMapsScraperController::class, 'startImport']);
         Route::get('imports', [GoogleMapsScraperController::class, 'getImports']);
         Route::get('imports/{apifyRun}', [GoogleMapsScraperController::class, 'getImport']);
+    });
+
+    // Web scraper routes
+    Route::prefix('web-scraper')->group(function () {
+        Route::post('start', [WebScraperController::class, 'startScraping']);
+        Route::get('runs', [WebScraperController::class, 'getScrapingRuns']);
+        Route::get('runs/{apifyRun}', [WebScraperController::class, 'getScrapingRun']);
     });
 });

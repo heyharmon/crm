@@ -10,7 +10,7 @@ class OrganizationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Organization::query();
+        $query = Organization::query()->withCount('pages');
         if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
@@ -41,6 +41,7 @@ class OrganizationController extends Controller
 
     public function show(Organization $organization)
     {
+        $organization->loadCount('pages');
         return response()->json($organization);
     }
 

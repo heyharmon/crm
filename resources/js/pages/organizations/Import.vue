@@ -38,7 +38,10 @@ const startImport = async () => {
             min_rating: 3,
             skip_closed: true
         }
-        await apifyImportStore.fetchImports()
+
+        setTimeout(() => {
+            apifyImportStore.fetchImports()
+        }, 1000)
     } catch (error) {
         alert('Failed to start import: ' + (error.message || 'Unknown error'))
     } finally {
