@@ -4,6 +4,7 @@ import { useOrganizationStore } from '@/stores/organizationStore'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Button from '@/components/ui/Button.vue'
 import OrganizationFilters from '@/components/OrganizationFilters.vue'
+import Pagination from '@/components/Pagination.vue'
 import api from '@/services/api'
 
 const organizationStore = useOrganizationStore()
@@ -22,24 +23,6 @@ watch(
 
 const handleSearch = () => {
     organizationStore.fetchOrganizations(1)
-}
-
-const handleSort = (column) => {
-    if (organizationStore.filters.sort_by === column) {
-        organizationStore.setFilters({
-            sort_direction: organizationStore.filters.sort_direction === 'asc' ? 'desc' : 'asc'
-        })
-    } else {
-        organizationStore.setFilters({
-            sort_by: column,
-            sort_direction: 'asc'
-        })
-    }
-}
-
-const getSortIcon = (column) => {
-    if (organizationStore.filters.sort_by !== column) return '↕️'
-    return organizationStore.filters.sort_direction === 'asc' ? '↑' : '↓'
 }
 
 const handlePageChange = (page) => {
@@ -117,36 +100,11 @@ const startWebScraping = async (organization) => {
                     <table class="w-full">
                         <thead class="bg-neutral-50 border-b border-neutral-200">
                             <tr>
-                                <th
-                                    @click="handleSort('name')"
-                                    class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider cursor-pointer hover:bg-neutral-100"
-                                >
-                                    Name {{ getSortIcon('name') }}
-                                </th>
-                                <th
-                                    @click="handleSort('category')"
-                                    class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider cursor-pointer hover:bg-neutral-100"
-                                >
-                                    Category {{ getSortIcon('category') }}
-                                </th>
-                                <th
-                                    @click="handleSort('city')"
-                                    class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider cursor-pointer hover:bg-neutral-100"
-                                >
-                                    Location {{ getSortIcon('city') }}
-                                </th>
-                                <th
-                                    @click="handleSort('score')"
-                                    class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider cursor-pointer hover:bg-neutral-100"
-                                >
-                                    Rating {{ getSortIcon('score') }}
-                                </th>
-                                <th
-                                    @click="handleSort('website_rating')"
-                                    class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider cursor-pointer hover:bg-neutral-100"
-                                >
-                                    Website Rating {{ getSortIcon('website_rating') }}
-                                </th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Category</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Location</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Rating</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Website Rating</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Pages</th>
                                 <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Actions</th>
                             </tr>
@@ -231,73 +189,7 @@ const startWebScraping = async (organization) => {
                     </table>
                 </div>
 
-                <div v-if="organizationStore.pagination.last_page > 1" class="bg-white px-4 py-3 flex items-center justify-between border-t border-neutral-200">
-                    <div class="flex-1 flex justify-between sm:hidden">
-                        <Button
-                            @click="handlePageChange(organizationStore.pagination.current_page - 1)"
-                            :disabled="organizationStore.pagination.current_page === 1"
-                            variant="outline"
-                        >
-                            Previous
-                        </Button>
-                        <Button
-                            @click="handlePageChange(organizationStore.pagination.current_page + 1)"
-                            :disabled="organizationStore.pagination.current_page === organizationStore.pagination.last_page"
-                            variant="outline"
-                        >
-                            Next
-                        </Button>
-                    </div>
-                    <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                        <div>
-                            <p class="text-sm text-neutral-700">
-                                Showing
-                                <span class="font-medium">{{
-                                    (organizationStore.pagination.current_page - 1) * organizationStore.pagination.per_page + 1
-                                }}</span>
-                                to
-                                <span class="font-medium">{{
-                                    Math.min(
-                                        organizationStore.pagination.current_page * organizationStore.pagination.per_page,
-                                        organizationStore.pagination.total
-                                    )
-                                }}</span>
-                                of
-                                <span class="font-medium">{{ organizationStore.pagination.total }}</span>
-                                results
-                            </p>
-                        </div>
-                        <div>
-                            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                <Button
-                                    @click="handlePageChange(organizationStore.pagination.current_page - 1)"
-                                    :disabled="organizationStore.pagination.current_page === 1"
-                                    variant="outline"
-                                    size="sm"
-                                >
-                                    Previous
-                                </Button>
-                                <Button
-                                    v-for="page in Math.min(5, organizationStore.pagination.last_page)"
-                                    :key="page"
-                                    @click="handlePageChange(page)"
-                                    :variant="page === organizationStore.pagination.current_page ? 'default' : 'outline'"
-                                    size="sm"
-                                >
-                                    {{ page }}
-                                </Button>
-                                <Button
-                                    @click="handlePageChange(organizationStore.pagination.current_page + 1)"
-                                    :disabled="organizationStore.pagination.current_page === organizationStore.pagination.last_page"
-                                    variant="outline"
-                                    size="sm"
-                                >
-                                    Next
-                                </Button>
-                            </nav>
-                        </div>
-                    </div>
-                </div>
+                <Pagination :pagination="organizationStore.pagination" @page-change="handlePageChange" class="border-t border-neutral-200" />
             </div>
         </div>
     </DefaultLayout>
