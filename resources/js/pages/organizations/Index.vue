@@ -50,9 +50,6 @@ const startWebScraping = async (organization) => {
             max_pages: 50,
             max_depth: 2
         })
-        alert(data?.message || 'Web scraping started successfully.')
-        // Refresh the organizations to get updated page counts
-        await organizationStore.fetchOrganizations()
     } catch (error) {
         console.error('Error starting web scraping:', error)
         alert('Failed to start web scraping. Please try again.')

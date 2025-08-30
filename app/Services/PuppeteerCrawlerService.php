@@ -9,7 +9,8 @@ use Illuminate\Support\Facades\Log;
 
 class PuppeteerCrawlerService extends BaseApifyService
 {
-    private const ACTOR_ID = 'heyharmon~puppeteer-crawler-task';
+    // private const ACTOR_ID = 'heyharmon~puppeteer-crawler-task';
+    private const ACTOR_ID = 'heyharmon~cheerio-crawler-task';
 
     public function startScraping(array $params, int $userId): ApifyRun
     {
@@ -65,7 +66,7 @@ class PuppeteerCrawlerService extends BaseApifyService
 
     public function processResults(ApifyRun $apifyRun, array $data): array
     {
-        $organizationId = $apifyRun->input_data['organization_id'] ?? null;
+        $organizationId = $apifyRun->input_data['organizationId'] ?? null;
 
         if (!$organizationId) {
             throw new \Exception('Organization ID not found in run input data');
