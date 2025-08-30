@@ -12,6 +12,10 @@ const props = defineProps({
   isLoading: {
     type: Boolean,
     default: false
+  },
+  showActions: {
+    type: Boolean,
+    default: true
   }
 });
 
@@ -64,6 +68,8 @@ const validateWebsite = () => {
     form.value.website = 'https://' + form.value.website;
   }
 };
+
+defineExpose({ submitForm })
 </script>
 
 <template>
@@ -162,7 +168,7 @@ const validateWebsite = () => {
       </div>
     </div>
 
-    <div class="flex justify-end space-x-2">
+    <div v-if="showActions" class="flex justify-end space-x-2">
       <router-link to="/organizations">
         <Button variant="outline">Cancel</Button>
       </router-link>

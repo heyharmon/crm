@@ -7,6 +7,9 @@ import Button from '@/components/ui/Button.vue'
 import OrganizationFilters from '@/components/OrganizationFilters.vue'
 import Pagination from '@/components/Pagination.vue'
 import api from '@/services/api'
+import RightDrawer from '@/components/ui/RightDrawer.vue'
+import OrganizationForm from '@/components/OrganizationForm.vue'
+import OrganizationDetails from '@/components/OrganizationDetails.vue'
 
 const organizationStore = useOrganizationStore()
 const route = useRoute()
@@ -109,6 +112,63 @@ const cardImageHeightClass = computed(() => {
     if (columns.value === 2) return 'h-96 sm:h-[30rem]' // ~384–480px (unchanged)
     return 'h-40 sm:h-48' // 160–192px for 3–4 columns
 })
+
+// Sidebar state synced with route query
+const sidebarMode = ref(null) // 'view' | 'edit' | null
+const sidebarOrgId = ref(null)
+const isDrawerOpen = computed(() => !!sidebarMode.value && !!sidebarOrgId.value)
+
+const syncFromRoute = () => {
+    const { org, mode } = route.query
+    if (org && (mode === 'view' || mode === 'edit')) {
+        sidebarOrgId.value = org
+        sidebarMode.value = mode
+    } else {
+        sidebarOrgId.value = null
+        sidebarMode.value = null
+    }
+}
+
+onMounted(syncFromRoute)
+watch(() => route.query, syncFromRoute, { deep: true })
+
+const openSidebar = async (mode, id) => {
+    const q = { ...route.query, org: String(id), mode }
+    await router.replace({ query: q })
+    // Ensure current organization is loaded for edit/details quickly
+    try {
+        await organizationStore.fetchOrganization(id)
+    } catch (e) {
+        // non-fatal; the nested components also handle loading
+    }
+}
+
+const closeSidebar = async () => {
+    const q = { ...route.query }
+    delete q.org
+    delete q.mode
+    await router.replace({ query: q })
+}
+
+const selectedOrganization = computed(() => {
+    const id = Number(sidebarOrgId.value)
+    return organizationStore.organizations.find((o) => o.id === id) || organizationStore.currentOrganization
+})
+
+const handleEditSubmit = async (organizationData) => {
+    if (!sidebarOrgId.value) return
+    try {
+        await organizationStore.updateOrganization(Number(sidebarOrgId.value), organizationData)
+        await organizationStore.fetchOrganizations(organizationStore.pagination.current_page)
+        // After saving, switch to view mode to reflect changes
+        openSidebar('view', sidebarOrgId.value)
+    } catch (error) {
+        console.error('Error updating organization:', error)
+    }
+}
+
+// Ref for calling submit from the drawer footer
+const editFormRef = ref(null)
 </script>
 
 <template>
@@ -247,18 +307,8 @@ const cardImageHeightClass = computed(() => {
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                     <div class="flex space-x-2">
-                                        <router-link
-                                            :to="{ name: 'organizations.show', params: { id: organization.id } }"
-                                            class="text-blue-600 hover:text-blue-900"
-                                        >
-                                            View
-                                        </router-link>
-                                        <router-link
-                                            :to="{ name: 'organizations.edit', params: { id: organization.id } }"
-                                            class="text-green-600 hover:text-green-900"
-                                        >
-                                            Edit
-                                        </router-link>
+                                        <button @click="openSidebar('view', organization.id)" class="text-blue-600 hover:text-blue-900">View</button>
+                                        <button @click="openSidebar('edit', organization.id)" class="text-green-600 hover:text-green-900">Edit</button>
                                         <button
                                             v-if="organization.website"
                                             @click="startWebScraping(organization)"
@@ -425,12 +475,12 @@ const cardImageHeightClass = computed(() => {
                                 </div>
 
                                 <div class="flex space-x-2">
-                                    <router-link :to="{ name: 'organizations.show', params: { id: organization.id } }" class="flex-1">
+                                    <button class="flex-1" @click="openSidebar('view', organization.id)">
                                         <Button variant="outline" size="sm" class="w-full">View Details</Button>
-                                    </router-link>
-                                    <router-link :to="{ name: 'organizations.edit', params: { id: organization.id } }">
+                                    </button>
+                                    <button @click="openSidebar('edit', organization.id)">
                                         <Button variant="outline" size="sm">Edit</Button>
-                                    </router-link>
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -440,5 +490,37 @@ const cardImageHeightClass = computed(() => {
                 </div>
             </div>
         </div>
+
+        <!-- Right-side drawer for view/edit -->
+        <RightDrawer
+            :title="sidebarMode === 'edit' ? 'Edit Organization' : 'Organization Details'"
+            :model-value="isDrawerOpen"
+            @update:modelValue="(v) => { if (!v) closeSidebar() }"
+            @close="closeSidebar"
+        >
+            <div v-if="isDrawerOpen">
+                <div v-if="sidebarMode === 'view'" class="h-full">
+                    <OrganizationDetails :organization-id="Number(sidebarOrgId)" />
+                    <div class="p-4 border-t border-neutral-200 flex justify-end">
+                        <Button variant="outline" @click="openSidebar('edit', sidebarOrgId)">Edit</Button>
+                    </div>
+                </div>
+                <div v-else-if="sidebarMode === 'edit'" class="h-full flex flex-col">
+                    <div class="flex-1 overflow-y-auto p-4">
+                        <OrganizationForm
+                            ref="editFormRef"
+                            :organization="selectedOrganization || {}"
+                            :is-loading="organizationStore.isLoading"
+                            :show-actions="false"
+                            @submit="handleEditSubmit"
+                        />
+                    </div>
+                    <div class="p-4 border-t border-neutral-200 flex justify-end gap-2">
+                        <Button variant="outline" @click="openSidebar('view', sidebarOrgId)">Cancel</Button>
+                        <Button @click="editFormRef?.submitForm?.()">Save</Button>
+                    </div>
+                </div>
+            </div>
+        </RightDrawer>
     </DefaultLayout>
 </template>
