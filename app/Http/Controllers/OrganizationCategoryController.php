@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Organization;
 use App\Models\OrganizationCategory;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class OrganizationCategoryController extends Controller
 {
@@ -32,9 +34,33 @@ class OrganizationCategoryController extends Controller
         return response()->json($organizationCategory);
     }
 
-    public function destroy(OrganizationCategory $organizationCategory)
+    public function destroy(Request $request, OrganizationCategory $organizationCategory)
     {
-        $organizationCategory->delete();
+        $validated = $request->validate([
+            'action' => 'sometimes|in:disassociate,reassign,destroy',
+            'reassign_to_id' => 'nullable|integer|exists:organization_categories,id',
+        ]);
+
+        $action = $validated['action'] ?? 'disassociate';
+
+        DB::transaction(function () use ($action, $validated, $organizationCategory) {
+            if ($action === 'reassign') {
+                $toId = $validated['reassign_to_id'] ?? null;
+                if (!$toId || (int) $toId === (int) $organizationCategory->id) {
+                    abort(422, 'A different target category is required for reassignment.');
+                }
+                Organization::where('organization_category_id', $organizationCategory->id)
+                    ->update(['organization_category_id' => $toId]);
+            } elseif ($action === 'destroy') {
+                Organization::where('organization_category_id', $organizationCategory->id)->delete();
+            } else { // disassociate
+                Organization::where('organization_category_id', $organizationCategory->id)
+                    ->update(['organization_category_id' => null]);
+            }
+
+            $organizationCategory->delete();
+        });
+
         return response()->json(['message' => 'Category deleted']);
     }
 }

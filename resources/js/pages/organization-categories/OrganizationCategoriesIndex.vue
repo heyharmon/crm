@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, computed } from 'vue';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
@@ -9,6 +9,9 @@ const categories = ref([]);
 const newCategory = ref('');
 const editingId = ref(null);
 const editingName = ref('');
+const showingDelete = ref({});
+const deleteAction = ref({}); // 'disassociate' | 'reassign' | 'destroy'
+const reassignTo = ref({});
 
 const fetchCategories = async () => {
   categories.value = await api.get('/organization-categories');
@@ -36,7 +39,29 @@ const updateCategory = async (id) => {
 };
 
 const deleteCategory = async (id) => {
-  await api.delete(`/organization-categories/${id}`);
+  // Default simple delete (disassociate) fallback
+  await api.delete(`/organization-categories/${id}`, { data: { action: 'disassociate' } });
+  await fetchCategories();
+};
+
+const toggleDeleteOptions = (id) => {
+  showingDelete.value[id] = !showingDelete.value[id];
+  if (showingDelete.value[id] && !deleteAction.value[id]) {
+    deleteAction.value[id] = 'disassociate';
+  }
+};
+
+const confirmDelete = async (cat) => {
+  const action = deleteAction.value[cat.id] || 'disassociate';
+  const payload = { action };
+  if (action === 'reassign') {
+    payload.reassign_to_id = reassignTo.value[cat.id] || null;
+  }
+  await api.delete(`/organization-categories/${cat.id}`, { data: payload });
+  // reset UI state
+  showingDelete.value[cat.id] = false;
+  deleteAction.value[cat.id] = 'disassociate';
+  reassignTo.value[cat.id] = null;
   await fetchCategories();
 };
 </script>
@@ -63,7 +88,37 @@ const deleteCategory = async (id) => {
                   <span>{{ cat.name }}</span>
                   <div class="space-x-2">
                     <Button variant="outline" @click="startEdit(cat)">Edit</Button>
-                    <Button variant="outline" @click="deleteCategory(cat.id)">Delete</Button>
+                    <Button variant="outline" @click="toggleDeleteOptions(cat.id)">Delete</Button>
+                  </div>
+                </div>
+                <div v-if="showingDelete[cat.id]" class="mt-3 p-3 border rounded bg-neutral-50">
+                  <div class="text-sm font-medium mb-2">Delete options</div>
+                  <div class="space-y-2 text-sm">
+                    <label class="flex items-center space-x-2">
+                      <input type="radio" :name="`del-${cat.id}`" value="disassociate" v-model="deleteAction[cat.id]">
+                      <span>Disassociate from organizations (set to none)</span>
+                    </label>
+                    <label class="flex items-center space-x-2">
+                      <input type="radio" :name="`del-${cat.id}`" value="reassign" v-model="deleteAction[cat.id]">
+                      <span>Reassign organizations to another category</span>
+                    </label>
+                    <div v-if="deleteAction[cat.id] === 'reassign'" class="pl-6">
+                      <select class="border rounded px-2 py-1" v-model="reassignTo[cat.id]">
+                        <option :value="null">Select category</option>
+                        <option v-for="c in categories.filter(x => x.id !== cat.id)" :key="c.id" :value="c.id">{{ c.name }}</option>
+                      </select>
+                    </div>
+                    <label class="flex items-center space-x-2">
+                      <input type="radio" :name="`del-${cat.id}`" value="destroy" v-model="deleteAction[cat.id]">
+                      <span>Destroy organizations in this category</span>
+                    </label>
+                  </div>
+                  <div class="mt-3 space-x-2">
+                    <Button variant="outline" @click="showingDelete[cat.id] = false">Cancel</Button>
+                    <Button 
+                      :disabled="deleteAction[cat.id] === 'reassign' && !reassignTo[cat.id]"
+                      @click="confirmDelete(cat)"
+                    >Confirm Delete</Button>
                   </div>
                 </div>
               </td>
