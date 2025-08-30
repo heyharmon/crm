@@ -10,9 +10,14 @@ class OrganizationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Organization::query()->with(['category'])->withCount('pages')
+        $query = Organization::query()
+            ->with(['category'])
+            // Add the pages_count subselect
+            ->withCount('pages')
+            // Join for filtering/sorting by category without clobbering selects
             ->leftJoin('organization_categories', 'organization_categories.id', '=', 'organizations.organization_category_id')
-            ->select('organizations.*');
+            // Append base columns; keep the withCount-added select intact
+            ->addSelect('organizations.*');
         if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {

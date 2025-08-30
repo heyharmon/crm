@@ -66,7 +66,8 @@ class ApifyWebCrawlerService extends BaseApifyService
 
     public function processResults(ApifyRun $apifyRun, array $data): array
     {
-        $organizationId = $apifyRun->input_data['organizationId'] ?? null;
+        // Read the organization id stored when starting the run
+        $organizationId = $apifyRun->input_data['organization_id'] ?? null;
 
         if (!$organizationId) {
             throw new \Exception('Organization ID not found in run input data');
