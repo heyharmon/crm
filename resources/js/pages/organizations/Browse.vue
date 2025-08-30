@@ -146,7 +146,7 @@ const updateWebsiteRating = async (organizationId, rating) => {
                             </div>
 
                             <div v-if="organization.category" class="text-sm text-neutral-600 mb-2">
-                                {{ organization.category }}
+                                {{ organization.category.name }}
                             </div>
 
                             <div v-if="organization.city || organization.state" class="text-sm text-neutral-500 mb-3">

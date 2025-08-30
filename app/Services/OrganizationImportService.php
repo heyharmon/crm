@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Organization;
+use App\Models\OrganizationCategory;
 use App\Models\ApifyRun;
 use Illuminate\Support\Facades\Log;
 
@@ -89,9 +90,17 @@ class OrganizationImportService
             'country_code' => $item['countryCode'] ?? null,
             'website' => $this->normalizeWebsite($item['website'] ?? null),
             'phone' => $item['phone'] ?? null,
-            'category' => $item['categoryName'] ?? null,
+            'organization_category_id' => $this->resolveCategoryId($item['categoryName'] ?? null),
             'map_url' => $item['url'] ?? null,
         ];
+    }
+
+    private function resolveCategoryId(?string $name): ?int
+    {
+        if (!$name) {
+            return null;
+        }
+        return OrganizationCategory::firstOrCreate(['name' => $name])->id;
     }
 
     /**

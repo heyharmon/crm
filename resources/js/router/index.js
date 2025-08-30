@@ -13,6 +13,7 @@ import OrganizationShow from '@/pages/organizations/Show.vue'
 import OrganizationCreate from '@/pages/organizations/Create.vue'
 import OrganizationEdit from '@/pages/organizations/Edit.vue'
 import OrganizationImport from '@/pages/organizations/Import.vue'
+import OrganizationCategoriesIndex from '@/pages/organization-categories/Index.vue'
 
 const routes = [
     {
@@ -79,6 +80,12 @@ const routes = [
         path: '/organizations/:id/edit',
         name: 'organizations.edit',
         component: OrganizationEdit,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/organization-categories',
+        name: 'organization-categories.index',
+        component: OrganizationCategoriesIndex,
         meta: { requiresAuth: true }
     }
 ]
