@@ -4,16 +4,16 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Home from '@/pages/Home.vue'
 import Login from '@/pages/auth/Login.vue'
 import Register from '@/pages/auth/Register.vue'
-import TeamsIndex from '@/pages/teams/Index.vue'
-import TeamShow from '@/pages/teams/Show.vue'
+import TeamIndex from '@/pages/teams/TeamIndex.vue'
+import TeamShow from '@/pages/teams/TeamShow.vue'
 // Organization pages
-import OrganizationsIndex from '@/pages/organizations/Index.vue'
-import OrganizationsBrowse from '@/pages/organizations/Browse.vue'
-import OrganizationShow from '@/pages/organizations/Show.vue'
-import OrganizationCreate from '@/pages/organizations/Create.vue'
-import OrganizationEdit from '@/pages/organizations/Edit.vue'
-import OrganizationImport from '@/pages/organizations/Import.vue'
-import OrganizationCategoriesIndex from '@/pages/organization-categories/Index.vue'
+import OrganizationIndex from '@/pages/organizations/OrganizationIndex.vue'
+import OrganizationBrowse from '@/pages/organizations/OrganizationBrowse.vue'
+import OrganizationShow from '@/pages/organizations/OrganizationShow.vue'
+import OrganizationCreate from '@/pages/organizations/OrganizationCreate.vue'
+import OrganizationEdit from '@/pages/organizations/OrganizationEdit.vue'
+import OrganizationImport from '@/pages/organizations/OrganizationImport.vue'
+import OrganizationCategoriesIndex from '@/pages/organization-categories/OrganizationCategoriesIndex.vue'
 
 const routes = [
     {
@@ -37,7 +37,7 @@ const routes = [
     {
         path: '/teams',
         name: 'teams.index',
-        component: TeamsIndex,
+        component: TeamIndex,
         meta: { requiresAuth: true }
     },
     {
@@ -49,13 +49,13 @@ const routes = [
     {
         path: '/organizations',
         name: 'organizations.index',
-        component: OrganizationsIndex,
+        component: OrganizationIndex,
         meta: { requiresAuth: true }
     },
     {
         path: '/organizations/browse',
         name: 'organizations.browse',
-        component: OrganizationsBrowse,
+        component: OrganizationBrowse,
         meta: { requiresAuth: true }
     },
     {
