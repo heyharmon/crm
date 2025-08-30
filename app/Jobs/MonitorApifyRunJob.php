@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ApifyRun;
-use App\Services\ApifyCrawlerService;
+use App\Services\BaseApifyService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -11,35 +11,42 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class MonitorWebScrapingJob implements ShouldQueue
+class MonitorApifyRunJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public int $tries = 180;
     public int $backoff = 10;
 
-    public function __construct(private int $apifyRunId) {}
+    public function __construct(
+        private int $apifyRunId,
+        private string $serviceClass,
+        private string $processorClass
+    ) {}
 
-    public function handle(ApifyCrawlerService $scraperService): void
+    public function handle(): void
     {
         $apifyRun = ApifyRun::findOrFail($this->apifyRunId);
+        /** @var BaseApifyService $service */
+        $service = app()->make($this->serviceClass);
         try {
-            $apifyRun = $scraperService->updateRunStatus($apifyRun);
+            $apifyRun = $service->updateRunStatus($apifyRun);
             if ($apifyRun->isCompleted()) {
                 if ($apifyRun->isSuccessful()) {
-                    ProcessWebScrapingResultsJob::dispatch($apifyRun->id);
+                    ProcessApifyResultsJob::dispatch($apifyRun->id, $this->serviceClass, $this->processorClass);
                 } else {
-                    Log::error('Web scraping run failed', [
+                    Log::error('Apify run failed', [
                         'run_id' => $apifyRun->apify_run_id,
                         'status' => $apifyRun->status,
                     ]);
                 }
             } else {
-                MonitorWebScrapingJob::dispatch($apifyRun->id)->delay(30);
+                MonitorApifyRunJob::dispatch($apifyRun->id, $this->serviceClass, $this->processorClass)->delay(30);
             }
         } catch (\Exception $e) {
-            Log::error('Failed to monitor web scraping run', [
+            Log::error('Failed to monitor Apify run', [
                 'apify_run_id' => $apifyRun->id,
+                'service' => $this->serviceClass,
                 'error' => $e->getMessage(),
             ]);
             $apifyRun->update([
@@ -50,3 +57,4 @@ class MonitorWebScrapingJob implements ShouldQueue
         }
     }
 }
+

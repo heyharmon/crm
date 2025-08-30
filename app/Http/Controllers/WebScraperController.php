@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\StartWebScrapingJob;
+use App\Jobs\StartApifyActorJob;
+use App\Services\ApifyWebCrawlerService;
+use App\Services\Processors\WebScrapingResultsProcessor;
 use App\Models\ApifyRun;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +19,12 @@ class WebScraperController extends Controller
             'max_depth' => 'sometimes|integer|min:1|max:5',
         ]);
 
-        StartWebScrapingJob::dispatch($validated, Auth::id());
+        StartApifyActorJob::dispatch(
+            $validated,
+            Auth::id(),
+            ApifyWebCrawlerService::class,
+            WebScrapingResultsProcessor::class
+        );
 
         return response()->json([
             'message' => 'Web scraping started successfully. You will be notified when it completes.',
