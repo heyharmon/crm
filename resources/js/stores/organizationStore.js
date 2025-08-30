@@ -108,18 +108,27 @@ export const useOrganizationStore = defineStore('organization', {
         },
 
         async deleteOrganization(id) {
-            this.isLoading = true
+            // Do not toggle global isLoading to avoid list flashing
             this.error = null
 
             try {
                 await api.delete(`/organizations/${id}`)
-                await this.fetchOrganizations(this.pagination.current_page)
+                // Remove the deleted organization from local state instead of refetching
+                this.organizations = this.organizations.filter(org => org.id !== id)
+
+                // Clear currentOrganization if it was the one deleted
+                if (this.currentOrganization && this.currentOrganization.id === id) {
+                    this.currentOrganization = null
+                }
+
+                // Keep pagination total in sync locally
+                if (typeof this.pagination.total === 'number' && this.pagination.total > 0) {
+                    this.pagination.total -= 1
+                }
             } catch (error) {
                 this.error = error.message || 'Failed to delete organization'
                 console.error('Error deleting organization:', error)
                 throw error
-            } finally {
-                this.isLoading = false
             }
         },
 
