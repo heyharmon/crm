@@ -123,9 +123,10 @@ const startWebScraping = async (organization) => {
                                         <div class="h-10 w-10 rounded-full mr-3 bg-neutral-200 flex items-center justify-center" v-else>
                                             <span class="text-neutral-500 font-medium">{{ organization.name.charAt(0).toUpperCase() }}</span>
                                         </div>
-                                        <div>
+                                        <div class="space-y-1">
                                             <div class="text-sm font-medium text-neutral-900">{{ organization.name }}</div>
                                             <div v-if="organization.phone" class="text-sm text-neutral-500">{{ organization.phone }}</div>
+                                            <div v-if="organization.website" class="text-sm text-neutral-500">{{ organization.website }}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -161,6 +162,12 @@ const startWebScraping = async (organization) => {
                                     >
                                         {{ organization.website_rating }}
                                     </span>
+                                    <div
+                                        v-else-if="!organization.website"
+                                        class="inline-block px-2 py-1 text-xs font-medium text-neutral-700 bg-neutral-100 rounded-full"
+                                    >
+                                        No Website
+                                    </div>
                                     <span v-else>-</span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">

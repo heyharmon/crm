@@ -40,14 +40,14 @@ class Organization extends Model
         return implode(', ', $parts);
     }
 
-    public function getFormattedWebsiteAttribute()
-    {
-        if (!$this->website) return null;
-        if (!str_starts_with($this->website, 'http')) {
-            return 'https://' . $this->website;
-        }
-        return $this->website;
-    }
+    // public function getFormattedWebsiteAttribute()
+    // {
+    //     if (!$this->website) return null;
+    //     if (!str_starts_with($this->website, 'http')) {
+    //         return 'https://' . $this->website;
+    //     }
+    //     return $this->website;
+    // }
 
     public static function findByGooglePlaceId($placeId)
     {

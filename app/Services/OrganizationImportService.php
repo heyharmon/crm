@@ -87,11 +87,48 @@ class OrganizationImportService
             'city' => $item['city'] ?? null,
             'state' => $item['state'] ?? null,
             'country_code' => $item['countryCode'] ?? null,
-            'website' => $item['website'] ?? null,
+            'website' => $this->normalizeWebsite($item['website'] ?? null),
             'phone' => $item['phone'] ?? null,
             'category' => $item['categoryName'] ?? null,
             'map_url' => $item['url'] ?? null,
         ];
+    }
+
+    /**
+     * Normalize website URLs to origin only (scheme + host),
+     * removing paths, query strings, fragments, and trailing slashes.
+     * If no scheme is provided, default to https.
+     */
+    private function normalizeWebsite(?string $url): ?string
+    {
+        if (!$url) {
+            return null;
+        }
+
+        $url = trim($url);
+        if ($url === '') {
+            return null;
+        }
+
+        // Ensure we can parse URLs missing a scheme by prepending https
+        $hasScheme = (bool) preg_match('/^\w+:\/\//i', $url);
+        $urlToParse = $hasScheme ? $url : 'https://' . $url;
+
+        $parts = parse_url($urlToParse);
+        if ($parts === false || empty($parts['host'])) {
+            return null; // Unparseable URL
+        }
+
+        $scheme = strtolower($parts['scheme'] ?? 'https');
+        $host = strtolower($parts['host']);
+
+        // Rebuild as origin only, including non-default port if present
+        $origin = $scheme . '://' . $host;
+        if (!empty($parts['port'])) {
+            $origin .= ':' . $parts['port'];
+        }
+
+        return rtrim($origin, '/');
     }
 
     private function extractPlaceId(string $url): ?string

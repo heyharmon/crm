@@ -96,7 +96,7 @@ export const useOrganizationStore = defineStore('organization', {
                     this.currentOrganization = response
                 }
 
-                await this.fetchOrganizations(this.pagination.current_page)
+                // await this.fetchOrganizations(this.pagination.current_page)
                 return response
             } catch (error) {
                 this.error = error.message || 'Failed to update organization'

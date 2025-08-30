@@ -21,19 +21,14 @@ class PuppeteerCrawlerService extends BaseApifyService
 
         $input = [
             'startUrls' => [
-                ['url' => $organization->formatted_website]
+                ['url' => $organization->website]
             ],
-            'maxPagesPerCrawl' => $params['max_pages'] ?? 50,
+            'pseudoUrls' => [
+                ['purl' => $organization->website . '/[.*?]']
+            ],
+            'maxPagesPerCrawl' => $params['max_pages'] ?? 500,
             'maxCrawlingDepth' => $params['max_depth'] ?? 2,
             'linkSelector' => 'a[href]',
-            'pageFunction' => 'async function pageFunction(context) {
-                const { page, request } = context;
-                const title = await page.title();
-                return {
-                    url: request.url,
-                    title: title
-                };
-            }',
             'proxyConfiguration' => [
                 'useApifyProxy' => true
             ]

@@ -136,6 +136,12 @@ const updateWebsiteRating = async (organizationId, rating) => {
                                 <div v-if="organization.score" class="flex items-center text-sm">
                                     <span class="text-yellow-400">★</span>
                                     <span class="ml-1 text-neutral-600">{{ organization.score }}</span>
+                                    <span
+                                        v-if="organization.reviews !== null && organization.reviews !== undefined"
+                                        class="ml-2 text-neutral-500"
+                                    >
+                                        ({{ organization.reviews }})
+                                    </span>
                                 </div>
                             </div>
 
@@ -151,7 +157,7 @@ const updateWebsiteRating = async (organizationId, rating) => {
                                 {{ organization.phone }}
                             </div>
 
-                            <div class="mb-3">
+                            <div v-if="organization.website" class="mb-3">
                                 <label class="block text-xs font-medium text-neutral-700 mb-1">Website Rating</label>
                                 <select
                                     :value="organization.website_rating || ''"
