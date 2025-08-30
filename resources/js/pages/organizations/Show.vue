@@ -52,7 +52,7 @@ const deleteOrganization = async () => {
             </router-link>
             <h1 class="text-3xl font-bold text-neutral-900">{{ organizationStore.currentOrganization.name }}</h1>
             <p v-if="organizationStore.currentOrganization.category" class="text-lg text-neutral-600 mt-1">
-              {{ organizationStore.currentOrganization.category }}
+              {{ organizationStore.currentOrganization.category.name }}
             </p>
           </div>
           <div class="flex space-x-2">
@@ -123,7 +123,7 @@ const deleteOrganization = async () => {
               <div class="space-y-3">
                 <div v-if="organizationStore.currentOrganization.category">
                   <span class="text-sm font-medium text-neutral-700">Category:</span>
-                  <span class="ml-2 text-sm text-neutral-900">{{ organizationStore.currentOrganization.category }}</span>
+                  <span class="ml-2 text-sm text-neutral-900">{{ organizationStore.currentOrganization.category.name }}</span>
                 </div>
                 
                 <div v-if="organizationStore.currentOrganization.city">

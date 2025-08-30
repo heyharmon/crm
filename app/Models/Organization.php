@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\OrganizationCategory;
 
 class Organization extends Model
 {
@@ -24,7 +26,7 @@ class Organization extends Model
         'website',
         'website_rating',
         'phone',
-        'category',
+        'organization_category_id',
         'map_url',
         'notes',
     ];
@@ -57,17 +59,24 @@ class Organization extends Model
     public function scopeByLocation($query, $city = null, $state = null)
     {
         if ($city) {
-            $query->where('city', 'LIKE', "%{$city}%");
+            $query->where('organizations.city', 'LIKE', "%{$city}%");
         }
         if ($state) {
-            $query->where('state', 'LIKE', "%{$state}%");
+            $query->where('organizations.state', 'LIKE', "%{$state}%");
         }
         return $query;
     }
 
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(OrganizationCategory::class, 'organization_category_id');
+    }
+
     public function scopeByCategory($query, $category)
     {
-        return $query->where('category', 'LIKE', "%{$category}%");
+        return $query->whereHas('category', function ($q) use ($category) {
+            $q->where('name', 'LIKE', "%{$category}%");
+        });
     }
 
     public function pages(): HasMany

@@ -21,14 +21,13 @@ return new class extends Migration
             $table->string('country_code', 2)->nullable();
             $table->string('website')->nullable();
             $table->string('phone')->nullable();
-            $table->string('category')->nullable();
+            $table->foreignId('organization_category_id')->nullable()->constrained('organization_categories');
             $table->text('map_url')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
             $table->softDeletes();
 
             $table->index(['city', 'state']);
-            $table->index('category');
             $table->index('deleted_at');
         });
     }

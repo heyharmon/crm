@@ -10,14 +10,16 @@ class OrganizationController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Organization::query()->withCount('pages');
+        $query = Organization::query()->with(['category'])->withCount('pages')
+            ->leftJoin('organization_categories', 'organization_categories.id', '=', 'organizations.organization_category_id')
+            ->select('organizations.*');
         if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
-                $q->where('name', 'LIKE', "%{$search}%")
-                    ->orWhere('category', 'LIKE', "%{$search}%")
-                    ->orWhere('city', 'LIKE', "%{$search}%")
-                    ->orWhere('state', 'LIKE', "%{$search}%");
+                $q->where('organizations.name', 'LIKE', "%{$search}%")
+                    ->orWhere('organization_categories.name', 'LIKE', "%{$search}%")
+                    ->orWhere('organizations.city', 'LIKE', "%{$search}%")
+                    ->orWhere('organizations.state', 'LIKE', "%{$search}%");
             });
         }
         if ($request->filled('city')) {
@@ -27,7 +29,7 @@ class OrganizationController extends Controller
             $query->byLocation(null, $request->get('state'));
         }
         if ($request->filled('category')) {
-            $query->byCategory($request->get('category'));
+            $query->where('organization_categories.name', 'LIKE', "%{$request->get('category')}%");
         }
         $allowedSorts = ['name', 'city', 'state', 'category', 'score', 'reviews', 'website_rating', 'created_at'];
 
@@ -43,7 +45,11 @@ class OrganizationController extends Controller
                 [$field, $dir] = array_pad(explode(':', $s), 2, 'desc');
                 $dir = strtolower($dir) === 'asc' ? 'asc' : 'desc';
                 if (in_array($field, $allowedSorts)) {
-                    $query->orderBy($field, $dir);
+                    if ($field === 'category') {
+                        $query->orderBy('organization_categories.name', $dir);
+                    } else {
+                        $query->orderBy('organizations.' . $field, $dir);
+                    }
                 }
             }
         } else {
@@ -51,7 +57,11 @@ class OrganizationController extends Controller
             $sortBy = $request->get('sort_by');
             $sortDirection = $request->get('sort_direction', 'asc');
             if ($sortBy && in_array($sortBy, $allowedSorts)) {
-                $query->orderBy($sortBy, $sortDirection);
+                if ($sortBy === 'category') {
+                    $query->orderBy('organization_categories.name', $sortDirection);
+                } else {
+                    $query->orderBy('organizations.' . $sortBy, $sortDirection);
+                }
             }
         }
         $organizations = $query->paginate(20);
@@ -60,7 +70,7 @@ class OrganizationController extends Controller
 
     public function show(Organization $organization)
     {
-        $organization->loadCount('pages');
+        $organization->load(['category'])->loadCount('pages');
         return response()->json($organization);
     }
 
@@ -78,10 +88,11 @@ class OrganizationController extends Controller
             'website' => 'nullable|url|max:500',
             'website_rating' => 'nullable|in:good,okay,bad',
             'phone' => 'nullable|string|max:50',
-            'category' => 'nullable|string|max:100',
+            'organization_category_id' => 'nullable|exists:organization_categories,id',
             'notes' => 'nullable|string|max:2000',
         ]);
         $organization = Organization::create($validated);
+        $organization->load('category');
         return response()->json($organization, 201);
     }
 
@@ -99,10 +110,11 @@ class OrganizationController extends Controller
             'website' => 'nullable|url|max:500',
             'website_rating' => 'nullable|in:good,okay,bad',
             'phone' => 'nullable|string|max:50',
-            'category' => 'nullable|string|max:100',
+            'organization_category_id' => 'nullable|exists:organization_categories,id',
             'notes' => 'nullable|string|max:2000',
         ]);
         $organization->update($validated);
+        $organization->load('category');
         return response()->json($organization);
     }
 

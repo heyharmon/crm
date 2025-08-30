@@ -1,7 +1,8 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { ref, watch, onMounted } from 'vue';
 import Button from '@/components/ui/Button.vue';
 import Input from '@/components/ui/Input.vue';
+import api from '@/services/api';
 
 const props = defineProps({
   organization: {
@@ -27,7 +28,7 @@ const form = ref({
   country_code: '',
   website: '',
   phone: '',
-  category: '',
+  organization_category_id: '',
   notes: '',
 });
 
@@ -38,8 +39,20 @@ watch(() => props.organization, (newOrg) => {
     Object.keys(form.value).forEach(key => {
       form.value[key] = newOrg[key] || '';
     });
+    if (newOrg.category) {
+      form.value.organization_category_id = newOrg.category.id;
+    }
   }
 }, { immediate: true });
+
+const categories = ref([]);
+onMounted(async () => {
+  try {
+    categories.value = await api.get('/organization-categories');
+  } catch (e) {
+    console.error('Failed to load categories', e);
+  }
+});
 
 const submitForm = () => {
   errors.value = {};
@@ -67,7 +80,13 @@ const validateWebsite = () => {
         
         <div>
           <label class="block text-sm font-medium text-neutral-700 mb-1">Category</label>
-          <Input v-model="form.category" placeholder="e.g., Insurance Agency" />
+          <select
+            v-model="form.organization_category_id"
+            class="w-full px-3 py-2 border border-neutral-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">None</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+          </select>
         </div>
         
         <div>

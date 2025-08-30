@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\OrganizationCategoryController;
 use App\Http\Controllers\GoogleMapsScraperController;
 use App\Http\Controllers\WebScraperController;
 
@@ -30,6 +31,11 @@ Route::middleware('auth:sanctum')->group(function () {
     // Organization routes
     Route::resource('organizations', OrganizationController::class);
     Route::post('organizations/{id}/restore', [OrganizationController::class, 'restore']);
+
+    // Organization category routes
+    Route::resource('organization-categories', OrganizationCategoryController::class)->only([
+        'index', 'store', 'update', 'destroy'
+    ]);
 
     // Apify import routes
     Route::prefix('apify')->group(function () {
