@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useApifyImportStore } from '@/stores/apifyImportStore'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
@@ -18,6 +18,15 @@ const form = ref({
 })
 
 const isSubmitting = ref(false)
+
+// Pricing: $7.00 per 1,000 results
+const PRICE_PER_THOUSAND = 7
+
+const maxCostDisplay = computed(() => {
+    const places = Number(form.value.max_places) || 0
+    const cost = (places * PRICE_PER_THOUSAND) / 1000
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cost)
+})
 
 onMounted(async () => {
     await apifyImportStore.fetchImports()
@@ -98,6 +107,7 @@ const refreshImports = async () => {
                             <label class="block text-sm font-medium text-neutral-700 mb-1">Max Places</label>
                             <Input v-model="form.max_places" type="number" min="1" max="1000" placeholder="100" />
                             <p class="text-xs text-neutral-500 mt-1">Maximum number of organizations to import</p>
+                            
                         </div>
 
                         <div>
@@ -105,6 +115,13 @@ const refreshImports = async () => {
                             <Input v-model="form.min_rating" type="number" step="0.1" min="0" max="5" placeholder="3" />
                             <p class="text-xs text-neutral-500 mt-1">Minimum star rating (0-5)</p>
                         </div>
+                    </div>
+
+                    <!-- Prominent cost estimate summary -->
+                    <div class="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                        <div class="text-xs font-semibold uppercase tracking-wide text-blue-700">Estimated Max Cost</div>
+                        <div class="mt-1 text-2xl font-bold text-blue-900">{{ maxCostDisplay }}</div>
+                        <div class="text-xs text-blue-800">Based on $7 per 1,000 results and your Max Places.</div>
                     </div>
 
                     <div>
