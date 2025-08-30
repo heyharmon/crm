@@ -13,6 +13,24 @@ const showingDelete = ref({});
 const deleteAction = ref({}); // 'disassociate' | 'reassign' | 'destroy'
 const reassignTo = ref({});
 
+// Bulk selection/action state
+const selectedIds = ref([]);
+const bulkAction = ref('disassociate');
+const bulkReassignTo = ref(null);
+
+const allSelected = computed({
+  get() {
+    return categories.value.length > 0 && selectedIds.value.length === categories.value.length;
+  },
+  set(val) {
+    if (val) {
+      selectedIds.value = categories.value.map(c => c.id);
+    } else {
+      selectedIds.value = [];
+    }
+  }
+});
+
 const fetchCategories = async () => {
   categories.value = await api.get('/organization-categories');
 };
@@ -64,6 +82,21 @@ const confirmDelete = async (cat) => {
   reassignTo.value[cat.id] = null;
   await fetchCategories();
 };
+
+const confirmBulkDelete = async () => {
+  if (!selectedIds.value.length) return;
+  const payload = { ids: selectedIds.value, action: bulkAction.value };
+  if (bulkAction.value === 'reassign') {
+    payload.reassign_to_id = bulkReassignTo.value || null;
+    if (!payload.reassign_to_id) return; // guard
+  }
+  await api.delete('/organization-categories/bulk', { data: payload });
+  // reset bulk state
+  selectedIds.value = [];
+  bulkAction.value = 'disassociate';
+  bulkReassignTo.value = null;
+  await fetchCategories();
+};
 </script>
 
 <template>
@@ -75,10 +108,41 @@ const confirmDelete = async (cat) => {
         <Button @click="createCategory">Add</Button>
       </div>
       <div class="bg-white rounded-lg shadow-sm border border-neutral-200">
+        <div v-if="selectedIds.length" class="p-4 border-b flex items-center flex-wrap gap-3 bg-neutral-50">
+          <div class="text-sm font-medium mr-2">Bulk delete selected ({{ selectedIds.length }})</div>
+          <label class="flex items-center space-x-2 text-sm">
+            <input type="radio" value="disassociate" v-model="bulkAction" />
+            <span>Disassociate</span>
+          </label>
+          <label class="flex items-center space-x-2 text-sm">
+            <input type="radio" value="reassign" v-model="bulkAction" />
+            <span>Reassign</span>
+          </label>
+          <div v-if="bulkAction === 'reassign'" class="ml-2">
+            <select class="border rounded px-2 py-1 text-sm" v-model="bulkReassignTo">
+              <option :value="null">Select category</option>
+              <option v-for="c in categories.filter(x => !selectedIds.includes(x.id))" :key="c.id" :value="c.id">{{ c.name }}</option>
+            </select>
+          </div>
+          <label class="flex items-center space-x-2 text-sm">
+            <input type="radio" value="destroy" v-model="bulkAction" />
+            <span>Destroy organizations</span>
+          </label>
+          <Button class="ml-auto" :disabled="bulkAction === 'reassign' && !bulkReassignTo" @click="confirmBulkDelete">Confirm</Button>
+        </div>
         <table class="min-w-full divide-y divide-neutral-200">
           <tbody class="divide-y divide-neutral-200">
+            <tr class="bg-neutral-50/50">
+              <td class="px-4 py-2">
+                <input type="checkbox" v-model="allSelected" />
+              </td>
+              <td class="px-4 py-2 text-sm text-neutral-600" colspan="2">Select all</td>
+            </tr>
             <tr v-for="cat in categories" :key="cat.id" class="hover:bg-neutral-50">
-              <td class="px-4 py-3">
+              <td class="px-4 py-3 align-top">
+                <input type="checkbox" :value="cat.id" v-model="selectedIds" />
+              </td>
+              <td class="px-4 py-3" colspan="1">
                 <div v-if="editingId === cat.id" class="flex space-x-2">
                   <Input v-model="editingName" />
                   <Button @click="updateCategory(cat.id)">Save</Button>

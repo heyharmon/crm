@@ -63,4 +63,47 @@ class OrganizationCategoryController extends Controller
 
         return response()->json(['message' => 'Category deleted']);
     }
+
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => 'required|array|min:1',
+            'ids.*' => 'integer|exists:organization_categories,id',
+            'action' => 'sometimes|in:disassociate,reassign,destroy',
+            'reassign_to_id' => 'nullable|integer|exists:organization_categories,id',
+        ]);
+
+        $ids = collect($validated['ids'])->unique()->values();
+        if ($ids->isEmpty()) {
+            return response()->json(['message' => 'No categories selected'], 422);
+        }
+
+        $action = $validated['action'] ?? 'disassociate';
+
+        DB::transaction(function () use ($action, $validated, $ids) {
+            if ($action === 'reassign') {
+                $toId = $validated['reassign_to_id'] ?? null;
+                if (!$toId) {
+                    abort(422, 'A target category is required for reassignment.');
+                }
+                if ($ids->contains((int) $toId)) {
+                    abort(422, 'Target category cannot be one of the selected categories.');
+                }
+
+                Organization::whereIn('organization_category_id', $ids)->update([
+                    'organization_category_id' => $toId,
+                ]);
+            } elseif ($action === 'destroy') {
+                Organization::whereIn('organization_category_id', $ids)->delete();
+            } else { // disassociate
+                Organization::whereIn('organization_category_id', $ids)->update([
+                    'organization_category_id' => null,
+                ]);
+            }
+
+            OrganizationCategory::whereIn('id', $ids)->delete();
+        });
+
+        return response()->json(['message' => 'Categories deleted']);
+    }
 }

@@ -33,6 +33,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('organizations/{id}/restore', [OrganizationController::class, 'restore']);
 
     // Organization category routes
+    // Define bulk route BEFORE resource to avoid matching {organization-category}='bulk'
+    Route::delete('organization-categories/bulk', [OrganizationCategoryController::class, 'bulkDestroy']);
     Route::resource('organization-categories', OrganizationCategoryController::class)->only([
         'index', 'store', 'update', 'destroy'
     ]);
