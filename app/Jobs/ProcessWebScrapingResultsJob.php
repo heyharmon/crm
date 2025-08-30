@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ApifyRun;
-use App\Services\PuppeteerCrawlerService;
+use App\Services\ApifyCrawlerService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -17,7 +17,7 @@ class ProcessWebScrapingResultsJob implements ShouldQueue
 
     public function __construct(private int $apifyRunId) {}
 
-    public function handle(PuppeteerCrawlerService $scraperService): void
+    public function handle(ApifyCrawlerService $scraperService): void
     {
         $apifyRun = ApifyRun::findOrFail($this->apifyRunId);
         try {

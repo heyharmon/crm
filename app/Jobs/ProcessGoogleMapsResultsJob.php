@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ApifyRun;
-use App\Services\GoogleMapsScraperService;
+use App\Services\ApifyGoogleMapsScraperService;
 use App\Services\OrganizationImportService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -12,7 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
-class ProcessApifyResultsJob implements ShouldQueue
+class ProcessGoogleMapsResultsJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -20,7 +20,7 @@ class ProcessApifyResultsJob implements ShouldQueue
     {
     }
 
-    public function handle(GoogleMapsScraperService $scraperService, OrganizationImportService $importService): void
+    public function handle(ApifyGoogleMapsScraperService $scraperService, OrganizationImportService $importService): void
     {
         $apifyRun = ApifyRun::findOrFail($this->apifyRunId);
         try {

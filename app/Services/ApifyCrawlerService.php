@@ -7,7 +7,7 @@ use App\Models\Organization;
 use App\Models\Page;
 use Illuminate\Support\Facades\Log;
 
-class PuppeteerCrawlerService extends BaseApifyService
+class ApifyCrawlerService extends BaseApifyService
 {
     // private const ACTOR_ID = 'heyharmon~puppeteer-crawler-task';
     private const ACTOR_ID = 'heyharmon~cheerio-crawler-task';

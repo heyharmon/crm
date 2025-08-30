@@ -21,7 +21,7 @@ export const useApifyImportStore = defineStore('apifyImport', {
       this.error = null;
       
       try {
-        const response = await api.post('/apify/start-import', importData);
+        const response = await api.post('/google-maps-scraper/start', importData);
         await this.fetchImports();
         return response;
       } catch (error) {
@@ -38,7 +38,7 @@ export const useApifyImportStore = defineStore('apifyImport', {
       this.error = null;
       
       try {
-        const response = await api.get('/apify/imports', {
+        const response = await api.get('/google-maps-scraper/runs', {
           params: { page }
         });
         
@@ -62,7 +62,7 @@ export const useApifyImportStore = defineStore('apifyImport', {
       this.error = null;
       
       try {
-        const response = await api.get(`/apify/imports/${id}`);
+        const response = await api.get(`/google-maps-scraper/runs/${id}`);
         this.currentImport = response;
         return response;
       } catch (error) {

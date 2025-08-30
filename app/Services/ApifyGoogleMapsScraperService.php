@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\ApifyRun;
 use Illuminate\Support\Facades\Log;
 
-class GoogleMapsScraperService extends BaseApifyService
+class ApifyGoogleMapsScraperService extends BaseApifyService
 {
     private const ACTOR_ID = 'heyharmon~google-maps-extractor';
 

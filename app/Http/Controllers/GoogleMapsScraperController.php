@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\StartApifyScrapingJob;
+use App\Jobs\StartGoogleMapsScrapingJob;
 use App\Models\ApifyRun;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,9 +18,9 @@ class GoogleMapsScraperController extends Controller
             'min_rating' => 'sometimes|numeric|min:0|max:5',
             'skip_closed' => 'sometimes|boolean',
         ]);
-        StartApifyScrapingJob::dispatch($validated, Auth::id());
+        StartGoogleMapsScrapingJob::dispatch($validated, Auth::id());
         return response()->json([
-            'message' => 'Import started successfully. You will be notified when it completes.',
+            'message' => 'Google Maps import started successfully. You will be notified when it completes.',
         ]);
     }
 

@@ -39,11 +39,11 @@ Route::middleware('auth:sanctum')->group(function () {
         'index', 'store', 'update', 'destroy'
     ]);
 
-    // Apify import routes
-    Route::prefix('apify')->group(function () {
-        Route::post('start-import', [GoogleMapsScraperController::class, 'startImport']);
-        Route::get('imports', [GoogleMapsScraperController::class, 'getImports']);
-        Route::get('imports/{apifyRun}', [GoogleMapsScraperController::class, 'getImport']);
+    // Google Maps scraper routes
+    Route::prefix('google-maps-scraper')->group(function () {
+        Route::post('start', [GoogleMapsScraperController::class, 'startImport']);
+        Route::get('runs', [GoogleMapsScraperController::class, 'getImports']);
+        Route::get('runs/{apifyRun}', [GoogleMapsScraperController::class, 'getImport']);
     });
 
     // Web scraper routes
