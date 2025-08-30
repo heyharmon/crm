@@ -27,7 +27,7 @@ class WebScraperController extends Controller
     public function getScrapingRuns()
     {
         $runs = ApifyRun::where('user_id', Auth::id())
-            ->where('actor_id', 'apify/web-scraper')
+            ->where('actor_id', 'firecrawl-map')
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 

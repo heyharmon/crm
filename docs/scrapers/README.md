@@ -6,7 +6,7 @@ Interfaces with external scraping services to import organization data and crawl
 ## Backend
 - **Controllers**: `GoogleMapsScraperController` starts Google Maps imports and lists their status; `WebScraperController` starts website crawls and reports run details.
 - **Jobs**: `StartApifyScrapingJob`, `MonitorApifyRunJob`, `ProcessApifyResultsJob`, `StartWebScrapingJob`, `MonitorWebScrapingJob`, and `ProcessWebScrapingResultsJob` orchestrate asynchronous scraping workflows.
-- **Services**: `BaseApifyService` wraps API calls; `GoogleMapsScraperService` and `PuppeteerCrawlerService` launch and monitor Apify actors; `OrganizationImportService` maps scraped results into organization records.
+- **Services**: `BaseApifyService` wraps Apify API calls for Google Maps imports; `BaseFirecrawlService` and `FirecrawlMapService` integrate with Firecrawl's Map API for website crawling; `OrganizationImportService` maps scraped results into organization records.
 - **Model**: `ApifyRun` stores metadata and progress for each scraping run.
 
 ## Frontend
