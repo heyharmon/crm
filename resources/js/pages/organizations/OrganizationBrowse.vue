@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, watch } from 'vue'
+import { onMounted, watch, ref } from 'vue'
 import { useOrganizationStore } from '@/stores/organizationStore'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import OrganizationFilters from '@/components/OrganizationFilters.vue'
@@ -26,6 +26,15 @@ const handleSearch = () => {
 
 const handlePageChange = (page) => {
     organizationStore.fetchOrganizations(page)
+}
+
+// Column toggle for card grid
+const columns = ref(3)
+
+// Ensure website links include protocol
+const formatWebsite = (url) => {
+    if (!url) return ''
+    return /^https?:\/\//i.test(url) ? url : `https://${url}`
 }
 
 const getScreenshotUrl = (website) => {
@@ -55,13 +64,15 @@ const getScreenshotUrl = (website) => {
 
 const openWebsite = (website) => {
     if (website) {
-        window.open(website, '_blank')
+        window.open(formatWebsite(website), '_blank')
     }
 }
 
 const updateWebsiteRating = async (organizationId, rating) => {
     try {
         await organizationStore.updateOrganization(organizationId, { website_rating: rating })
+        const org = organizationStore.organizations.find((o) => o.id === organizationId)
+        if (org) org.website_rating = rating
     } catch (error) {
         console.error('Error updating website rating:', error)
     }
@@ -102,7 +113,35 @@ const updateWebsiteRating = async (organizationId, rating) => {
             </div>
 
             <div v-else>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- Columns toggle -->
+                <div class="flex items-center justify-end mb-4 space-x-2">
+                    <span class="text-sm text-neutral-600">Columns:</span>
+                    <div class="inline-flex rounded-md overflow-hidden border border-neutral-300">
+                        <button
+                            class="px-3 py-1 text-sm focus:outline-none"
+                            :class="columns === 1 ? 'bg-neutral-900 text-white' : 'bg-white hover:bg-neutral-50'"
+                            @click="columns = 1"
+                        >
+                            1
+                        </button>
+                        <button
+                            class="px-3 py-1 text-sm border-l border-neutral-300 focus:outline-none"
+                            :class="columns === 2 ? 'bg-neutral-900 text-white' : 'bg-white hover:bg-neutral-50'"
+                            @click="columns = 2"
+                        >
+                            2
+                        </button>
+                        <button
+                            class="px-3 py-1 text-sm border-l border-neutral-300 focus:outline-none"
+                            :class="columns === 3 ? 'bg-neutral-900 text-white' : 'bg-white hover:bg-neutral-50'"
+                            @click="columns = 3"
+                        >
+                            3
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid gap-6 mb-8" :class="{ 'grid-cols-1': columns === 1, 'grid-cols-2': columns === 2, 'grid-cols-3': columns === 3 }">
                     <div
                         v-for="organization in organizationStore.organizations"
                         :key="organization.id"
@@ -157,18 +196,48 @@ const updateWebsiteRating = async (organizationId, rating) => {
                                 {{ organization.phone }}
                             </div>
 
+                            <div v-if="organization.website" class="text-sm mb-3">
+                                <a
+                                    :href="formatWebsite(organization.website)"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="text-blue-600 hover:text-blue-800 cursor-pointer break-all"
+                                >
+                                    {{ organization.website }}
+                                </a>
+                            </div>
+
                             <div v-if="organization.website" class="mb-3">
                                 <label class="block text-xs font-medium text-neutral-700 mb-1">Website Rating</label>
-                                <select
-                                    :value="organization.website_rating || ''"
-                                    @change="updateWebsiteRating(organization.id, $event.target.value || null)"
-                                    class="w-full text-xs border border-neutral-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                                <div class="inline-flex rounded-md overflow-hidden border border-neutral-300">
+                                    <button
+                                        class="px-3 py-1 text-xs focus:outline-none"
+                                        :class="organization.website_rating === 'good' ? 'bg-green-600 text-white' : 'bg-white hover:bg-green-50 text-neutral-700'"
+                                        @click="updateWebsiteRating(organization.id, 'good')"
+                                    >
+                                        Good
+                                    </button>
+                                    <button
+                                        class="px-3 py-1 text-xs border-l border-neutral-300 focus:outline-none"
+                                        :class="organization.website_rating === 'okay' ? 'bg-yellow-500 text-white' : 'bg-white hover:bg-yellow-50 text-neutral-700'"
+                                        @click="updateWebsiteRating(organization.id, 'okay')"
+                                    >
+                                        Okay
+                                    </button>
+                                    <button
+                                        class="px-3 py-1 text-xs border-l border-neutral-300 focus:outline-none"
+                                        :class="organization.website_rating === 'bad' ? 'bg-red-600 text-white' : 'bg-white hover:bg-red-50 text-neutral-700'"
+                                        @click="updateWebsiteRating(organization.id, 'bad')"
+                                    >
+                                        Bad
+                                    </button>
+                                </div>
+                                <button
+                                    class="ml-2 text-xs text-neutral-500 hover:text-neutral-700 underline"
+                                    @click="updateWebsiteRating(organization.id, null)"
                                 >
-                                    <option value="">Not rated</option>
-                                    <option value="good">Good</option>
-                                    <option value="okay">Okay</option>
-                                    <option value="bad">Bad</option>
-                                </select>
+                                    Clear
+                                </button>
                             </div>
 
                             <div class="flex space-x-2">

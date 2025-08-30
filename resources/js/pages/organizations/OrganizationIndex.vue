@@ -54,6 +54,12 @@ const startWebScraping = async (organization) => {
         alert('Failed to start web scraping. Please try again.')
     }
 }
+
+// Ensure website links include protocol
+const formatWebsite = (url) => {
+    if (!url) return ''
+    return /^https?:\/\//i.test(url) ? url : `https://${url}`
+}
 </script>
 
 <template>
@@ -120,7 +126,15 @@ const startWebScraping = async (organization) => {
                                         <div class="space-y-1">
                                             <div class="text-sm font-medium text-neutral-900">{{ organization.name }}</div>
                                             <div v-if="organization.phone" class="text-sm text-neutral-500">{{ organization.phone }}</div>
-                                            <div v-if="organization.website" class="text-sm text-neutral-500">{{ organization.website }}</div>
+                                            <a
+                                                v-if="organization.website"
+                                                :href="formatWebsite(organization.website)"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                class="text-sm text-blue-600 hover:text-blue-800 cursor-pointer break-all"
+                                            >
+                                                {{ organization.website }}
+                                            </a>
                                         </div>
                                     </div>
                                 </td>
