@@ -5,6 +5,9 @@ export const useOrganizationStore = defineStore('organization', {
     state: () => ({
         organizations: [],
         currentOrganization: null,
+        // Separate loading flags to avoid unintended UI refreshes
+        listLoading: false,
+        currentLoading: false,
         pagination: {
             current_page: 1,
             last_page: 1,
@@ -19,13 +22,14 @@ export const useOrganizationStore = defineStore('organization', {
             // Multi-sort: ordered list of "field:direction"; empty by default (no sorting)
             sort: []
         },
+        // keep isLoading for create/update flows only
         isLoading: false,
         error: null
     }),
 
     actions: {
         async fetchOrganizations(page = 1) {
-            this.isLoading = true
+            this.listLoading = true
             this.error = null
 
             try {
@@ -47,12 +51,12 @@ export const useOrganizationStore = defineStore('organization', {
                 this.error = error.message || 'Failed to fetch organizations'
                 console.error('Error fetching organizations:', error)
             } finally {
-                this.isLoading = false
+                this.listLoading = false
             }
         },
 
         async fetchOrganization(id) {
-            this.isLoading = true
+            this.currentLoading = true
             this.error = null
 
             try {
@@ -64,7 +68,7 @@ export const useOrganizationStore = defineStore('organization', {
                 console.error('Error fetching organization:', error)
                 throw error
             } finally {
-                this.isLoading = false
+                this.currentLoading = false
             }
         },
 

@@ -209,7 +209,7 @@ const editFormRef = ref(null)
                 @search="handleSearch"
             />
 
-            <div v-if="organizationStore.isLoading" class="flex justify-center py-8">
+            <div v-if="organizationStore.listLoading" class="flex justify-center py-8">
                 <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-neutral-900"></div>
             </div>
 
@@ -510,7 +510,7 @@ const editFormRef = ref(null)
                         <OrganizationForm
                             ref="editFormRef"
                             :organization="selectedOrganization || {}"
-                            :is-loading="organizationStore.isLoading"
+                            :is-loading="organizationStore.currentLoading"
                             :show-actions="false"
                             @submit="handleEditSubmit"
                         />

@@ -34,7 +34,7 @@ const handleSubmit = async (organizationData) => {
         <h1 class="text-2xl font-bold">Edit Organization</h1>
       </div>
       
-      <div v-if="organizationStore.isLoading" class="flex justify-center py-8">
+      <div v-if="organizationStore.currentLoading" class="flex justify-center py-8">
         <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-neutral-900"></div>
       </div>
       
@@ -42,7 +42,7 @@ const handleSubmit = async (organizationData) => {
         v-else
         :organization="organizationStore.currentOrganization"
         @submit="handleSubmit" 
-        :is-loading="organizationStore.isLoading"
+        :is-loading="organizationStore.currentLoading"
       />
     </div>
   </DefaultLayout>

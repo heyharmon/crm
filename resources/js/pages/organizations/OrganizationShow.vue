@@ -36,7 +36,7 @@ const deleteOrganization = async () => {
 <template>
   <DefaultLayout>
     <div class="container mx-auto py-8 px-4">
-      <div v-if="organizationStore.isLoading" class="flex justify-center py-8">
+      <div v-if="organizationStore.currentLoading" class="flex justify-center py-8">
         <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-neutral-900"></div>
       </div>
 
