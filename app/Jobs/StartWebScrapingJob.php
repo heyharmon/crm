@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Services\PuppeteerCrawlerService;
+use App\Services\FirecrawlMapService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,7 +16,7 @@ class StartWebScrapingJob implements ShouldQueue
 
     public function __construct(private array $params, private int $userId) {}
 
-    public function handle(PuppeteerCrawlerService $scraperService): void
+    public function handle(FirecrawlMapService $scraperService): void
     {
         try {
             $apifyRun = $scraperService->startScraping($this->params, $this->userId);

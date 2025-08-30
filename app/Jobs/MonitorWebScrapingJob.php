@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\ApifyRun;
-use App\Services\PuppeteerCrawlerService;
+use App\Services\FirecrawlMapService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -20,7 +20,7 @@ class MonitorWebScrapingJob implements ShouldQueue
 
     public function __construct(private int $apifyRunId) {}
 
-    public function handle(PuppeteerCrawlerService $scraperService): void
+    public function handle(FirecrawlMapService $scraperService): void
     {
         $apifyRun = ApifyRun::findOrFail($this->apifyRunId);
         try {
