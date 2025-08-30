@@ -44,15 +44,13 @@ const startWebScraping = async (organization) => {
         return
     }
 
-    if (!confirm(`Start web scraping for ${organization.name}?`)) return
-
     try {
-        const response = await api.post('/web-scraper/start', {
+        const data = await api.post('/web-scraper/start', {
             organization_id: organization.id,
             max_pages: 50,
             max_depth: 2
         })
-        alert(response.data.message)
+        alert(data?.message || 'Web scraping started successfully.')
         // Refresh the organizations to get updated page counts
         await organizationStore.fetchOrganizations()
     } catch (error) {

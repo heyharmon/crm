@@ -26,7 +26,7 @@ class PuppeteerCrawlerService extends BaseApifyService
             'pseudoUrls' => [
                 ['purl' => $organization->website . '/[.*?]']
             ],
-            'maxPagesPerCrawl' => $params['max_pages'] ?? 500,
+            'maxPagesPerCrawl' => $params['max_pages'] ?? 100,
             'maxCrawlingDepth' => $params['max_depth'] ?? 2,
             'linkSelector' => 'a[href]',
             'proxyConfiguration' => [
