@@ -8,7 +8,6 @@ import TeamIndex from '@/pages/teams/TeamIndex.vue'
 import TeamShow from '@/pages/teams/TeamShow.vue'
 // Organization pages
 import OrganizationIndex from '@/pages/organizations/OrganizationIndex.vue'
-import OrganizationBrowse from '@/pages/organizations/OrganizationBrowse.vue'
 import OrganizationShow from '@/pages/organizations/OrganizationShow.vue'
 import OrganizationCreate from '@/pages/organizations/OrganizationCreate.vue'
 import OrganizationEdit from '@/pages/organizations/OrganizationEdit.vue'
@@ -54,8 +53,7 @@ const routes = [
     },
     {
         path: '/organizations/browse',
-        name: 'organizations.browse',
-        component: OrganizationBrowse,
+        redirect: { name: 'organizations.index', query: { view: 'grid' } },
         meta: { requiresAuth: true }
     },
     {
