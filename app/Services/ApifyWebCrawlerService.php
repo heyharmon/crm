@@ -9,8 +9,8 @@ use Illuminate\Support\Facades\Log;
 
 class ApifyWebCrawlerService extends BaseApifyService
 {
-    // private const ACTOR_ID = 'heyharmon~puppeteer-crawler-task';
-    private const ACTOR_ID = 'heyharmon~cheerio-crawler-task';
+    // private const ACTOR_ID = 'heyharmon~cheerio-crawler-task';
+    private const ACTOR_ID = 'heyharmon~web-scraper-puppeteer';
 
     public function startScraping(array $params, int $userId): ApifyRun
     {
@@ -24,8 +24,8 @@ class ApifyWebCrawlerService extends BaseApifyService
             'startUrls' => [
                 ['url' => $organization->website]
             ],
-            'pseudoUrls' => [
-                ['purl' => $organization->website . '/[.*?]']
+            'globs' => [
+                ['glob' => $organization->website . '/**/*']
             ],
             'maxPagesPerCrawl' => $params['max_pages'] ?? 100,
             'maxCrawlingDepth' => $params['max_depth'] ?? 2,

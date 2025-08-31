@@ -221,111 +221,126 @@ const editFormRef = ref(null)
                 <!-- Table view -->
                 <div v-if="view === 'table'" class="bg-white rounded-lg shadow-sm border border-neutral-200 overflow-hidden">
                     <div class="overflow-x-auto">
-                    <table class="w-full">
-                        <thead class="bg-neutral-50 border-b border-neutral-200">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Name</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Category</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Location</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Score</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Reviews</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Website Rating</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Pages</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-neutral-200">
-                            <tr v-for="organization in organizationStore.organizations" :key="organization.id" class="hover:bg-neutral-50">
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center">
-                                        <img
-                                            v-if="organization.banner"
-                                            :src="organization.banner"
-                                            :alt="organization.name"
-                                            class="h-10 w-10 rounded-full mr-3 object-cover"
-                                        />
-                                        <div class="h-10 w-10 rounded-full mr-3 bg-neutral-200 flex items-center justify-center" v-else>
-                                            <span class="text-neutral-500 font-medium">{{ organization.name.charAt(0).toUpperCase() }}</span>
+                        <table class="w-full">
+                            <thead class="bg-neutral-50 border-b border-neutral-200">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Category</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Location</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Score</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Reviews</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Website Rating</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Pages</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-neutral-200">
+                                <tr
+                                    v-for="organization in organizationStore.organizations"
+                                    :key="organization.id"
+                                    class="hover:bg-neutral-50 cursor-pointer"
+                                    @click="openSidebar('view', organization.id)"
+                                    tabindex="0"
+                                    @keydown.enter="openSidebar('view', organization.id)"
+                                    @keydown.space.prevent="openSidebar('view', organization.id)"
+                                >
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center">
+                                            <img
+                                                v-if="organization.banner"
+                                                :src="organization.banner"
+                                                :alt="organization.name"
+                                                class="h-10 w-10 rounded-full mr-3 object-cover"
+                                            />
+                                            <div class="h-10 w-10 rounded-full mr-3 bg-neutral-200 flex items-center justify-center" v-else>
+                                                <span class="text-neutral-500 font-medium">{{ organization.name.charAt(0).toUpperCase() }}</span>
+                                            </div>
+                                            <div class="space-y-1">
+                                                <div class="text-sm font-medium text-neutral-900">{{ organization.name }}</div>
+                                                <div v-if="organization.phone" class="text-sm text-neutral-500">{{ organization.phone }}</div>
+                                                <a
+                                                    v-if="organization.website"
+                                                    :href="formatWebsite(organization.website)"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    class="text-sm text-blue-600 hover:text-blue-800 cursor-pointer break-all"
+                                                    @click.stop
+                                                >
+                                                    {{ organization.website }}
+                                                </a>
+                                            </div>
                                         </div>
-                                        <div class="space-y-1">
-                                            <div class="text-sm font-medium text-neutral-900">{{ organization.name }}</div>
-                                            <div v-if="organization.phone" class="text-sm text-neutral-500">{{ organization.phone }}</div>
-                                            <a
-                                                v-if="organization.website"
-                                                :href="formatWebsite(organization.website)"
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                class="text-sm text-blue-600 hover:text-blue-800 cursor-pointer break-all"
-                                            >
-                                                {{ organization.website }}
-                                            </a>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
+                                        {{ organization.category?.name || '-' }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
+                                        <div>{{ organization.city || '-' }}</div>
+                                        <div class="text-neutral-500">{{ organization.state || '-' }}</div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
+                                        <div v-if="organization.score" class="flex items-center">
+                                            <span class="text-yellow-400">★</span>
+                                            <span class="ml-1">{{ organization.score }}</span>
                                         </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
-                                    {{ organization.category?.name || '-' }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
-                                    <div>{{ organization.city || '-' }}</div>
-                                    <div class="text-neutral-500">{{ organization.state || '-' }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
-                                    <div v-if="organization.score" class="flex items-center">
-                                        <span class="text-yellow-400">★</span>
-                                        <span class="ml-1">{{ organization.score }}</span>
-                                    </div>
-                                    <span v-else>-</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
-                                    <span v-if="organization.reviews !== null && organization.reviews !== undefined">
-                                        {{ organization.reviews }}
-                                    </span>
-                                    <span v-else>-</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
-                                    <span
-                                        v-if="organization.website_rating"
-                                        :class="{
-                                            'text-green-600 bg-green-100': organization.website_rating === 'good',
-                                            'text-yellow-600 bg-yellow-100': organization.website_rating === 'okay',
-                                            'text-red-600 bg-red-100': organization.website_rating === 'bad'
-                                        }"
-                                        class="px-2 py-1 rounded-full text-xs font-medium capitalize"
-                                    >
-                                        {{ organization.website_rating }}
-                                    </span>
-                                    <div
-                                        v-else-if="!organization.website"
-                                        class="inline-block px-2 py-1 text-xs font-medium text-neutral-700 bg-neutral-100 rounded-full"
-                                    >
-                                        No Website
-                                    </div>
-                                    <span v-else>-</span>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
-                                    {{ organization.pages_count || 0 }}
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    <div class="flex space-x-2">
-                                        <button @click="openSidebar('view', organization.id)" class="text-blue-600 hover:text-blue-900">View</button>
-                                        <button @click="openSidebar('edit', organization.id)" class="text-green-600 hover:text-green-900">Edit</button>
-                                        <button
-                                            v-if="organization.website"
-                                            @click="startWebScraping(organization)"
-                                            class="text-purple-600 hover:text-purple-900"
+                                        <span v-else>-</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
+                                        <span v-if="organization.reviews !== null && organization.reviews !== undefined">
+                                            {{ organization.reviews }}
+                                        </span>
+                                        <span v-else>-</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
+                                        <span
+                                            v-if="organization.website_rating"
+                                            :class="{
+                                                'text-green-600 bg-green-100': organization.website_rating === 'good',
+                                                'text-yellow-600 bg-yellow-100': organization.website_rating === 'okay',
+                                                'text-red-600 bg-red-100': organization.website_rating === 'bad'
+                                            }"
+                                            class="px-2 py-1 rounded-full text-xs font-medium capitalize"
                                         >
-                                            Scrape
-                                        </button>
-                                        <button @click="deleteOrganization(organization.id)" class="text-red-600 hover:text-red-900">Delete</button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+                                            {{ organization.website_rating }}
+                                        </span>
+                                        <div
+                                            v-else-if="!organization.website"
+                                            class="inline-block px-2 py-1 text-xs font-medium text-neutral-700 bg-neutral-100 rounded-full"
+                                        >
+                                            No Website
+                                        </div>
+                                        <span v-else>-</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
+                                        {{ organization.pages_count || 0 }}
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <div class="flex space-x-2">
+                                            <button
+                                                @click.stop="openSidebar('edit', organization.id)"
+                                                class="text-green-600 hover:text-green-900 cursor-pointer"
+                                            >
+                                                Edit
+                                            </button>
+                                            <button
+                                                v-if="organization.website"
+                                                @click.stop="startWebScraping(organization)"
+                                                class="text-purple-600 hover:text-purple-900 cursor-pointer"
+                                            >
+                                                Scrape
+                                            </button>
+                                            <button @click.stop="deleteOrganization(organization.id)" class="text-red-600 hover:text-red-900 cursor-pointer">
+                                                Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
 
-                <Pagination :pagination="organizationStore.pagination" @page-change="handlePageChange" class="border-t border-neutral-200" />
-            </div>
+                    <Pagination :pagination="organizationStore.pagination" @page-change="handlePageChange" class="border-t border-neutral-200" />
+                </div>
 
                 <!-- Grid view -->
                 <div v-else>
@@ -409,10 +424,7 @@ const editFormRef = ref(null)
                                     <div v-if="organization.score" class="flex items-center text-sm">
                                         <span class="text-yellow-400">★</span>
                                         <span class="ml-1 text-neutral-600">{{ organization.score }}</span>
-                                        <span
-                                            v-if="organization.reviews !== null && organization.reviews !== undefined"
-                                            class="ml-2 text-neutral-500"
-                                        >
+                                        <span v-if="organization.reviews !== null && organization.reviews !== undefined" class="ml-2 text-neutral-500">
                                             ({{ organization.reviews }})
                                         </span>
                                     </div>
@@ -446,21 +458,31 @@ const editFormRef = ref(null)
                                     <div class="inline-flex rounded-md overflow-hidden border border-neutral-300">
                                         <button
                                             class="px-3 py-1 text-xs focus:outline-none"
-                                            :class="organization.website_rating === 'good' ? 'bg-green-600 text-white' : 'bg-white hover:bg-green-50 text-neutral-700'"
+                                            :class="
+                                                organization.website_rating === 'good'
+                                                    ? 'bg-green-600 text-white'
+                                                    : 'bg-white hover:bg-green-50 text-neutral-700'
+                                            "
                                             @click="updateWebsiteRating(organization.id, 'good')"
                                         >
                                             Good
                                         </button>
                                         <button
                                             class="px-3 py-1 text-xs border-l border-neutral-300 focus:outline-none"
-                                            :class="organization.website_rating === 'okay' ? 'bg-yellow-500 text-white' : 'bg-white hover:bg-yellow-50 text-neutral-700'"
+                                            :class="
+                                                organization.website_rating === 'okay'
+                                                    ? 'bg-yellow-500 text-white'
+                                                    : 'bg-white hover:bg-yellow-50 text-neutral-700'
+                                            "
                                             @click="updateWebsiteRating(organization.id, 'okay')"
                                         >
                                             Okay
                                         </button>
                                         <button
                                             class="px-3 py-1 text-xs border-l border-neutral-300 focus:outline-none"
-                                            :class="organization.website_rating === 'bad' ? 'bg-red-600 text-white' : 'bg-white hover:bg-red-50 text-neutral-700'"
+                                            :class="
+                                                organization.website_rating === 'bad' ? 'bg-red-600 text-white' : 'bg-white hover:bg-red-50 text-neutral-700'
+                                            "
                                             @click="updateWebsiteRating(organization.id, 'bad')"
                                         >
                                             Bad
@@ -495,7 +517,11 @@ const editFormRef = ref(null)
         <RightDrawer
             :title="sidebarMode === 'edit' ? 'Edit Organization' : 'Organization Details'"
             :model-value="isDrawerOpen"
-            @update:modelValue="(v) => { if (!v) closeSidebar() }"
+            @update:modelValue="
+                (v) => {
+                    if (!v) closeSidebar()
+                }
+            "
             @close="closeSidebar"
         >
             <div v-if="isDrawerOpen">
