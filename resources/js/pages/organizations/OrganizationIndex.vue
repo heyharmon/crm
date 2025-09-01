@@ -15,24 +15,98 @@ const organizationStore = useOrganizationStore()
 const route = useRoute()
 const router = useRouter()
 
+// --- Query <-> Filters sync helpers ---
+const syncingQuery = ref(false)
+
+const parseFiltersFromQuery = (q) => {
+    const toStr = (v) => (typeof v === 'string' ? v : '')
+    const toArr = (v) => (Array.isArray(v) ? v : v ? [String(v)] : [])
+    return {
+        filters: {
+            search: toStr(q.search),
+            city: toStr(q.city),
+            state: toStr(q.state),
+            category: toStr(q.category),
+            sort: toArr(q.sort)
+        },
+        page: q.page ? Number(q.page) || 1 : 1
+    }
+}
+
+const buildQueryFromFilters = (filters, page, base = {}) => {
+    const q = { ...base }
+    // drop existing filter keys so we can rebuild cleanly
+    delete q.search
+    delete q.city
+    delete q.state
+    delete q.category
+    delete q.sort
+    delete q.page
+
+    if (filters.search) q.search = filters.search
+    if (filters.city) q.city = filters.city
+    if (filters.state) q.state = filters.state
+    if (filters.category) q.category = filters.category
+    if (Array.isArray(filters.sort) && filters.sort.length) q.sort = [...filters.sort]
+    if (page && page > 1) q.page = String(page)
+    return q
+}
+
 onMounted(async () => {
-    await organizationStore.fetchOrganizations()
+    // Hydrate filters and page from the URL on load
+    const { filters, page } = parseFiltersFromQuery(route.query)
+    // prevent filter watcher from resetting page on initial load
+    syncingQuery.value = true
+    try {
+        if (filters) organizationStore.setFilters(filters)
+    } finally {
+        syncingQuery.value = false
+    }
+    await organizationStore.fetchOrganizations(page)
 })
 
+// Keep URL query in sync when filters change, and fetch
 watch(
     () => organizationStore.filters,
-    () => {
-        organizationStore.fetchOrganizations(1)
+    async (newFilters, oldFilters) => {
+        if (syncingQuery.value) return
+        syncingQuery.value = true
+
+        // If filters changed, reset page to 1
+        const page = 1
+        const nextQuery = buildQueryFromFilters(newFilters, page, route.query)
+        try {
+            await router.replace({ query: nextQuery })
+        } finally {
+            syncingQuery.value = false
+        }
+        await organizationStore.fetchOrganizations(page)
     },
     { deep: true }
 )
 
-const handleSearch = () => {
-    organizationStore.fetchOrganizations(1)
+const handleSearch = async () => {
+    // Force page reset and fetch using current filters
+    const q = buildQueryFromFilters(organizationStore.filters, 1, route.query)
+    syncingQuery.value = true
+    try {
+        await router.replace({ query: q })
+    } finally {
+        syncingQuery.value = false
+    }
+    await organizationStore.fetchOrganizations(1)
 }
 
-const handlePageChange = (page) => {
-    organizationStore.fetchOrganizations(page)
+const handlePageChange = async (page) => {
+    // Persist page in query and let fetch run here
+    const q = buildQueryFromFilters(organizationStore.filters, page, route.query)
+    syncingQuery.value = true
+    try {
+        await router.replace({ query: q })
+    } finally {
+        syncingQuery.value = false
+    }
+    await organizationStore.fetchOrganizations(page)
 }
 
 const deleteOrganization = async (id) => {
@@ -131,6 +205,22 @@ const syncFromRoute = () => {
 
 onMounted(syncFromRoute)
 watch(() => route.query, syncFromRoute, { deep: true })
+
+// React to route query changes (e.g., browser nav/manual edits) for filters/page
+watch(
+    () => route.query,
+    async (q, prevQ) => {
+        if (syncingQuery.value) return
+        const keys = ['search', 'city', 'state', 'category', 'sort', 'page']
+        const relevantChanged = keys.some((k) => JSON.stringify(q[k]) !== JSON.stringify(prevQ?.[k]))
+        if (!relevantChanged) return
+
+        const { filters, page } = parseFiltersFromQuery(q)
+        organizationStore.setFilters(filters)
+        await organizationStore.fetchOrganizations(page)
+    },
+    { deep: true }
+)
 
 const openSidebar = async (mode, id) => {
     const q = { ...route.query, org: String(id), mode }
@@ -305,14 +395,14 @@ const editFormRef = ref(null)
                                         </span>
                                         <div
                                             v-else-if="!organization.website"
-                                            class="inline-block px-2 py-1 text-xs font-medium text-neutral-700 bg-neutral-100 rounded-full"
+                                            class="inline-block px-2 py-1 text-xs font-medium text-neutral-600 border border-neutral-400 rounded-full"
                                         >
                                             No Website
                                         </div>
                                         <span v-else>-</span>
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm text-neutral-900">
-                                        {{ organization.pages_count || 0 }}
+                                        {{ organization.website ? organization.pages_count || 0 : '-' }}
                                     </td>
                                     <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                         <div class="flex space-x-2">
