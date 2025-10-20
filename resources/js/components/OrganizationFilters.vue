@@ -76,9 +76,9 @@ const getSortIcon = (column) => {
 </script>
 
 <template>
-    <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-4 mb-6">
-        <div class="flex flex-wrap gap-4 items-center">
-            <div class="flex-1 min-w-64">
+    <div class="mb-6 rounded-3xl border border-neutral-200 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
+        <div class="flex flex-wrap items-center gap-3">
+            <div class="min-w-64 flex-1">
                 <Input
                     :model-value="filters.search"
                     @update:model-value="updateFilter('search', $event)"
@@ -87,59 +87,111 @@ const getSortIcon = (column) => {
                 />
             </div>
 
-            <Button @click="showFilters = !showFilters" variant="outline">
+            <Button
+                @click="showFilters = !showFilters"
+                variant="outline"
+                class="rounded-full border-neutral-200 bg-white/90 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
+            >
                 {{ showFilters ? 'Hide Filters' : 'Show Filters' }}
             </Button>
 
-            <Button @click="resetFilters" variant="outline"> Clear Filters </Button>
+            <Button
+                @click="resetFilters"
+                variant="outline"
+                class="rounded-full border-neutral-200 bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-200"
+            >
+                Clear Filters
+            </Button>
         </div>
 
-        <div v-if="showFilters" class="mt-4 space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div v-if="showFilters" class="mt-6 space-y-6">
+            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
-                    <label class="block text-sm font-medium mb-1">City</label>
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-neutral-500">City</label>
                     <Input :model-value="filters.city" @update:model-value="updateFilter('city', $event)" placeholder="Filter by city" />
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium mb-1">State</label>
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-neutral-500">State</label>
                     <Input :model-value="filters.state" @update:model-value="updateFilter('state', $event)" placeholder="Filter by state" />
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium mb-1">Category</label>
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-neutral-500">Category</label>
                     <Input :model-value="filters.category" @update:model-value="updateFilter('category', $event)" placeholder="Filter by category" />
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium mb-1">Website</label>
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-neutral-500">Website</label>
                     <div class="flex flex-wrap gap-2">
-                        <Button size="sm" :variant="!filters.website ? 'default' : 'outline'" @click="updateFilter('website', '')"> Any </Button>
-                        <Button size="sm" :variant="filters.website === 'present' ? 'default' : 'outline'" @click="setWebsiteFilter('present')">
+                        <Button
+                            size="sm"
+                            :variant="!filters.website ? 'default' : 'outline'"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                            @click="updateFilter('website', '')"
+                        >
+                            Any
+                        </Button>
+                        <Button
+                            size="sm"
+                            :variant="filters.website === 'present' ? 'default' : 'outline'"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                            @click="setWebsiteFilter('present')"
+                        >
                             Has Website
                         </Button>
-                        <Button size="sm" :variant="filters.website === 'missing' ? 'default' : 'outline'" @click="setWebsiteFilter('missing')">
+                        <Button
+                            size="sm"
+                            :variant="filters.website === 'missing' ? 'default' : 'outline'"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                            @click="setWebsiteFilter('missing')"
+                        >
                             No Website
                         </Button>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium mb-1">Website Rating</label>
+                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-neutral-500">Website Rating</label>
                     <div class="flex flex-wrap gap-2">
-                        <Button size="sm" :variant="!filters.website_rating ? 'default' : 'outline'" @click="updateFilter('website_rating', '')">
+                        <Button
+                            size="sm"
+                            :variant="!filters.website_rating ? 'default' : 'outline'"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                            @click="updateFilter('website_rating', '')"
+                        >
                             Any
                         </Button>
-                        <Button size="sm" :variant="filters.website_rating === 'good' ? 'default' : 'outline'" @click="setWebsiteRatingFilter('good')">
+                        <Button
+                            size="sm"
+                            :variant="filters.website_rating === 'good' ? 'default' : 'outline'"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                            @click="setWebsiteRatingFilter('good')"
+                        >
                             Good
                         </Button>
-                        <Button size="sm" :variant="filters.website_rating === 'okay' ? 'default' : 'outline'" @click="setWebsiteRatingFilter('okay')">
+                        <Button
+                            size="sm"
+                            :variant="filters.website_rating === 'okay' ? 'default' : 'outline'"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                            @click="setWebsiteRatingFilter('okay')"
+                        >
                             Okay
                         </Button>
-                        <Button size="sm" :variant="filters.website_rating === 'bad' ? 'default' : 'outline'" @click="setWebsiteRatingFilter('bad')">
+                        <Button
+                            size="sm"
+                            :variant="filters.website_rating === 'bad' ? 'default' : 'outline'"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                            @click="setWebsiteRatingFilter('bad')"
+                        >
                             Bad
                         </Button>
-                        <Button size="sm" :variant="filters.website_rating === 'none' ? 'default' : 'outline'" @click="setWebsiteRatingFilter('none')">
+                        <Button
+                            size="sm"
+                            :variant="filters.website_rating === 'none' ? 'default' : 'outline'"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                            @click="setWebsiteRatingFilter('none')"
+                        >
                             Not Rated
                         </Button>
                     </div>
@@ -147,28 +199,45 @@ const getSortIcon = (column) => {
             </div>
 
             <div>
-                <label class="block text-sm font-medium mb-2">Sort By</label>
+                <label class="mb-3 block text-xs font-semibold uppercase tracking-wide text-neutral-500">Sort By</label>
                 <div class="flex flex-wrap gap-2">
-                    <Button @click="handleSort('name')" :variant="(filters.sort || []).some((s) => s.startsWith('name:')) ? 'default' : 'outline'" size="sm">
+                    <Button
+                        @click="handleSort('name')"
+                        :variant="(filters.sort || []).some((s) => s.startsWith('name:')) ? 'default' : 'outline'"
+                        size="sm"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                    >
                         Name {{ getSortIcon('name') }}
                     </Button>
                     <Button
                         @click="handleSort('category')"
                         :variant="(filters.sort || []).some((s) => s.startsWith('category:')) ? 'default' : 'outline'"
                         size="sm"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
                     >
                         Category {{ getSortIcon('category') }}
                     </Button>
-                    <Button @click="handleSort('city')" :variant="(filters.sort || []).some((s) => s.startsWith('city:')) ? 'default' : 'outline'" size="sm">
+                    <Button
+                        @click="handleSort('city')"
+                        :variant="(filters.sort || []).some((s) => s.startsWith('city:')) ? 'default' : 'outline'"
+                        size="sm"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                    >
                         Location {{ getSortIcon('city') }}
                     </Button>
-                    <Button @click="handleSort('score')" :variant="(filters.sort || []).some((s) => s.startsWith('score:')) ? 'default' : 'outline'" size="sm">
+                    <Button
+                        @click="handleSort('score')"
+                        :variant="(filters.sort || []).some((s) => s.startsWith('score:')) ? 'default' : 'outline'"
+                        size="sm"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                    >
                         Score {{ getSortIcon('score') }}
                     </Button>
                     <Button
                         @click="handleSort('reviews')"
                         :variant="(filters.sort || []).some((s) => s.startsWith('reviews:')) ? 'default' : 'outline'"
                         size="sm"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
                     >
                         Reviews {{ getSortIcon('reviews') }}
                     </Button>
@@ -176,6 +245,7 @@ const getSortIcon = (column) => {
                         @click="handleSort('website_rating')"
                         :variant="(filters.sort || []).some((s) => s.startsWith('website_rating:')) ? 'default' : 'outline'"
                         size="sm"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
                     >
                         Website Rating {{ getSortIcon('website_rating') }}
                     </Button>

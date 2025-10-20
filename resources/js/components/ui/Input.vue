@@ -1,28 +1,26 @@
 <script setup>
+import { computed } from 'vue'
 import { useVModel } from '@vueuse/core'
 
 const props = defineProps({
-  defaultValue: [String, Number],
-  modelValue: [String, Number],
-  class: [String, Object, Array]
+    defaultValue: [String, Number],
+    modelValue: [String, Number],
+    class: [String, Object, Array]
 })
 
 const emits = defineEmits(['update:modelValue'])
 
 const modelValue = useVModel(props, 'modelValue', emits, {
-  passive: true,
-  defaultValue: props.defaultValue,
+    passive: true,
+    defaultValue: props.defaultValue
 })
+
+const baseClasses =
+    'flex h-10 w-full min-w-0 rounded-lg border border-neutral-200 bg-white px-4 text-sm text-neutral-900 placeholder:text-neutral-400 shadow-sm transition focus-visible:outline-none focus-visible:border-neutral-300 focus-visible:ring-2 focus-visible:ring-neutral-200 disabled:cursor-not-allowed disabled:opacity-60 file:inline-flex file:h-7 file:rounded-full file:border-0 file:bg-neutral-100 file:px-3 file:text-xs file:font-semibold file:text-neutral-700 aria-invalid:border-red-300 aria-invalid:ring-2 aria-invalid:ring-red-200'
+
+const inputClasses = computed(() => [baseClasses, props.class])
 </script>
 
 <template>
-  <input
-    v-model="modelValue"
-    data-slot="input"
-    :class="
-      'file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-base ' +
-      'focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[1px] ' +
-      'aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive'
-    "
-  >
+    <input v-model="modelValue" data-slot="input" :class="inputClasses" />
 </template>

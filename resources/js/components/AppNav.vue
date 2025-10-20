@@ -14,26 +14,52 @@ const logout = async () => {
 </script>
 
 <template>
-    <nav class="bg-neutral-900 text-white">
-        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-                <router-link to="/" class="text-xl font-bold">CRM</router-link>
-                <div v-if="isAuthenticated" class="flex items-center space-x-4 ml-6">
-                    <router-link to="/" class="text-sm hover:text-neutral-300">Dashboard</router-link>
-                    <router-link to="/organizations" class="text-sm hover:text-neutral-300">Organizations</router-link>
-                    <router-link to="/teams" class="text-sm hover:text-neutral-300">Teams</router-link>
-                    <router-link to="/organization-categories" class="text-sm hover:text-neutral-300">Categories</router-link>
+    <nav class="border-b border-neutral-200 bg-white/90 backdrop-blur">
+        <div class="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 lg:px-6">
+            <div class="flex items-center gap-6">
+                <router-link to="/" class="text-base font-semibold tracking-tight text-neutral-900">
+                    CRM
+                </router-link>
+
+                <div v-if="isAuthenticated" class="hidden items-center gap-4 text-sm font-medium text-neutral-500 md:flex">
+                    <router-link to="/" class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900">
+                        Dashboard
+                    </router-link>
+                    <router-link to="/organizations" class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900">
+                        Organizations
+                    </router-link>
+                    <router-link to="/teams" class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900">
+                        Teams
+                    </router-link>
+                    <router-link to="/organization-categories" class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900">
+                        Categories
+                    </router-link>
                 </div>
             </div>
 
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center gap-3">
                 <template v-if="isAuthenticated">
-                    <span class="text-sm">{{ user?.name }}</span>
-                    <button @click="logout" class="px-3 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-sm cursor-pointer">Logout</button>
+                    <span class="text-sm font-medium text-neutral-600">{{ user?.name }}</span>
+                    <button
+                        @click="logout"
+                        class="inline-flex items-center rounded-full border border-neutral-200 bg-white px-4 py-1.5 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-100"
+                    >
+                        Logout
+                    </button>
                 </template>
                 <template v-else>
-                    <router-link to="/login" class="px-3 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-sm"> Login </router-link>
-                    <router-link to="/register" class="px-3 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-sm"> Register </router-link>
+                    <router-link
+                        to="/login"
+                        class="inline-flex items-center rounded-full border border-neutral-200 bg-white px-4 py-1.5 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-100"
+                    >
+                        Login
+                    </router-link>
+                    <router-link
+                        to="/register"
+                        class="inline-flex items-center rounded-full border border-neutral-900 bg-neutral-900 px-4 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"
+                    >
+                        Register
+                    </router-link>
                 </template>
             </div>
         </div>
