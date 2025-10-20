@@ -27,6 +27,8 @@ const parseFiltersFromQuery = (q) => {
             city: toStr(q.city),
             state: toStr(q.state),
             category: toStr(q.category),
+            website: toStr(q.website),
+            website_rating: toStr(q.website_rating),
             sort: toArr(q.sort)
         },
         page: q.page ? Number(q.page) || 1 : 1
@@ -40,6 +42,8 @@ const buildQueryFromFilters = (filters, page, base = {}) => {
     delete q.city
     delete q.state
     delete q.category
+    delete q.website
+    delete q.website_rating
     delete q.sort
     delete q.page
 
@@ -47,6 +51,8 @@ const buildQueryFromFilters = (filters, page, base = {}) => {
     if (filters.city) q.city = filters.city
     if (filters.state) q.state = filters.state
     if (filters.category) q.category = filters.category
+    if (filters.website) q.website = filters.website
+    if (filters.website_rating) q.website_rating = filters.website_rating
     if (Array.isArray(filters.sort) && filters.sort.length) q.sort = [...filters.sort]
     if (page && page > 1) q.page = String(page)
     return q
@@ -592,6 +598,11 @@ const editFormRef = ref(null)
                                     </button>
                                     <button @click="openSidebar('edit', organization.id)">
                                         <Button variant="outline" size="sm">Edit</Button>
+                                    </button>
+                                    <button @click="deleteOrganization(organization.id)">
+                                        <Button variant="outline" size="sm" class="text-red-600 border-red-200 hover:bg-red-50">
+                                            Delete
+                                        </Button>
                                     </button>
                                 </div>
                             </div>

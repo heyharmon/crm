@@ -18,6 +18,17 @@ const updateFilter = (key, value) => {
     emit('update:filters', { [key]: value })
 }
 
+const setWebsiteFilter = (value) => {
+    // Clicking the active option should revert to "any"
+    const next = props.filters.website === value ? '' : value
+    emit('update:filters', { website: next })
+}
+
+const setWebsiteRatingFilter = (value) => {
+    const next = props.filters.website_rating === value ? '' : value
+    emit('update:filters', { website_rating: next })
+}
+
 const handleSearch = () => {
     emit('search')
 }
@@ -98,6 +109,40 @@ const getSortIcon = (column) => {
                 <div>
                     <label class="block text-sm font-medium mb-1">Category</label>
                     <Input :model-value="filters.category" @update:model-value="updateFilter('category', $event)" placeholder="Filter by category" />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">Website</label>
+                    <div class="flex flex-wrap gap-2">
+                        <Button size="sm" :variant="!filters.website ? 'default' : 'outline'" @click="updateFilter('website', '')"> Any </Button>
+                        <Button size="sm" :variant="filters.website === 'present' ? 'default' : 'outline'" @click="setWebsiteFilter('present')">
+                            Has Website
+                        </Button>
+                        <Button size="sm" :variant="filters.website === 'missing' ? 'default' : 'outline'" @click="setWebsiteFilter('missing')">
+                            No Website
+                        </Button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium mb-1">Website Rating</label>
+                    <div class="flex flex-wrap gap-2">
+                        <Button size="sm" :variant="!filters.website_rating ? 'default' : 'outline'" @click="updateFilter('website_rating', '')">
+                            Any
+                        </Button>
+                        <Button size="sm" :variant="filters.website_rating === 'good' ? 'default' : 'outline'" @click="setWebsiteRatingFilter('good')">
+                            Good
+                        </Button>
+                        <Button size="sm" :variant="filters.website_rating === 'okay' ? 'default' : 'outline'" @click="setWebsiteRatingFilter('okay')">
+                            Okay
+                        </Button>
+                        <Button size="sm" :variant="filters.website_rating === 'bad' ? 'default' : 'outline'" @click="setWebsiteRatingFilter('bad')">
+                            Bad
+                        </Button>
+                        <Button size="sm" :variant="filters.website_rating === 'none' ? 'default' : 'outline'" @click="setWebsiteRatingFilter('none')">
+                            Not Rated
+                        </Button>
+                    </div>
                 </div>
             </div>
 

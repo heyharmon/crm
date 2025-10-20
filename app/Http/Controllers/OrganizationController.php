@@ -36,6 +36,29 @@ class OrganizationController extends Controller
         if ($request->filled('category')) {
             $query->where('organization_categories.name', 'LIKE', "%{$request->get('category')}%");
         }
+        if ($request->filled('website')) {
+            $websiteFilter = $request->get('website');
+            if ($websiteFilter === 'present') {
+                $query->whereNotNull('organizations.website')
+                    ->where('organizations.website', '!=', '');
+            } elseif ($websiteFilter === 'missing') {
+                $query->where(function ($q) {
+                    $q->whereNull('organizations.website')
+                        ->orWhere('organizations.website', '=', '');
+                });
+            }
+        }
+        if ($request->filled('website_rating')) {
+            $rating = $request->get('website_rating');
+            if (in_array($rating, ['good', 'okay', 'bad'])) {
+                $query->where('organizations.website_rating', $rating);
+            } elseif ($rating === 'none') {
+                $query->where(function ($q) {
+                    $q->whereNull('organizations.website_rating')
+                        ->orWhere('organizations.website_rating', '=', '');
+                });
+            }
+        }
         $allowedSorts = ['name', 'city', 'state', 'category', 'score', 'reviews', 'website_rating', 'created_at'];
 
         // Support multi-sort via sort[]="field:direction"
