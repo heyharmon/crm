@@ -76,36 +76,27 @@ const getSortIcon = (column) => {
 </script>
 
 <template>
-    <div class="mb-6 rounded-3xl border border-neutral-200 bg-white/80 p-6 shadow-sm backdrop-blur-sm">
-        <div class="flex flex-wrap items-center gap-3">
-            <div class="min-w-64 flex-1">
-                <Input
-                    :model-value="filters.search"
-                    @update:model-value="updateFilter('search', $event)"
-                    placeholder="Search organizations..."
-                    @keyup.enter="handleSearch"
-                />
+    <div class="flex flex-col gap-6">
+        <div class="space-y-3">
+            <label class="block text-xs font-semibold uppercase tracking-wide text-neutral-500">Search</label>
+            <Input
+                :model-value="filters.search"
+                @update:model-value="updateFilter('search', $event)"
+                placeholder="Search organizations..."
+                @keyup.enter="handleSearch"
+            />
+            <div class="flex flex-wrap gap-2 pt-2">
+                <Button @click="showFilters = !showFilters" variant="outline" class="rounded-full border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100">
+                    {{ showFilters ? 'Hide Filters' : 'Show Filters' }}
+                </Button>
+                <Button @click="resetFilters" variant="outline" class="rounded-full border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100">
+                    Clear Filters
+                </Button>
             </div>
-
-            <Button
-                @click="showFilters = !showFilters"
-                variant="outline"
-                class="rounded-full border-neutral-200 bg-white/90 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100"
-            >
-                {{ showFilters ? 'Hide Filters' : 'Show Filters' }}
-            </Button>
-
-            <Button
-                @click="resetFilters"
-                variant="outline"
-                class="rounded-full border-neutral-200 bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-200"
-            >
-                Clear Filters
-            </Button>
         </div>
 
-        <div v-if="showFilters" class="mt-6 space-y-6">
-            <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div v-if="showFilters" class="space-y-6">
+            <div class="space-y-4">
                 <div>
                     <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-neutral-500">City</label>
                     <Input :model-value="filters.city" @update:model-value="updateFilter('city', $event)" placeholder="Filter by city" />
@@ -120,16 +111,13 @@ const getSortIcon = (column) => {
                     <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-neutral-500">Category</label>
                     <Input :model-value="filters.category" @update:model-value="updateFilter('category', $event)" placeholder="Filter by category" />
                 </div>
+            </div>
 
+            <div class="space-y-4">
                 <div>
                     <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-neutral-500">Website</label>
                     <div class="flex flex-wrap gap-2">
-                        <Button
-                            size="sm"
-                            :variant="!filters.website ? 'default' : 'outline'"
-                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
-                            @click="updateFilter('website', '')"
-                        >
+                        <Button size="sm" :variant="!filters.website ? 'default' : 'outline'" class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold" @click="updateFilter('website', '')">
                             Any
                         </Button>
                         <Button
@@ -154,12 +142,7 @@ const getSortIcon = (column) => {
                 <div>
                     <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-neutral-500">Website Rating</label>
                     <div class="flex flex-wrap gap-2">
-                        <Button
-                            size="sm"
-                            :variant="!filters.website_rating ? 'default' : 'outline'"
-                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
-                            @click="updateFilter('website_rating', '')"
-                        >
+                        <Button size="sm" :variant="!filters.website_rating ? 'default' : 'outline'" class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold" @click="updateFilter('website_rating', '')">
                             Any
                         </Button>
                         <Button

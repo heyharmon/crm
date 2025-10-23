@@ -1,0 +1,26 @@
+<script setup>
+import AppNav from '@/components/AppNav.vue'
+
+defineProps({
+    sidebarWidth: {
+        type: String,
+        default: 'w-80 xl:w-96'
+    }
+})
+</script>
+
+<template>
+    <div class="flex min-h-screen flex-col bg-neutral-50">
+        <AppNav />
+
+        <div class="mx-auto flex w-full max-w-[1563px] flex-1 min-h-0 flex-col overflow-hidden lg:flex-row">
+            <aside v-if="$slots.sidebar" :class="['hidden h-full min-h-0 flex-shrink-0 border-r border-neutral-200 bg-white px-6 py-6 lg:block', sidebarWidth]">
+                <slot name="sidebar" />
+            </aside>
+
+            <main class="flex-1 min-h-0 overflow-y-auto bg-white">
+                <slot />
+            </main>
+        </div>
+    </div>
+</template>
