@@ -15,9 +15,9 @@ const logout = async () => {
 
 <template>
     <nav class="border-b border-neutral-200 bg-white/90 backdrop-blur">
-        <div class="mx-auto flex items-center justify-between px-4 py-4 lg:px-6">
+        <div class="mx-auto flex items-center justify-between px-4 py-4 lg:px-8">
             <div class="flex items-center gap-6">
-                <router-link to="/" class="text-base font-semibold tracking-tight text-neutral-900"> CRM </router-link>
+                <router-link to="/" class="text-base font-bold text-neutral-900"> CRM </router-link>
 
                 <div v-if="isAuthenticated" class="hidden items-center text-sm font-medium text-neutral-500 md:flex">
                     <router-link to="/" class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900"> Dashboard </router-link>

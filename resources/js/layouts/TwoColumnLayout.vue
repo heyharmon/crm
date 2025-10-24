@@ -13,8 +13,11 @@ defineProps({
     <div class="flex min-h-screen flex-col bg-neutral-50">
         <AppNav />
 
-        <div class="mx-auto flex w-full max-w-[1563px] flex-1 min-h-0 flex-col overflow-hidden lg:flex-row">
-            <aside v-if="$slots.sidebar" :class="['hidden h-full min-h-0 flex-shrink-0 border-r border-neutral-200 bg-white px-6 py-6 lg:block', sidebarWidth]">
+        <div class="mx-auto flex w-full flex-1 min-h-0 flex-col overflow-hidden lg:flex-row">
+            <aside
+                v-if="$slots.sidebar"
+                :class="['hidden h-full min-h-0 flex-shrink-0 border-r border-neutral-200 bg-white pl-8 pr-4 py-6 lg:block', sidebarWidth]"
+            >
                 <slot name="sidebar" />
             </aside>
 

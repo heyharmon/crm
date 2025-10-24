@@ -16,7 +16,7 @@ const handlePageChange = (page) => {
 </script>
 
 <template>
-    <div v-if="pagination.last_page > 1" class="bg-white rounded-lg shadow-sm border border-neutral-200 px-4 py-3 flex items-center justify-between">
+    <div v-if="pagination.last_page > 1" class="py-3 flex items-center justify-between">
         <div class="flex-1 flex justify-between sm:hidden gap-1.5">
             <Button @click="handlePageChange(pagination.current_page - 1)" :disabled="pagination.current_page === 1" variant="outline"> Previous </Button>
             <Button @click="handlePageChange(pagination.current_page + 1)" :disabled="pagination.current_page === pagination.last_page" variant="outline">

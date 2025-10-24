@@ -267,23 +267,20 @@ const editFormRef = ref(null)
         </template>
 
         <div class="flex h-full flex-col min-h-0">
-            <div class="border-b border-neutral-200 bg-white px-4 py-4 lg:px-6">
+            <div class="border-b border-neutral-200 bg-white px-4 py-3 lg:px-6">
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                        <h1 class="text-2xl font-semibold text-neutral-900">Organizations</h1>
-                        <p class="text-sm text-neutral-500">Review and manage all organizations with quick access to filtering and views.</p>
-                    </div>
+                    <h1 class="text-xl font-semibold text-neutral-900">Organizations</h1>
                     <div class="flex flex-wrap items-center gap-3">
                         <div class="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-white p-1">
                             <button
-                                class="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
+                                class="rounded-full px-3 py-1 text-sm font-medium text-neutral-600 transition-colors focus-visible:outline-neutral-400"
                                 :class="view === 'table' ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
                                 @click="view = 'table'"
                             >
                                 Table
                             </button>
                             <button
-                                class="rounded-full px-4 py-1.5 text-sm font-medium text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
+                                class="rounded-full px-3 py-1 text-sm font-medium text-neutral-600 transition-colors focus-visible:outline-neutral-400"
                                 :class="view === 'grid' ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
                                 @click="view = 'grid'"
                             >

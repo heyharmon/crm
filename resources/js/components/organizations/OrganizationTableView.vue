@@ -16,20 +16,14 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits([
-    'open-sidebar',
-    'start-web-scraping',
-    'delete-organization',
-    'update-website-rating',
-    'page-change'
-])
+const emit = defineEmits(['open-sidebar', 'start-web-scraping', 'delete-organization', 'update-website-rating', 'page-change'])
 </script>
 
 <template>
     <div class="flex flex-1 flex-col min-h-0">
         <div class="flex-1 overflow-auto">
-            <table class="min-w-full divide-y divide-neutral-200 text-left text-sm font-medium uppercase tracking-wide text-neutral-500 shadow-sm">
-                <thead class="bg-neutral-50">
+            <table class="min-w-full divide-y divide-neutral-200 text-left text-sm">
+                <thead class="bg-neutral-50 text-xs tracking-wide uppercase text-neutral-500">
                     <tr>
                         <th class="border-b border-neutral-200 px-4 py-3">Name</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Category</th>
@@ -67,7 +61,6 @@ const emit = defineEmits([
                                 </div>
                                 <div class="space-y-1">
                                     <div class="text-sm font-semibold text-neutral-900">{{ organization.name }}</div>
-                                    <div v-if="organization.phone" class="text-xs text-neutral-500">{{ organization.phone }}</div>
                                     <a
                                         v-if="organization.website"
                                         :href="props.formatWebsite(organization.website)"
@@ -89,10 +82,7 @@ const emit = defineEmits([
                             <div class="text-xs text-neutral-500">{{ organization.state || '-' }}</div>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
-                            <div
-                                v-if="organization.score"
-                                class="flex items-center gap-1 rounded-full border border-neutral-200 bg-neutral-50 px-2 py-1 text-xs font-medium text-neutral-700"
-                            >
+                            <div v-if="organization.score" class="flex items-center gap-1 text-xs font-medium text-neutral-700">
                                 <span class="text-yellow-500">★</span>
                                 <span>{{ organization.score }}</span>
                             </div>
