@@ -38,7 +38,15 @@ const optionsBySlug = computed(() => {
     }, {})
 })
 
+const optionNameById = computed(() => {
+    return (props.ratingOptions || []).reduce((map, option) => {
+        map[option.id] = option.name
+        return map
+    }, {})
+})
+
 const getOptionLabelFromSlug = (slug) => optionsBySlug.value?.[slug]?.name || slug || '-'
+const getOptionLabelFromId = (id, fallback) => optionNameById.value?.[id] || fallback || null
 
 const formatAverage = (value) => {
     if (value === null || value === undefined) return null
@@ -174,8 +182,8 @@ const getScreenshotUrl = (website) => {
                                         </span>
                                     </span>
                                     <span v-else class="text-neutral-400">No ratings yet</span>
-                                    <span v-if="organization.my_website_rating_option_name" class="text-neutral-500">
-                                        Your rating: {{ organization.my_website_rating_option_name }}
+                                    <span v-if="getOptionLabelFromId(organization.my_website_rating_option_id, organization.my_website_rating_option_name)" class="text-neutral-500">
+                                        Your rating: {{ getOptionLabelFromId(organization.my_website_rating_option_id, organization.my_website_rating_option_name) }}
                                     </span>
                                 </div>
                                 <button

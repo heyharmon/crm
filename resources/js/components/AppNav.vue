@@ -30,7 +30,7 @@ const logout = async () => {
                         Rating Options
                     </router-link>
                     <router-link to="/website-ratings" class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900">
-                        Website Reviews
+                        Rate Websites
                     </router-link>
                 </div>
             </div>

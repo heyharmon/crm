@@ -153,8 +153,8 @@ export const useOrganizationStore = defineStore('organization', {
                 website_rating_summary,
                 website_rating_count,
                 my_website_rating_option_id,
-                my_website_rating_option_slug,
-                my_website_rating_option_name
+                my_website_rating_option_slug = null,
+                my_website_rating_option_name = null
             } = payload
 
             const update = (org) => {

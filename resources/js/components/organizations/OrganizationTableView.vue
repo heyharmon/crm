@@ -1,5 +1,4 @@
 <script setup>
-import { computed } from 'vue'
 import Pagination from '@/components/Pagination.vue'
 
 const props = defineProps({
@@ -14,30 +13,18 @@ const props = defineProps({
     formatWebsite: {
         type: Function,
         required: true
-    },
-    ratingOptions: {
-        type: Array,
-        default: () => []
     }
 })
 
-const emit = defineEmits([
-    'open-sidebar',
-    'start-web-scraping',
-    'delete-organization',
-    'update-website-rating',
-    'clear-website-rating',
-    'page-change'
-])
+const emit = defineEmits(['open-sidebar', 'start-web-scraping', 'delete-organization', 'page-change'])
 
-const optionsBySlug = computed(() => {
-    return (props.ratingOptions || []).reduce((map, option) => {
-        map[option.slug] = option
-        return map
-    }, {})
-})
-
-const getOptionLabelFromSlug = (slug) => optionsBySlug.value?.[slug]?.name || slug || '-'
+const formatRatingSummary = (slug) => {
+    if (!slug) return null
+    return slug
+        .split('-')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ')
+}
 
 const formatAverage = (value) => {
     if (value === null || value === undefined) return null
@@ -130,7 +117,7 @@ const formatAverage = (value) => {
                             <div v-else class="flex flex-col gap-2">
                                 <div class="flex flex-wrap items-center gap-2 text-xs text-neutral-500">
                                     <span v-if="organization.website_rating_summary" class="font-medium text-neutral-700">
-                                        Average: {{ getOptionLabelFromSlug(organization.website_rating_summary) }}
+                                        Average: {{ formatRatingSummary(organization.website_rating_summary) }}
                                     </span>
                                     <span v-else class="text-neutral-400">No ratings yet</span>
                                     <span v-if="organization.website_rating_average !== null">
@@ -139,32 +126,7 @@ const formatAverage = (value) => {
                                     <span v-if="organization.website_rating_count">
                                         • {{ organization.website_rating_count }} ratings
                                     </span>
-                                    <span v-if="organization.my_website_rating_option_name">
-                                        • Your rating: {{ organization.my_website_rating_option_name }}
-                                    </span>
                                 </div>
-                                <div class="inline-flex flex-wrap items-center gap-1 rounded-full border border-neutral-200 bg-white p-1">
-                                    <button
-                                        v-for="option in ratingOptions"
-                                        :key="option.id"
-                                        class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
-                                        :class="
-                                            organization.my_website_rating_option_id === option.id
-                                                ? 'bg-neutral-900 text-white shadow-sm'
-                                                : 'hover:bg-neutral-100 hover:text-neutral-900'
-                                        "
-                                        @click.stop="emit('update-website-rating', { id: organization.id, optionId: option.id })"
-                                    >
-                                        {{ option.name }}
-                                    </button>
-                                </div>
-                                <button
-                                    class="self-start text-xs font-medium text-neutral-500 underline underline-offset-4 transition-colors hover:text-neutral-700"
-                                    :disabled="!organization.my_website_rating_option_id"
-                                    @click.stop="emit('clear-website-rating', organization.id)"
-                                >
-                                    Clear
-                                </button>
                             </div>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">

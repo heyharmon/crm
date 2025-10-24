@@ -82,11 +82,10 @@ class OrganizationWebsiteRatingService
 
     protected function resolveSummaryForAverage(float $average): ?string
     {
-        $option = WebsiteRatingOption::orderByRaw('ABS(score - ?) asc', [$average])
+        $option = WebsiteRatingOption::orderByRaw('ABS(CAST(score AS SIGNED) - ?) asc', [$average])
             ->orderByDesc('score')
             ->first();
 
         return $option?->slug;
     }
 }
-

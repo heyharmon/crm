@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
             $table->string('name', 100);
             $table->string('slug', 100)->unique();
-            $table->unsignedTinyInteger('score');
+            $table->tinyInteger('score');
             $table->string('description', 255)->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
@@ -33,7 +33,7 @@ return new class extends Migration
             $table->foreignId('website_rating_option_id')
                 ->constrained('website_rating_options')
                 ->cascadeOnDelete();
-            $table->unsignedTinyInteger('score');
+            $table->tinyInteger('score');
             $table->timestamps();
 
             $table->unique(['organization_id', 'user_id']);
@@ -105,4 +105,3 @@ return new class extends Migration
         Schema::dropIfExists('website_rating_options');
     }
 };
-

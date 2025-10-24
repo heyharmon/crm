@@ -340,12 +340,9 @@ const editFormRef = ref(null)
                         :organizations="organizationStore.organizations"
                         :pagination="organizationStore.pagination"
                         :format-website="formatWebsite"
-                        :rating-options="ratingOptions"
                         @open-sidebar="({ mode, id }) => openSidebar(mode, id)"
                         @start-web-scraping="startWebScraping"
                         @delete-organization="deleteOrganization"
-                        @update-website-rating="({ id, optionId }) => submitWebsiteRating(id, optionId)"
-                        @clear-website-rating="(id) => clearWebsiteRating(id)"
                         @page-change="handlePageChange"
                     />
 

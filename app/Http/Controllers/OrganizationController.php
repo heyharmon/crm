@@ -28,24 +28,6 @@ class OrganizationController extends Controller
                     ->whereColumn('organization_id', 'organizations.id')
                     ->where('user_id', $userId)
                     ->limit(1),
-                'my_website_rating_option_slug' => WebsiteRatingOption::select('slug')
-                    ->whereColumn(
-                        'website_rating_options.id',
-                        OrganizationWebsiteRating::select('website_rating_option_id')
-                            ->whereColumn('organization_id', 'organizations.id')
-                            ->where('user_id', $userId)
-                            ->limit(1)
-                    )
-                    ->limit(1),
-                'my_website_rating_option_name' => WebsiteRatingOption::select('name')
-                    ->whereColumn(
-                        'website_rating_options.id',
-                        OrganizationWebsiteRating::select('website_rating_option_id')
-                            ->whereColumn('organization_id', 'organizations.id')
-                            ->where('user_id', $userId)
-                            ->limit(1)
-                    )
-                    ->limit(1),
             ]);
         }
         if ($request->filled('search')) {
@@ -67,19 +49,13 @@ class OrganizationController extends Controller
         if ($userId && $request->filled('my_website_rating')) {
             $myRatingFilter = $request->get('my_website_rating');
             if ($myRatingFilter === 'none') {
-                $query->whereNull(
-                    OrganizationWebsiteRating::select('id')
-                        ->whereColumn('organization_id', 'organizations.id')
-                        ->where('user_id', $userId)
-                        ->limit(1)
-                );
+                $query->whereDoesntHave('websiteRatings', function ($q) use ($userId) {
+                    $q->where('user_id', $userId);
+                });
             } elseif ($myRatingFilter === 'any') {
-                $query->whereNotNull(
-                    OrganizationWebsiteRating::select('id')
-                        ->whereColumn('organization_id', 'organizations.id')
-                        ->where('user_id', $userId)
-                        ->limit(1)
-                );
+                $query->whereHas('websiteRatings', function ($q) use ($userId) {
+                    $q->where('user_id', $userId);
+                });
             }
         }
         if ($request->filled('category')) {
