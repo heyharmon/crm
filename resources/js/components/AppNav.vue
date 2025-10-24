@@ -27,7 +27,7 @@ const logout = async () => {
                         Categories
                     </router-link>
                     <router-link to="/website-ratings" class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900">
-                        Website Ratings
+                        Website Rating
                     </router-link>
                 </div>
             </div>

@@ -22,7 +22,15 @@ const getScreenshotUrl = (website) => {
     if (!website) return null
     const baseUrl = 'https://api.apiflash.com/v1/urltoimage'
     const accessKey = '3725d3868ee3426e82b2a3b9eebde219'
-    return `${baseUrl}?access_key=${accessKey}&wait_until=page_loaded&no_cookie_banners=true&url=${encodeURIComponent(website)}`
+    const params = new URLSearchParams({
+        access_key: accessKey,
+        // wait_until: 'page_loaded',
+        wait_until: 'network_idle', // wait for no in-flight requests
+        // delay: '1', // give sliders/assets time to settle (ms)
+        no_cookie_banners: 'true',
+        url: website
+    })
+    return `${baseUrl}?${params.toString()}`
 }
 
 const getScreenshotKey = (website) => getScreenshotUrl(website)

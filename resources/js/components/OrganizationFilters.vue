@@ -1,5 +1,4 @@
 <script setup>
-import { ref } from 'vue'
 import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/Input.vue'
 
@@ -11,8 +10,6 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:filters', 'reset-filters', 'search'])
-
-const showFilters = ref(true)
 
 const updateFilter = (key, value) => {
     emit('update:filters', { [key]: value })
@@ -77,53 +74,55 @@ const getSortIcon = (column) => {
 
 <template>
     <div class="flex flex-col gap-6">
+        <div class="flex items-center justify-between">
+            <p class="text-xs font-semibold uppercase tracking-wide text-neutral-400">Filters</p>
+            <Button @click="resetFilters" size="sm" variant="link"> Clear Filters </Button>
+        </div>
+
         <div class="space-y-3">
-            <label class="block text-xs font-semibold uppercase tracking-wide text-neutral-500">Search</label>
+            <label class="block text-xs font-medium uppercase tracking-wide text-neutral-500">Search</label>
             <Input
                 :model-value="filters.search"
                 @update:model-value="updateFilter('search', $event)"
                 placeholder="Search organizations..."
                 @keyup.enter="handleSearch"
             />
-            <div class="flex flex-wrap gap-2 pt-2">
-                <Button @click="showFilters = !showFilters" variant="outline" class="rounded-full border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100">
-                    {{ showFilters ? 'Hide Filters' : 'Show Filters' }}
-                </Button>
-                <Button @click="resetFilters" variant="outline" class="rounded-full border-neutral-200 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100">
-                    Clear Filters
-                </Button>
-            </div>
         </div>
 
-        <div v-if="showFilters" class="space-y-6">
+        <div class="space-y-6">
             <div class="space-y-4">
                 <div>
-                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-neutral-500">City</label>
+                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">City</label>
                     <Input :model-value="filters.city" @update:model-value="updateFilter('city', $event)" placeholder="Filter by city" />
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-neutral-500">State</label>
+                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">State</label>
                     <Input :model-value="filters.state" @update:model-value="updateFilter('state', $event)" placeholder="Filter by state" />
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-neutral-500">Category</label>
+                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Category</label>
                     <Input :model-value="filters.category" @update:model-value="updateFilter('category', $event)" placeholder="Filter by category" />
                 </div>
             </div>
 
             <div class="space-y-4">
                 <div>
-                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-neutral-500">Website</label>
+                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Website</label>
                     <div class="flex flex-wrap gap-2">
-                        <Button size="sm" :variant="!filters.website ? 'default' : 'outline'" class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold" @click="updateFilter('website', '')">
+                        <Button
+                            size="sm"
+                            :variant="!filters.website ? 'default' : 'outline'"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                            @click="updateFilter('website', '')"
+                        >
                             Any
                         </Button>
                         <Button
                             size="sm"
                             :variant="filters.website === 'present' ? 'default' : 'outline'"
-                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                             @click="setWebsiteFilter('present')"
                         >
                             Has Website
@@ -131,7 +130,7 @@ const getSortIcon = (column) => {
                         <Button
                             size="sm"
                             :variant="filters.website === 'missing' ? 'default' : 'outline'"
-                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                             @click="setWebsiteFilter('missing')"
                         >
                             No Website
@@ -140,15 +139,20 @@ const getSortIcon = (column) => {
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-xs font-semibold uppercase tracking-wide text-neutral-500">Website Rating</label>
+                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Website Rating</label>
                     <div class="flex flex-wrap gap-2">
-                        <Button size="sm" :variant="!filters.website_rating ? 'default' : 'outline'" class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold" @click="updateFilter('website_rating', '')">
+                        <Button
+                            size="sm"
+                            :variant="!filters.website_rating ? 'default' : 'outline'"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                            @click="updateFilter('website_rating', '')"
+                        >
                             Any
                         </Button>
                         <Button
                             size="sm"
                             :variant="filters.website_rating === 'good' ? 'default' : 'outline'"
-                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                             @click="setWebsiteRatingFilter('good')"
                         >
                             Good
@@ -156,7 +160,7 @@ const getSortIcon = (column) => {
                         <Button
                             size="sm"
                             :variant="filters.website_rating === 'okay' ? 'default' : 'outline'"
-                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                             @click="setWebsiteRatingFilter('okay')"
                         >
                             Okay
@@ -164,7 +168,7 @@ const getSortIcon = (column) => {
                         <Button
                             size="sm"
                             :variant="filters.website_rating === 'bad' ? 'default' : 'outline'"
-                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                             @click="setWebsiteRatingFilter('bad')"
                         >
                             Bad
@@ -172,7 +176,7 @@ const getSortIcon = (column) => {
                         <Button
                             size="sm"
                             :variant="filters.website_rating === 'none' ? 'default' : 'outline'"
-                            class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                             @click="setWebsiteRatingFilter('none')"
                         >
                             Not Rated
@@ -182,13 +186,13 @@ const getSortIcon = (column) => {
             </div>
 
             <div>
-                <label class="mb-3 block text-xs font-semibold uppercase tracking-wide text-neutral-500">Sort By</label>
+                <label class="mb-3 block text-xs font-medium uppercase tracking-wide text-neutral-500">Sort By</label>
                 <div class="flex flex-wrap gap-2">
                     <Button
                         @click="handleSort('name')"
                         :variant="(filters.sort || []).some((s) => s.startsWith('name:')) ? 'default' : 'outline'"
                         size="sm"
-                        class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                     >
                         Name {{ getSortIcon('name') }}
                     </Button>
@@ -196,7 +200,7 @@ const getSortIcon = (column) => {
                         @click="handleSort('category')"
                         :variant="(filters.sort || []).some((s) => s.startsWith('category:')) ? 'default' : 'outline'"
                         size="sm"
-                        class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                     >
                         Category {{ getSortIcon('category') }}
                     </Button>
@@ -204,7 +208,7 @@ const getSortIcon = (column) => {
                         @click="handleSort('city')"
                         :variant="(filters.sort || []).some((s) => s.startsWith('city:')) ? 'default' : 'outline'"
                         size="sm"
-                        class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                     >
                         Location {{ getSortIcon('city') }}
                     </Button>
@@ -212,7 +216,7 @@ const getSortIcon = (column) => {
                         @click="handleSort('score')"
                         :variant="(filters.sort || []).some((s) => s.startsWith('score:')) ? 'default' : 'outline'"
                         size="sm"
-                        class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                     >
                         Score {{ getSortIcon('score') }}
                     </Button>
@@ -220,7 +224,7 @@ const getSortIcon = (column) => {
                         @click="handleSort('reviews')"
                         :variant="(filters.sort || []).some((s) => s.startsWith('reviews:')) ? 'default' : 'outline'"
                         size="sm"
-                        class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                     >
                         Reviews {{ getSortIcon('reviews') }}
                     </Button>
@@ -228,7 +232,7 @@ const getSortIcon = (column) => {
                         @click="handleSort('website_rating')"
                         :variant="(filters.sort || []).some((s) => s.startsWith('website_rating:')) ? 'default' : 'outline'"
                         size="sm"
-                        class="rounded-full border-neutral-200 px-3 py-1 text-xs font-semibold"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                     >
                         Website Rating {{ getSortIcon('website_rating') }}
                     </Button>

@@ -17,19 +17,13 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits([
-    'update:columns',
-    'open-sidebar',
-    'delete-organization',
-    'update-website-rating',
-    'page-change'
-])
+const emit = defineEmits(['update:columns', 'open-sidebar', 'delete-organization', 'update-website-rating', 'page-change'])
 
 const getScreenshotUrl = (website) => {
     if (!website) return null
     const baseUrl = 'https://api.apiflash.com/v1/urltoimage'
     const accessKey = '3725d3868ee3426e82b2a3b9eebde219'
-    return `${baseUrl}?access_key=${accessKey}&wait_until=page_loaded&no_cookie_banners=true&url=${encodeURIComponent(website)}`
+    return `${baseUrl}?access_key=${accessKey}&wait_until=network_idle&no_cookie_banners=true&url=${encodeURIComponent(website)}`
 }
 </script>
 
@@ -127,14 +121,18 @@ const getScreenshotUrl = (website) => {
                         <div class="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-white p-1">
                             <button
                                 class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
-                                :class="organization.website_rating === 'good' ? 'bg-green-600 text-white shadow-sm' : 'hover:bg-green-50 hover:text-neutral-900'"
+                                :class="
+                                    organization.website_rating === 'good' ? 'bg-green-600 text-white shadow-sm' : 'hover:bg-green-50 hover:text-neutral-900'
+                                "
                                 @click="emit('update-website-rating', { id: organization.id, rating: 'good' })"
                             >
                                 Good
                             </button>
                             <button
                                 class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
-                                :class="organization.website_rating === 'okay' ? 'bg-yellow-500 text-white shadow-sm' : 'hover:bg-yellow-50 hover:text-neutral-900'"
+                                :class="
+                                    organization.website_rating === 'okay' ? 'bg-yellow-500 text-white shadow-sm' : 'hover:bg-yellow-50 hover:text-neutral-900'
+                                "
                                 @click="emit('update-website-rating', { id: organization.id, rating: 'okay' })"
                             >
                                 Okay

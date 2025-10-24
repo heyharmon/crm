@@ -253,17 +253,12 @@ const editFormRef = ref(null)
 <template>
     <TwoColumnLayout>
         <template #sidebar>
-            <div class="space-y-6">
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-wide text-neutral-400">Filters</p>
-                </div>
-                <OrganizationFilters
-                    :filters="organizationStore.filters"
-                    @update:filters="organizationStore.setFilters"
-                    @reset-filters="organizationStore.resetFilters"
-                    @search="handleSearch"
-                />
-            </div>
+            <OrganizationFilters
+                :filters="organizationStore.filters"
+                @update:filters="organizationStore.setFilters"
+                @reset-filters="organizationStore.resetFilters"
+                @search="handleSearch"
+            />
         </template>
 
         <div class="flex h-full flex-col min-h-0">
@@ -296,7 +291,7 @@ const editFormRef = ref(null)
                             </Button>
                         </router-link>
                         <router-link to="/organizations/create">
-                            <Button class="rounded-full px-4 py-2 text-sm font-medium">Create Organization</Button>
+                            <Button class="rounded-full px-4 py-2 text-sm font-medium">Add Organization</Button>
                         </router-link>
                     </div>
                 </div>
