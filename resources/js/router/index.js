@@ -13,6 +13,7 @@ import OrganizationCreate from '@/pages/organizations/OrganizationCreate.vue'
 import OrganizationEdit from '@/pages/organizations/OrganizationEdit.vue'
 import OrganizationImport from '@/pages/organizations/OrganizationImport.vue'
 import OrganizationCategoriesIndex from '@/pages/organization-categories/OrganizationCategoriesIndex.vue'
+import WebsiteRatingOptionsIndex from '@/pages/website-rating-options/WebsiteRatingOptionsIndex.vue'
 import WebsiteRatings from '@/pages/WebsiteRatings.vue'
 
 const routes = [
@@ -85,6 +86,12 @@ const routes = [
         path: '/organization-categories',
         name: 'organization-categories.index',
         component: OrganizationCategoriesIndex,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/website-rating-options',
+        name: 'website-rating-options.index',
+        component: WebsiteRatingOptionsIndex,
         meta: { requiresAuth: true }
     },
     {

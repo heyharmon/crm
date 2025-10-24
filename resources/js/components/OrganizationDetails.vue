@@ -26,6 +26,14 @@ onMounted(load)
 watch(() => props.organizationId, load)
 
 const org = () => organizationStore.currentOrganization
+
+const formatRatingLabel = (slug) => {
+  if (!slug) return null
+  return slug
+    .split('-')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ')
+}
 </script>
 
 <template>
@@ -67,6 +75,32 @@ const org = () => organizationStore.currentOrganization
         <p class="text-sm">{{ org().full_address }}</p>
         <div v-if="org().map_url" class="mt-2">
           <a :href="org().map_url" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 text-sm">View on Google Maps →</a>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-lg border border-neutral-200 p-4">
+        <h3 class="font-semibold mb-3">Website Ratings</h3>
+        <div class="space-y-2 text-sm text-neutral-700">
+          <div>
+            <span class="font-medium text-neutral-900">Average:</span>
+            <template v-if="org().website_rating_summary">
+              {{ formatRatingLabel(org().website_rating_summary) }}
+              <span v-if="org().website_rating_average !== null" class="text-neutral-500">
+                ({{ Number(org().website_rating_average).toFixed(2) }})
+              </span>
+              <span v-if="org().website_rating_count" class="text-neutral-500">
+                • {{ org().website_rating_count }} ratings
+              </span>
+            </template>
+            <span v-else class="text-neutral-400">No ratings yet</span>
+          </div>
+          <div>
+            <span class="font-medium text-neutral-900">Your rating:</span>
+            <span v-if="org().my_website_rating_option_name">
+              {{ org().my_website_rating_option_name }}
+            </span>
+            <span v-else class="text-neutral-400">Not set</span>
+          </div>
         </div>
       </div>
 

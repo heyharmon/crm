@@ -6,8 +6,10 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationCategoryController;
+use App\Http\Controllers\OrganizationWebsiteRatingController;
 use App\Http\Controllers\GoogleMapsScraperController;
 use App\Http\Controllers\WebScraperController;
+use App\Http\Controllers\WebsiteRatingOptionController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -38,6 +40,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::resource('organization-categories', OrganizationCategoryController::class)->only([
         'index', 'store', 'update', 'destroy'
     ]);
+
+    // Website rating options
+    Route::resource('website-rating-options', WebsiteRatingOptionController::class)->only([
+        'index', 'store', 'update', 'destroy'
+    ]);
+
+    // Organization website ratings
+    Route::post('organizations/{organization}/website-ratings', [OrganizationWebsiteRatingController::class, 'store']);
+    Route::delete('organizations/{organization}/website-ratings', [OrganizationWebsiteRatingController::class, 'destroy']);
 
     // Google Maps scraper routes
     Route::prefix('google-maps-scraper')->group(function () {
