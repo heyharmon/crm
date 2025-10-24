@@ -1,4 +1,5 @@
 <script setup>
+import { computed } from 'vue'
 import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/Input.vue'
 
@@ -33,6 +34,14 @@ const handleSearch = () => {
 const resetFilters = () => {
     emit('reset-filters')
 }
+
+const hasActiveFilters = computed(() => {
+    const filterEntries = Object.entries(props.filters || {})
+    return filterEntries.some(([key, value]) => {
+        if (key === 'sort') return Array.isArray(value) && value.length > 0
+        return Boolean(value)
+    })
+})
 
 // Multi-sort: maintain an ordered list of "field:direction" in filters.sort
 const parseSort = (entry) => {
@@ -76,7 +85,7 @@ const getSortIcon = (column) => {
     <div class="flex flex-col gap-6">
         <div class="flex items-center justify-between">
             <p class="text-xs font-semibold uppercase tracking-wide text-neutral-400">Filters</p>
-            <Button @click="resetFilters" size="sm" variant="link"> Clear Filters </Button>
+            <Button v-if="hasActiveFilters" @click="resetFilters" size="sm" variant="link"> Clear Filters </Button>
         </div>
 
         <div class="space-y-3">
