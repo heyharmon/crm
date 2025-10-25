@@ -30,11 +30,9 @@ class WebsiteRatingOptionController extends Controller
             'name' => 'required|string|max:100|unique:website_rating_options,name',
             'score' => 'required|integer|min:1|max:5',
             'description' => 'nullable|string|max:255',
-            'is_active' => 'nullable|boolean',
         ]);
 
         $validated['slug'] = $this->generateUniqueSlug($validated['name']);
-        $validated['is_active'] = $validated['is_active'] ?? true;
 
         $option = WebsiteRatingOption::create($validated);
 
@@ -47,7 +45,6 @@ class WebsiteRatingOptionController extends Controller
             'name' => 'sometimes|required|string|max:100|unique:website_rating_options,name,' . $websiteRatingOption->id,
             'score' => 'sometimes|required|integer|min:1|max:5',
             'description' => 'nullable|string|max:255',
-            'is_active' => 'nullable|boolean',
         ]);
 
         if (array_key_exists('name', $validated) && $validated['name'] !== $websiteRatingOption->name) {

@@ -15,11 +15,9 @@ class WebsiteRatingOption extends Model
         'slug',
         'score',
         'description',
-        'is_active',
     ];
 
     protected $casts = [
-        'is_active' => 'boolean',
         'score' => 'integer',
     ];
 
@@ -28,4 +26,3 @@ class WebsiteRatingOption extends Model
         return $this->hasMany(OrganizationWebsiteRating::class);
     }
 }
-

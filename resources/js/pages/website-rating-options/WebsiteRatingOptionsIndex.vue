@@ -19,8 +19,7 @@ const editingId = ref(null)
 const editingOption = ref({
     name: '',
     score: 3,
-    description: '',
-    is_active: true
+    description: ''
 })
 
 const deleteMode = ref({})
@@ -71,8 +70,7 @@ const startEdit = (option) => {
     editingOption.value = {
         name: option.name,
         score: option.score,
-        description: option.description || '',
-        is_active: option.is_active
+        description: option.description || ''
     }
 }
 
@@ -81,8 +79,7 @@ const cancelEdit = () => {
     editingOption.value = {
         name: '',
         score: 3,
-        description: '',
-        is_active: true
+        description: ''
     }
 }
 
@@ -91,25 +88,12 @@ const updateOption = async (optionId) => {
         await api.put(`/website-rating-options/${optionId}`, {
             name: editingOption.value.name,
             score: Number(editingOption.value.score),
-            description: editingOption.value.description || null,
-            is_active: editingOption.value.is_active
+            description: editingOption.value.description || null
         })
         cancelEdit()
         await fetchOptions()
     } catch (err) {
         console.error('Failed to update rating option:', err)
-        error.value = err?.message || 'Failed to update rating option.'
-    }
-}
-
-const toggleActive = async (option) => {
-    try {
-        await api.put(`/website-rating-options/${option.id}`, {
-            is_active: !option.is_active
-        })
-        await fetchOptions()
-    } catch (err) {
-        console.error('Failed to toggle rating option:', err)
         error.value = err?.message || 'Failed to update rating option.'
     }
 }
@@ -189,7 +173,6 @@ const confirmDelete = async (option) => {
                             <th class="px-4 py-3 text-left">Name</th>
                             <th class="px-4 py-3 text-left">Score</th>
                             <th class="px-4 py-3 text-left">Description</th>
-                            <th class="px-4 py-3 text-left">Active</th>
                             <th class="px-4 py-3 text-left">Ratings</th>
                             <th class="px-4 py-3 text-left">Actions</th>
                         </tr>
@@ -217,19 +200,6 @@ const confirmDelete = async (option) => {
                                 </div>
                                 <div v-else class="text-sm text-neutral-600">
                                     {{ option.description || '—' }}
-                                </div>
-                            </td>
-                            <td class="px-4 py-3 align-top">
-                                <div class="flex items-center gap-2">
-                                    <span
-                                        :class="option.is_active ? 'text-green-600' : 'text-neutral-400'"
-                                        class="inline-flex items-center text-xs font-semibold uppercase tracking-wide"
-                                    >
-                                        {{ option.is_active ? 'Active' : 'Inactive' }}
-                                    </span>
-                                    <Button variant="outline" size="sm" class="rounded-full px-3 py-1 text-xs" @click="toggleActive(option)">
-                                        {{ option.is_active ? 'Deactivate' : 'Activate' }}
-                                    </Button>
                                 </div>
                             </td>
                             <td class="px-4 py-3 align-top text-sm text-neutral-600">
@@ -288,7 +258,7 @@ const confirmDelete = async (option) => {
                             </td>
                         </tr>
                         <tr v-if="!options.length && !loading">
-                            <td colspan="6" class="px-4 py-6 text-center text-sm text-neutral-500">No rating options found.</td>
+                            <td colspan="5" class="px-4 py-6 text-center text-sm text-neutral-500">No rating options found.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -296,4 +266,3 @@ const confirmDelete = async (option) => {
         </div>
     </DefaultLayout>
 </template>
-
