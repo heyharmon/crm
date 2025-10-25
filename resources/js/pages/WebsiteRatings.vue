@@ -279,10 +279,7 @@ onMounted(() => {
                     {{ error }}
                 </div>
 
-                <div
-                    v-if="!ratingOptions.length && !isLoading"
-                    class="rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700"
-                >
+                <div v-if="!ratingOptions.length && !isLoading" class="rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
                     No rating options are configured yet. Add options first so users can submit website ratings.
                 </div>
 
@@ -307,17 +304,12 @@ onMounted(() => {
                                 <div class="text-right text-xs text-neutral-500">
                                     <template v-if="currentOrg.website_rating_summary">
                                         <span class="font-semibold text-neutral-700">
-                                            Average: {{
-                                                optionBySlug[currentOrg.website_rating_summary]?.name ||
-                                                currentOrg.website_rating_summary
-                                            }}
+                                            Average: {{ optionBySlug[currentOrg.website_rating_summary]?.name || currentOrg.website_rating_summary }}
                                         </span>
                                         <span v-if="currentOrg.website_rating_average !== null">
                                             ({{ formatAverage(currentOrg.website_rating_average) }})
                                         </span>
-                                        <span v-if="currentOrg.website_rating_count">
-                                            • {{ currentOrg.website_rating_count }} ratings
-                                        </span>
+                                        <span v-if="currentOrg.website_rating_count"> • {{ currentOrg.website_rating_count }} ratings </span>
                                     </template>
                                     <span v-else class="text-neutral-400">No ratings yet</span>
                                 </div>
@@ -341,15 +333,7 @@ onMounted(() => {
                                 </div>
                                 <div class="flex flex-wrap items-center justify-end gap-3">
                                     <span v-if="isRating" class="text-xs text-neutral-400">Saving rating…</span>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        class="rounded-full border-neutral-200 px-4 py-1.5 text-xs font-semibold text-neutral-600 hover:bg-neutral-100"
-                                        :disabled="isRating"
-                                        @click="skipWebsite"
-                                    >
-                                        Skip
-                                    </Button>
+                                    <Button variant="outline" size="sm" :disabled="isRating" @click="skipWebsite"> Skip </Button>
                                 </div>
                             </div>
                         </div>

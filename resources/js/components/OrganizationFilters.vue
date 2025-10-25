@@ -235,6 +235,14 @@ const getSortIcon = (column) => {
                     >
                         Website Rating {{ getSortIcon('website_rating') }}
                     </Button>
+                    <Button
+                        @click="handleSort('website_rating_weighted')"
+                        :variant="(filters.sort || []).some((s) => s.startsWith('website_rating_weighted:')) ? 'default' : 'outline'"
+                        size="sm"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                    >
+                        Weighted Rating {{ getSortIcon('website_rating_weighted') }}
+                    </Button>
                 </div>
             </div>
         </div>

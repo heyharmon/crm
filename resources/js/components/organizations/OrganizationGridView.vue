@@ -182,7 +182,16 @@ const getScreenshotUrl = (website) => {
                                         </span>
                                     </span>
                                     <span v-else class="text-neutral-400">No ratings yet</span>
-                                    <span v-if="getOptionLabelFromId(organization.my_website_rating_option_id, organization.my_website_rating_option_name)" class="text-neutral-500">
+                                    <span
+                                        v-if="organization.website_rating_weighted !== null"
+                                        class="inline-flex items-center gap-1 text-neutral-500"
+                                    >
+                                        Weighted: {{ formatAverage(organization.website_rating_weighted) }}
+                                    </span>
+                                    <span
+                                        v-if="getOptionLabelFromId(organization.my_website_rating_option_id, organization.my_website_rating_option_name)"
+                                        class="text-neutral-500"
+                                    >
                                         Your rating: {{ getOptionLabelFromId(organization.my_website_rating_option_id, organization.my_website_rating_option_name) }}
                                     </span>
                                 </div>

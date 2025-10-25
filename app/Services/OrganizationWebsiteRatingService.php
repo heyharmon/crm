@@ -57,10 +57,13 @@ class OrganizationWebsiteRatingService
             $summary = $this->resolveSummaryForAverage($average);
         }
 
+        $weighted = $this->calculateWeightedAverage($average, $count);
+
         $organization->forceFill([
             'website_rating_average' => $average,
             'website_rating_count' => $count,
             'website_rating_summary' => $summary,
+            'website_rating_weighted' => $weighted,
         ])->save();
     }
 
@@ -87,5 +90,47 @@ class OrganizationWebsiteRatingService
             ->first();
 
         return $option?->slug;
+    }
+
+    protected function calculateWeightedAverage(?float $average, int $count): ?float
+    {
+        if ($average === null) {
+            return null;
+        }
+
+        $global = $this->globalRatingStats();
+        if (!$global || $global['count'] === 0) {
+            return $average;
+        }
+
+        $m = config('ratings.minimum_votes', 3);
+        $C = $global['average'];
+        $v = $count;
+        if ($v === 0) {
+            return $C;
+        }
+
+        return (($v / ($v + $m)) * $average) + (($m / ($v + $m)) * $C);
+    }
+
+    protected function globalRatingStats(): ?array
+    {
+        static $stats = null;
+        if ($stats !== null) {
+            return $stats;
+        }
+
+        $result = OrganizationWebsiteRating::selectRaw('AVG(score) as avg_score, COUNT(*) as total')->first();
+        if (!$result || !$result->total) {
+            $stats = ['average' => null, 'count' => 0];
+            return $stats;
+        }
+
+        $stats = [
+            'average' => (float) $result->avg_score,
+            'count' => (int) $result->total,
+        ];
+
+        return $stats;
     }
 }

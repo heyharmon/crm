@@ -82,7 +82,7 @@ class OrganizationController extends Controller
             }
         }
 
-        $allowedSorts = ['name', 'city', 'state', 'category', 'score', 'reviews', 'website_rating', 'website_rating_average', 'created_at'];
+        $allowedSorts = ['name', 'city', 'state', 'category', 'score', 'reviews', 'website_rating', 'website_rating_average', 'website_rating_weighted', 'created_at'];
 
         // Support multi-sort via sort[]="field:direction"
         $sorts = $request->input('sort', []);
@@ -100,6 +100,8 @@ class OrganizationController extends Controller
                         $query->orderBy('organization_categories.name', $dir);
                     } elseif ($field === 'website_rating') {
                         $query->orderBy('organizations.website_rating_average', $dir);
+                    } elseif ($field === 'website_rating_weighted') {
+                        $query->orderBy('organizations.website_rating_weighted', $dir);
                     } else {
                         $query->orderBy('organizations.' . $field, $dir);
                     }
@@ -114,6 +116,8 @@ class OrganizationController extends Controller
                     $query->orderBy('organization_categories.name', $sortDirection);
                 } elseif ($sortBy === 'website_rating') {
                     $query->orderBy('organizations.website_rating_average', $sortDirection);
+                } elseif ($sortBy === 'website_rating_weighted') {
+                    $query->orderBy('organizations.website_rating_weighted', $sortDirection);
                 } else {
                     $query->orderBy('organizations.' . $sortBy, $sortDirection);
                 }

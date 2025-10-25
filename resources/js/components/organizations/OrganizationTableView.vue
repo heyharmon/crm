@@ -91,8 +91,8 @@ const formatAverage = (value) => {
                             {{ organization.category?.name || '-' }}
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
-                            <div class="font-medium text-neutral-900">{{ organization.city || '-' }}</div>
-                            <div class="text-xs text-neutral-500">{{ organization.state || '-' }}</div>
+                            <div class="font-medium text-neutral-700">{{ organization.state || '-' }}</div>
+                            <div class="text-xs text-neutral-500">{{ organization.city || '-' }}</div>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             <div v-if="organization.score" class="flex items-center gap-1 text-xs font-medium text-neutral-700">
@@ -115,17 +115,17 @@ const formatAverage = (value) => {
                                 No Website
                             </div>
                             <div v-else class="flex flex-col gap-2">
-                                <div class="flex flex-wrap items-center gap-2 text-xs text-neutral-500">
+                                <div class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                                     <span v-if="organization.website_rating_summary" class="font-medium text-neutral-700">
-                                        Average: {{ formatRatingSummary(organization.website_rating_summary) }}
+                                        {{ formatRatingSummary(organization.website_rating_summary) }}
                                     </span>
                                     <span v-else class="text-neutral-400">No ratings yet</span>
-                                    <span v-if="organization.website_rating_average !== null">
-                                        ({{ formatAverage(organization.website_rating_average) }})
-                                    </span>
-                                    <span v-if="organization.website_rating_count">
-                                        • {{ organization.website_rating_count }} ratings
-                                    </span>
+                                    <div class="flex flex-wrap items-center gap-1 text-xs text-neutral-500">
+                                        <span v-if="organization.website_rating_average !== null">
+                                            ({{ formatAverage(organization.website_rating_average) }})
+                                        </span>
+                                        <span v-if="organization.website_rating_count"> {{ organization.website_rating_count }} ratings </span>
+                                    </div>
                                 </div>
                             </div>
                         </td>

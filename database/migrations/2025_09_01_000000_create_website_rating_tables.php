@@ -44,6 +44,7 @@ return new class extends Migration
             $table->decimal('website_rating_average', 4, 2)->nullable()->after('website');
             $table->unsignedInteger('website_rating_count')->default(0)->after('website_rating_average');
             $table->string('website_rating_summary', 50)->nullable()->after('website_rating_count');
+            $table->decimal('website_rating_weighted', 4, 2)->nullable()->after('website_rating_summary');
         });
 
         if (Schema::hasColumn('organizations', 'website_rating')) {
@@ -54,9 +55,18 @@ return new class extends Migration
 
         DB::table('website_rating_options')->insert([
             [
+                'name' => 'Excellent',
+                'slug' => 'excellent',
+                'score' => 5,
+                'description' => 'Outstanding experience that exceeds expectations.',
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
                 'name' => 'Good',
                 'slug' => 'good',
-                'score' => 3,
+                'score' => 4,
                 'description' => 'Website meets expectations and offers a solid experience.',
                 'is_active' => true,
                 'created_at' => now(),
@@ -65,8 +75,17 @@ return new class extends Migration
             [
                 'name' => 'Okay',
                 'slug' => 'okay',
-                'score' => 2,
+                'score' => 3,
                 'description' => 'Website is usable but could benefit from improvements.',
+                'is_active' => true,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'name' => 'Poor',
+                'slug' => 'poor',
+                'score' => 2,
+                'description' => 'Website has notable issues that hurt the experience.',
                 'is_active' => true,
                 'created_at' => now(),
                 'updated_at' => now(),
@@ -94,6 +113,9 @@ return new class extends Migration
             }
             if (Schema::hasColumn('organizations', 'website_rating_count')) {
                 $table->dropColumn('website_rating_count');
+            }
+            if (Schema::hasColumn('organizations', 'website_rating_weighted')) {
+                $table->dropColumn('website_rating_weighted');
             }
             if (Schema::hasColumn('organizations', 'website_rating_average')) {
                 $table->dropColumn('website_rating_average');

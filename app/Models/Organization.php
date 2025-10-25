@@ -36,6 +36,7 @@ class Organization extends Model
         'reviews' => 'integer',
         'website_rating_average' => 'float',
         'website_rating_count' => 'integer',
+        'website_rating_weighted' => 'float',
     ];
 
     public function getFullAddressAttribute()

@@ -95,6 +95,13 @@ const formatRatingLabel = (slug) => {
             <span v-else class="text-neutral-400">No ratings yet</span>
           </div>
           <div>
+            <span class="font-medium text-neutral-900">Weighted:</span>
+            <span v-if="org().website_rating_weighted !== null">
+              {{ Number(org().website_rating_weighted).toFixed(2) }}
+            </span>
+            <span v-else class="text-neutral-400">No data</span>
+          </div>
+          <div>
             <span class="font-medium text-neutral-900">Your rating:</span>
             <span v-if="org().my_website_rating_option_name">
               {{ org().my_website_rating_option_name }}
