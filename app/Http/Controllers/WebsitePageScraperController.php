@@ -9,7 +9,7 @@ use App\Models\ApifyRun;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class WebsitePageController extends Controller
+class WebsitePageScraperController extends Controller
 {
     public function startScraping(Request $request)
     {

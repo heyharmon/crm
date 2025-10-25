@@ -8,7 +8,7 @@ use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationCategoryController;
 use App\Http\Controllers\WebsiteRatingController;
 use App\Http\Controllers\OrganizationGoogleMapsScraperController;
-use App\Http\Controllers\WebsitePageController;
+use App\Http\Controllers\WebsitePageScraperController;
 use App\Http\Controllers\WebsiteRatingOptionController;
 
 // Public routes
@@ -59,8 +59,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Web scraper routes
     Route::prefix('web-scraper')->group(function () {
-        Route::post('start', [WebsitePageController::class, 'startScraping']);
-        Route::get('runs', [WebsitePageController::class, 'getScrapingRuns']);
-        Route::get('runs/{apifyRun}', [WebsitePageController::class, 'getScrapingRun']);
+        Route::post('start', [WebsitePageScraperController::class, 'startScraping']);
+        Route::get('runs', [WebsitePageScraperController::class, 'getScrapingRuns']);
+        Route::get('runs/{apifyRun}', [WebsitePageScraperController::class, 'getScrapingRun']);
     });
 });

@@ -9,6 +9,10 @@ const props = defineProps({
 const organizationStore = useOrganizationStore()
 const isLoadingLocal = ref(false)
 const error = ref(null)
+const screenshotStatus = ref('idle') // idle | loading | ready | error | empty
+const screenshotError = ref(null)
+const screenshotSrc = ref(null)
+const activeScreenshotKey = ref(null)
 
 const load = async () => {
   try {
@@ -23,8 +27,6 @@ const load = async () => {
 }
 
 onMounted(load)
-watch(() => props.organizationId, load)
-
 const org = () => organizationStore.currentOrganization
 
 const formatRatingLabel = (slug) => {
@@ -34,6 +36,80 @@ const formatRatingLabel = (slug) => {
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(' ')
 }
+
+const normalizeWebsite = (url) => {
+  if (!url) return ''
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`
+}
+
+function getScreenshotUrl(website) {
+  if (!website) return null
+  const baseUrl = 'https://api.apiflash.com/v1/urltoimage'
+  const accessKey = '3725d3868ee3426e82b2a3b9eebde219'
+  const params = new URLSearchParams({
+    access_key: accessKey,
+    wait_until: 'network_idle',
+    no_cookie_banners: 'true',
+    url: normalizeWebsite(website)
+  })
+  return `${baseUrl}?${params.toString()}`
+}
+
+function resetScreenshot(status = 'idle') {
+  screenshotStatus.value = status
+  screenshotSrc.value = null
+  screenshotError.value = null
+  activeScreenshotKey.value = null
+}
+
+function loadScreenshot(organization) {
+  if (!organization) {
+    resetScreenshot('idle')
+    return
+  }
+
+  if (!organization.website) {
+    resetScreenshot('empty')
+    return
+  }
+
+  const screenshotUrl = getScreenshotUrl(organization.website)
+  if (!screenshotUrl) {
+    screenshotError.value = 'Screenshot unavailable.'
+    screenshotStatus.value = 'error'
+    screenshotSrc.value = null
+    return
+  }
+
+  const key = screenshotUrl
+  activeScreenshotKey.value = key
+  screenshotStatus.value = 'loading'
+  screenshotError.value = null
+  screenshotSrc.value = null
+
+  const img = new Image()
+  img.onload = () => {
+    if (activeScreenshotKey.value !== key) return
+    screenshotSrc.value = screenshotUrl
+    screenshotStatus.value = 'ready'
+  }
+  img.onerror = () => {
+    if (activeScreenshotKey.value !== key) return
+    screenshotStatus.value = 'error'
+    screenshotError.value = 'Screenshot unavailable.'
+    screenshotSrc.value = null
+  }
+  img.src = screenshotUrl
+}
+
+watch(() => props.organizationId, load)
+watch(
+  () => organizationStore.currentOrganization,
+  (organization) => {
+    loadScreenshot(organization)
+  },
+  { immediate: true }
+)
 </script>
 
 <template>
@@ -52,8 +128,16 @@ const formatRatingLabel = (slug) => {
         <p v-if="org().category" class="text-neutral-600">{{ org().category.name }}</p>
       </div>
 
-      <div v-if="org().banner" class="rounded-lg overflow-hidden border border-neutral-200">
-        <img :src="org().banner" :alt="org().name" class="w-full max-h-56 object-cover" />
+      <div v-if="org().website" class="rounded-lg overflow-hidden border border-neutral-200">
+        <img v-if="screenshotStatus === 'ready' && screenshotSrc" :src="screenshotSrc" :alt="org().name" class="w-full max-h-56 object-cover" />
+        <div
+          v-else
+          class="flex h-56 w-full items-center justify-center bg-neutral-50 text-sm font-medium text-neutral-500"
+        >
+          <span v-if="screenshotStatus === 'loading'">Loading website preview…</span>
+          <span v-else-if="screenshotStatus === 'error'">{{ screenshotError || 'Screenshot unavailable.' }}</span>
+          <span v-else>Website preview unavailable.</span>
+        </div>
       </div>
 
       <div class="bg-white rounded-lg border border-neutral-200 p-4">

@@ -22,14 +22,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits([
-    'update:columns',
-    'open-sidebar',
-    'delete-organization',
-    'update-website-rating',
-    'clear-website-rating',
-    'page-change'
-])
+const emit = defineEmits(['update:columns', 'open-sidebar', 'delete-organization', 'update-website-rating', 'clear-website-rating', 'page-change'])
 
 const optionsBySlug = computed(() => {
     return (props.ratingOptions || []).reduce((map, option) => {
@@ -67,28 +60,28 @@ const getScreenshotUrl = (website) => {
             <span class="text-xs font-semibold uppercase tracking-wide text-neutral-400">Columns</span>
             <div class="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-white p-1">
                 <button
-                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
+                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
                     :class="props.columns === 1 ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
                     @click="emit('update:columns', 1)"
                 >
                     1
                 </button>
                 <button
-                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
+                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
                     :class="props.columns === 2 ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
                     @click="emit('update:columns', 2)"
                 >
                     2
                 </button>
                 <button
-                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
+                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
                     :class="props.columns === 3 ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
                     @click="emit('update:columns', 3)"
                 >
                     3
                 </button>
                 <button
-                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
+                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
                     :class="props.columns === 4 ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
                     @click="emit('update:columns', 4)"
                 >
@@ -157,7 +150,7 @@ const getScreenshotUrl = (website) => {
                                 <button
                                     v-for="option in ratingOptions"
                                     :key="option.id"
-                                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
+                                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
                                     :class="
                                         organization.my_website_rating_option_id === option.id
                                             ? 'bg-neutral-900 text-white shadow-sm'
@@ -177,22 +170,18 @@ const getScreenshotUrl = (website) => {
                                         <span v-if="organization.website_rating_average !== null">
                                             ({{ formatAverage(organization.website_rating_average) }})
                                         </span>
-                                        <span v-if="organization.website_rating_count">
-                                            • {{ organization.website_rating_count }} ratings
-                                        </span>
+                                        <span v-if="organization.website_rating_count"> • {{ organization.website_rating_count }} ratings </span>
                                     </span>
                                     <span v-else class="text-neutral-400">No ratings yet</span>
-                                    <span
-                                        v-if="organization.website_rating_weighted !== null"
-                                        class="inline-flex items-center gap-1 text-neutral-500"
-                                    >
+                                    <span v-if="organization.website_rating_weighted !== null" class="inline-flex items-center gap-1 text-neutral-500">
                                         Weighted: {{ formatAverage(organization.website_rating_weighted) }}
                                     </span>
                                     <span
                                         v-if="getOptionLabelFromId(organization.my_website_rating_option_id, organization.my_website_rating_option_name)"
                                         class="text-neutral-500"
                                     >
-                                        Your rating: {{ getOptionLabelFromId(organization.my_website_rating_option_id, organization.my_website_rating_option_name) }}
+                                        Your rating:
+                                        {{ getOptionLabelFromId(organization.my_website_rating_option_id, organization.my_website_rating_option_name) }}
                                     </span>
                                 </div>
                                 <button

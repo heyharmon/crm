@@ -5,7 +5,7 @@ Scrapes an organization's website using an Apify crawler actor and stores discov
 
 ## Flow
 - **Trigger**: `resources/js/pages/organizations/OrganizationIndex.vue` calls `POST /api/web-scraper/start` from the listing actions.
-- **Controller**: `app/Http/Controllers/WebsitePageController.php` validates input and dispatches jobs.
+- **Controller**: `app/Http/Controllers/WebsitePageScraperController.php` validates input and dispatches jobs.
 - **Jobs** (generic):
   - `app/Jobs/StartApifyActorJob.php`: starts the Apify run via `ApifyWebCrawlerService`.
   - `app/Jobs/MonitorApifyRunJob.php`: polls run status until completion.
