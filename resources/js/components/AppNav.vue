@@ -26,10 +26,16 @@ const logout = async () => {
                     <router-link to="/organization-categories" class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900">
                         Categories
                     </router-link>
-                    <router-link to="/website-rating-options" class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900">
+                    <router-link
+                        :to="{ name: 'organization-websites.options' }"
+                        class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900"
+                    >
                         Rating Options
                     </router-link>
-                    <router-link to="/website-ratings" class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900">
+                    <router-link
+                        :to="{ name: 'organization-websites.ratings' }"
+                        class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900"
+                    >
                         Rate Websites
                     </router-link>
                 </div>

@@ -13,8 +13,8 @@ import OrganizationCreate from '@/pages/organizations/OrganizationCreate.vue'
 import OrganizationEdit from '@/pages/organizations/OrganizationEdit.vue'
 import OrganizationImport from '@/pages/organizations/OrganizationImport.vue'
 import OrganizationCategoriesIndex from '@/pages/organization-categories/OrganizationCategoriesIndex.vue'
-import WebsiteRatingOptionsIndex from '@/pages/website-rating-options/WebsiteRatingOptionsIndex.vue'
-import WebsiteRatings from '@/pages/WebsiteRatings.vue'
+import OrganizationWebsiteRatingOptions from '@/pages/organization-websites/OrganizationWebsiteRatingOptions.vue'
+import OrganizationWebsiteRatings from '@/pages/organization-websites/OrganizationWebsiteRatings.vue'
 
 const routes = [
     {
@@ -89,15 +89,25 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
+        path: '/organization-websites/options',
+        name: 'organization-websites.options',
+        component: OrganizationWebsiteRatingOptions,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/organization-websites/ratings',
+        name: 'organization-websites.ratings',
+        component: OrganizationWebsiteRatings,
+        meta: { requiresAuth: true }
+    },
+    {
         path: '/website-rating-options',
-        name: 'website-rating-options.index',
-        component: WebsiteRatingOptionsIndex,
+        redirect: { name: 'organization-websites.options' },
         meta: { requiresAuth: true }
     },
     {
         path: '/website-ratings',
-        name: 'website-ratings',
-        component: WebsiteRatings,
+        redirect: { name: 'organization-websites.ratings' },
         meta: { requiresAuth: true }
     }
 ]
