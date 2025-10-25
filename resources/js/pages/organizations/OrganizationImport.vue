@@ -5,6 +5,7 @@ import { useApifyImportStore } from '@/stores/apifyImportStore'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/Input.vue'
+import { formatDisplayDate } from '@/utils/date'
 
 const router = useRouter()
 const apifyImportStore = useApifyImportStore()
@@ -163,7 +164,7 @@ const refreshImports = async () => {
                                         {{ importRun.status }}
                                     </span>
                                     <span class="text-sm text-neutral-500">
-                                        {{ new Date(importRun.created_at).toLocaleString() }}
+                                        {{ formatDisplayDate(importRun.created_at, 'MMM D, YYYY h:mm A') }}
                                     </span>
                                 </div>
 

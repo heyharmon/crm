@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Button from '@/components/ui/Button.vue'
 import Pagination from '@/components/ui/Pagination.vue'
+import { formatDisplayDate } from '@/utils/date'
 
 const props = defineProps({
     organizations: {
@@ -44,13 +45,6 @@ const getOptionLabelFromId = (id, fallback) => optionNameById.value?.[id] || fal
 const formatAverage = (value) => {
     if (value === null || value === undefined) return null
     return Number(value).toFixed(2)
-}
-
-const formatDate = (value) => {
-    if (!value) return null
-    const date = new Date(value)
-    if (Number.isNaN(date.getTime())) return null
-    return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' }).format(date)
 }
 
 const getScreenshotUrl = (website) => {
@@ -124,7 +118,7 @@ const getScreenshotUrl = (website) => {
                                 {{ [organization.city, organization.state].filter(Boolean).join(', ') }}
                             </div>
                             <div v-if="organization.last_major_redesign_at" class="text-xs font-medium text-emerald-700">
-                                Last redesign · {{ formatDate(organization.last_major_redesign_at) }}
+                                Last redesign · {{ formatDisplayDate(organization.last_major_redesign_at) }}
                             </div>
                         </div>
                         <div

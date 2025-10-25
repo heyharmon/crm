@@ -2,6 +2,7 @@
 import { onMounted, ref, watch } from 'vue'
 import { useOrganizationStore } from '@/stores/organizationStore'
 import { getRatingLabel, getRatingPillClasses } from '@/utils/ratingStyles'
+import { formatDisplayDate } from '@/utils/date'
 
 const props = defineProps({
     organizationId: { type: [String, Number], required: true }
@@ -33,14 +34,6 @@ const org = () => organizationStore.currentOrganization
 
 const formatRatingLabel = (slug) => getRatingLabel(slug)
 const ratingSummaryClasses = (slug) => getRatingPillClasses(slug)
-
-const formatDate = (value, options) => {
-    if (!value) return null
-    const date = new Date(value)
-    if (Number.isNaN(date.getTime())) return null
-    const formatter = new Intl.DateTimeFormat(undefined, options || { year: 'numeric', month: 'short', day: 'numeric' })
-    return formatter.format(date)
-}
 
 const normalizeWebsite = (url) => {
     if (!url) return ''
@@ -233,7 +226,7 @@ watch(
                     <div class="flex items-center justify-between">
                         <span class="font-medium text-neutral-900">Last major redesign:</span>
                         <span v-if="org().last_major_redesign_at" class="text-neutral-700">
-                            {{ formatDate(org().last_major_redesign_at) }}
+                            {{ formatDisplayDate(org().last_major_redesign_at) }}
                         </span>
                         <span v-else class="text-neutral-400"> Not detected </span>
                     </div>
@@ -247,7 +240,7 @@ watch(
                                 <img
                                     v-if="getRedesignScreenshotUrl(event)"
                                     :src="getRedesignScreenshotUrl(event)"
-                                    :alt="`Archived screenshot from ${formatDate(event.captured_at)}`"
+                                    :alt="`Archived screenshot from ${formatDisplayDate(event.captured_at)}`"
                                     class="absolute inset-0 h-full w-full object-cover"
                                     loading="lazy"
                                     @error="(e) => (e.target.style.display = 'none')"
@@ -258,7 +251,7 @@ watch(
                             </div>
                             <div class="px-4 py-3 space-y-2 text-sm text-neutral-700">
                                 <div class="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold text-neutral-900">
-                                    <span>{{ formatDate(event.captured_at) }}</span>
+                                    <span>{{ formatDisplayDate(event.captured_at) }}</span>
                                     <span class="text-xs font-medium text-neutral-500">≈ {{ event.persistence_days }} days stable</span>
                                 </div>
                                 <p class="text-xs text-neutral-500 break-words">Digest: {{ event.digest || 'n/a' }}</p>

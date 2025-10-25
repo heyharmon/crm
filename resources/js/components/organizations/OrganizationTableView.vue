@@ -2,6 +2,7 @@
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import { getRatingLabel, getRatingPillClasses } from '@/utils/ratingStyles'
+import { formatDisplayDate } from '@/utils/date'
 
 const props = defineProps({
     organizations: {
@@ -62,13 +63,6 @@ const ratingSummaryClasses = (slug) => getRatingPillClasses(slug)
 const formatAverage = (value) => {
     if (value === null || value === undefined) return null
     return Number(value).toFixed(2)
-}
-
-const formatDate = (value) => {
-    if (!value) return null
-    const date = new Date(value)
-    if (Number.isNaN(date.getTime())) return null
-    return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' }).format(date)
 }
 
 const formatPagesCount = (organization) => {
@@ -159,7 +153,7 @@ const formatPagesCount = (organization) => {
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             <span v-if="organization.last_major_redesign_at">
-                                {{ formatDate(organization.last_major_redesign_at) }}
+                                {{ formatDisplayDate(organization.last_major_redesign_at) }}
                             </span>
                             <span v-else class="text-neutral-400">—</span>
                         </td>
