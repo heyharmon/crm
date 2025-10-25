@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\OrganizationCategory;
 use App\Models\OrganizationWebsiteRating;
+use App\Models\OrganizationWebsiteRedesign;
 
 class Organization extends Model
 {
@@ -37,6 +38,7 @@ class Organization extends Model
         'website_rating_average' => 'float',
         'website_rating_count' => 'integer',
         'website_rating_weighted' => 'float',
+        'last_major_redesign_at' => 'date',
     ];
 
     public function getFullAddressAttribute()
@@ -90,5 +92,10 @@ class Organization extends Model
     public function websiteRatings(): HasMany
     {
         return $this->hasMany(OrganizationWebsiteRating::class);
+    }
+
+    public function websiteRedesigns(): HasMany
+    {
+        return $this->hasMany(OrganizationWebsiteRedesign::class)->orderByDesc('captured_at');
     }
 }

@@ -59,6 +59,14 @@ const formatAverage = (value) => {
     if (value === null || value === undefined) return null
     return Number(value).toFixed(2)
 }
+
+const formatDate = (value) => {
+    if (!value) return null
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return null
+    return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' }).format(date)
+}
+
 const formatPagesCount = (organization) => {
     if (!organization?.website) return '-'
     const count = organization.pages_count
@@ -80,6 +88,7 @@ const formatPagesCount = (organization) => {
                         <th class="border-b border-neutral-200 px-4 py-3">Location</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Score</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Reviews</th>
+                        <th class="border-b border-neutral-200 px-4 py-3">Last Redesign</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Website Rating</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Pages</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Actions</th>
@@ -143,6 +152,12 @@ const formatPagesCount = (organization) => {
                                 {{ organization.reviews }}
                             </span>
                             <span v-else>-</span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
+                            <span v-if="organization.last_major_redesign_at">
+                                {{ formatDate(organization.last_major_redesign_at) }}
+                            </span>
+                            <span v-else class="text-neutral-400">—</span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             <div

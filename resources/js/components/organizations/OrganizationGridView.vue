@@ -46,6 +46,13 @@ const formatAverage = (value) => {
     return Number(value).toFixed(2)
 }
 
+const formatDate = (value) => {
+    if (!value) return null
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return null
+    return new Intl.DateTimeFormat(undefined, { year: 'numeric', month: 'short', day: 'numeric' }).format(date)
+}
+
 const getScreenshotUrl = (website) => {
     if (!website) return null
     const baseUrl = 'https://api.apiflash.com/v1/urltoimage'
@@ -115,6 +122,9 @@ const getScreenshotUrl = (website) => {
                             </div>
                             <div v-if="organization.city || organization.state" class="text-sm text-neutral-500">
                                 {{ [organization.city, organization.state].filter(Boolean).join(', ') }}
+                            </div>
+                            <div v-if="organization.last_major_redesign_at" class="text-xs font-medium text-emerald-700">
+                                Last redesign · {{ formatDate(organization.last_major_redesign_at) }}
                             </div>
                         </div>
                         <div

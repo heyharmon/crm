@@ -8,5 +8,6 @@ This directory contains high-level overviews of the main domains in the CRM appl
 - **invitations** – invitation tokens and flows
 - **organizations** – organization records and browsing
 - **scrapers** – importing and scraping data via external services
+- **website-redesigns** – Wayback-powered redesign detection and historical context
 
 Use these documents as quick context for AI coding agents working within each domain.
