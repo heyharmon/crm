@@ -190,6 +190,15 @@ const clearWebsiteRating = async (organizationId) => {
     }
 }
 
+const detectWebsiteRedesign = async (organization) => {
+    if (!organization?.id) return
+    try {
+        await organizationStore.detectWebsiteRedesign(organization.id)
+    } catch (error) {
+        console.error('Error queuing redesign detection:', error)
+    }
+}
+
 // Taller screenshot heights for 1–2 column modes
 // Sidebar state synced with route query
 const sidebarMode = ref(null) // 'view' | 'edit' | null
@@ -348,6 +357,7 @@ const editFormRef = ref(null)
                         :format-website="formatWebsite"
                         @open-sidebar="({ mode, id }) => openSidebar(mode, id)"
                         @start-web-scraping="startWebScraping"
+                        @detect-redesign="detectWebsiteRedesign"
                         @delete-organization="deleteOrganization"
                         @page-change="handlePageChange"
                     />

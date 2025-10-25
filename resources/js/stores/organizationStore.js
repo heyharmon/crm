@@ -202,6 +202,18 @@ export const useOrganizationStore = defineStore('organization', {
             }
         },
 
+        async detectWebsiteRedesign(organizationId) {
+            this.error = null
+
+            try {
+                return await api.post(`/organizations/${organizationId}/website-redesigns`)
+            } catch (error) {
+                this.error = error.message || 'Failed to queue redesign detection'
+                console.error('Error queuing redesign detection:', error)
+                throw error
+            }
+        },
+
         setFilters(newFilters) {
             this.filters = { ...this.filters, ...newFilters }
         },

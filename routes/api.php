@@ -10,6 +10,7 @@ use App\Http\Controllers\WebsiteRatingController;
 use App\Http\Controllers\OrganizationGoogleMapsScraperController;
 use App\Http\Controllers\WebsitePageScraperController;
 use App\Http\Controllers\WebsiteRatingOptionController;
+use App\Http\Controllers\OrganizationWebsiteRedesignController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -49,6 +50,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Organization website ratings
     Route::post('organizations/{organization}/website-ratings', [WebsiteRatingController::class, 'store']);
     Route::delete('organizations/{organization}/website-ratings', [WebsiteRatingController::class, 'destroy']);
+    Route::post('organizations/{organization}/website-redesigns', [OrganizationWebsiteRedesignController::class, 'store']);
 
     // Google Maps scraper routes
     Route::prefix('google-maps-scraper')->group(function () {

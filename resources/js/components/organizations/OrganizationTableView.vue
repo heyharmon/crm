@@ -18,7 +18,7 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['open-sidebar', 'start-web-scraping', 'delete-organization', 'page-change'])
+const emit = defineEmits(['open-sidebar', 'start-web-scraping', 'delete-organization', 'detect-redesign', 'page-change'])
 const openMenuId = ref(null)
 const toggleMenu = (organizationId) => {
     openMenuId.value = openMenuId.value === organizationId ? null : organizationId
@@ -39,6 +39,10 @@ const handleScrape = (organization) => {
 }
 const handleDelete = (organizationId) => {
     emit('delete-organization', organizationId)
+    closeMenu()
+}
+const handleDetectRedesign = (organization) => {
+    emit('detect-redesign', organization)
     closeMenu()
 }
 onMounted(() => {
@@ -221,7 +225,15 @@ const formatPagesCount = (organization) => {
                                         type="button"
                                         @click.stop="handleScrape(organization)"
                                     >
-                                        Scrape
+                                        Count pages
+                                    </button>
+                                    <button
+                                        v-if="organization.website"
+                                        class="flex w-full items-center px-3 py-2 text-sm text-neutral-700 transition hover:bg-neutral-50"
+                                        type="button"
+                                        @click.stop="handleDetectRedesign(organization)"
+                                    >
+                                        Detect redesign
                                     </button>
                                     <button
                                         class="flex w-full items-center px-3 py-2 text-sm text-red-600 transition hover:bg-red-50"
