@@ -17,7 +17,7 @@ onMounted(async () => {
 const handleSubmit = async (organizationData) => {
   try {
     await organizationStore.updateOrganization(organizationId, organizationData);
-    router.push({ name: 'organizations.show', params: { id: organizationId } });
+    router.push({ name: 'organizations.index' });
   } catch (error) {
     console.error('Error updating organization:', error);
   }
@@ -28,8 +28,8 @@ const handleSubmit = async (organizationData) => {
   <DefaultLayout>
     <div class="container mx-auto py-8 px-4 max-w-4xl">
       <div class="mb-8">
-        <router-link :to="{ name: 'organizations.show', params: { id: organizationId } }" class="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block">
-          ← Back to Organization
+        <router-link :to="{ name: 'organizations.index' }" class="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block">
+          ← Back to Organizations
         </router-link>
         <h1 class="text-2xl font-bold">Edit Organization</h1>
       </div>

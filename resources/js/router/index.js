@@ -8,7 +8,6 @@ import TeamIndex from '@/pages/teams/TeamIndex.vue'
 import TeamShow from '@/pages/teams/TeamShow.vue'
 // Organization pages
 import OrganizationIndex from '@/pages/organizations/OrganizationIndex.vue'
-import OrganizationShow from '@/pages/organizations/OrganizationShow.vue'
 import OrganizationCreate from '@/pages/organizations/OrganizationCreate.vue'
 import OrganizationEdit from '@/pages/organizations/OrganizationEdit.vue'
 import OrganizationImport from '@/pages/organizations/OrganizationImport.vue'
@@ -68,12 +67,6 @@ const routes = [
         path: '/organizations/import',
         name: 'organizations.import',
         component: OrganizationImport,
-        meta: { requiresAuth: true }
-    },
-    {
-        path: '/organizations/:id',
-        name: 'organizations.show',
-        component: OrganizationShow,
         meta: { requiresAuth: true }
     },
     {

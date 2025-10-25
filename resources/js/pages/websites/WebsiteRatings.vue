@@ -3,6 +3,7 @@ import { ref, computed, onMounted, watch, reactive } from 'vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Button from '@/components/ui/Button.vue'
 import api from '@/services/api'
+import { getRatingButtonClasses } from '@/utils/ratingStyles'
 
 const queue = ref([])
 const currentOrg = ref(null)
@@ -29,6 +30,7 @@ const formatAverage = (value) => {
     if (value === null || value === undefined) return null
     return Number(value).toFixed(2)
 }
+const ratingButtonClasses = (option) => getRatingButtonClasses(option.slug, myRatingOptionId.value === option.id)
 
 const loadRatingOptions = async () => {
     try {
@@ -319,12 +321,8 @@ onMounted(() => {
                                         :key="option.id"
                                         size="lg"
                                         variant="ghost"
-                                        class="rounded-full px-6 py-2 text-sm font-semibold"
-                                        :class="
-                                            myRatingOptionId === option.id
-                                                ? 'bg-neutral-900 text-white'
-                                                : 'bg-neutral-100 text-neutral-900 hover:bg-neutral-200'
-                                        "
+                                        class="rounded-full px-6 py-2 text-sm font-semibold transition focus-visible:outline-offset-2"
+                                        :class="ratingButtonClasses(option)"
                                         :disabled="isRating"
                                         @click="rateWebsite(option.id)"
                                     >

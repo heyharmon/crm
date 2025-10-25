@@ -1,5 +1,6 @@
 <script setup>
 import Pagination from '@/components/ui/Pagination.vue'
+import { getRatingLabel, getRatingPillClasses } from '@/utils/ratingStyles'
 
 const props = defineProps({
     organizations: {
@@ -18,17 +19,21 @@ const props = defineProps({
 
 const emit = defineEmits(['open-sidebar', 'start-web-scraping', 'delete-organization', 'page-change'])
 
-const formatRatingSummary = (slug) => {
-    if (!slug) return null
-    return slug
-        .split('-')
-        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-        .join(' ')
-}
+const formatRatingSummary = (slug) => getRatingLabel(slug)
+const ratingSummaryClasses = (slug) => getRatingPillClasses(slug)
 
 const formatAverage = (value) => {
     if (value === null || value === undefined) return null
     return Number(value).toFixed(2)
+}
+
+const formatPagesCount = (organization) => {
+    if (!organization?.website) return '-'
+    const count = organization.pages_count
+    if (count === null || count === undefined) return '—'
+    const numericCount = Number(count)
+    if (!Number.isFinite(numericCount)) return '—'
+    return numericCount === 0 ? '—' : count
 }
 </script>
 
@@ -114,23 +119,29 @@ const formatAverage = (value) => {
                             >
                                 No Website
                             </div>
-                            <div v-else class="flex flex-col gap-2">
-                                <div class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
-                                    <span v-if="organization.website_rating_summary" class="font-medium text-neutral-700">
+                            <div v-else class="flex flex-col gap-1">
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        v-if="organization.website_rating_summary"
+                                        class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold"
+                                        :class="ratingSummaryClasses(organization.website_rating_summary)"
+                                    >
                                         {{ formatRatingSummary(organization.website_rating_summary) }}
                                     </span>
-                                    <span v-else class="text-neutral-400">No ratings yet</span>
-                                    <div class="flex flex-wrap items-center gap-1 text-xs text-neutral-500">
-                                        <span v-if="organization.website_rating_average !== null">
-                                            ({{ formatAverage(organization.website_rating_average) }})
-                                        </span>
-                                        <span v-if="organization.website_rating_count"> {{ organization.website_rating_count }} ratings </span>
-                                    </div>
+                                    <span v-else class="text-xs font-medium text-neutral-400">No ratings yet</span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-1 text-xs text-neutral-500">
+                                    <span v-if="organization.website_rating_average !== null">
+                                        ({{ formatAverage(organization.website_rating_average) }})
+                                    </span>
+                                    <span v-if="organization.website_rating_count">
+                                        {{ organization.website_rating_count }} ratings
+                                    </span>
                                 </div>
                             </div>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
-                            {{ organization.website ? organization.pages_count || 0 : '-' }}
+                            {{ formatPagesCount(organization) }}
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-neutral-700">
                             <div class="flex items-center gap-2">
