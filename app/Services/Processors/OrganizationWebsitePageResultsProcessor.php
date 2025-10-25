@@ -6,7 +6,7 @@ use App\Models\ApifyRun;
 use App\Services\ApifyWebCrawlerService;
 use App\Services\Processors\Contracts\ApifyResultsProcessor;
 
-class WebScrapingResultsProcessor implements ApifyResultsProcessor
+class OrganizationWebsitePageResultsProcessor implements ApifyResultsProcessor
 {
     public function __construct(private ApifyWebCrawlerService $crawlerService)
     {

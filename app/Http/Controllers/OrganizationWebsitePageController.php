@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Jobs\StartApifyActorJob;
 use App\Services\ApifyWebCrawlerService;
-use App\Services\Processors\WebScrapingResultsProcessor;
+use App\Services\Processors\OrganizationWebsitePageResultsProcessor;
 use App\Models\ApifyRun;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class WebScraperController extends Controller
+class OrganizationWebsitePageController extends Controller
 {
     public function startScraping(Request $request)
     {
@@ -23,7 +23,7 @@ class WebScraperController extends Controller
             $validated,
             Auth::id(),
             ApifyWebCrawlerService::class,
-            WebScrapingResultsProcessor::class
+            OrganizationWebsitePageResultsProcessor::class
         );
 
         return response()->json([

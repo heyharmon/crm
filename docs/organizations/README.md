@@ -6,7 +6,7 @@ Stores businesses or clients in the CRM and provides browsing, creation and edit
 ## Backend
 - **OrganizationController**: supports listing with filters, viewing details, creating, updating, deleting and restoring organizations. Website ratings expose both the simple average (`website_rating_average`) and Bayesian weighted score (`website_rating_weighted`), along with the current user’s selection.
 - **OrganizationCategoryController**: CRUD for reusable organization categories.
-- **WebsiteRatingOptionController**: CRUD for reusable rating options (e.g., Good/Okay/Bad) with reassignment tools when deleting.
+- **OrganizationWebsiteRatingOptionController**: CRUD for reusable rating options (e.g., Good/Okay/Bad) with reassignment tools when deleting.
 - **OrganizationWebsiteRatingController**: handles per-user rating submissions and clearing ratings.
 - **Organization model**: represents an organization with address, contact, and aggregate rating data; related `Page` records hold scraped website pages.
 - **WebsiteRatingOption & OrganizationWebsiteRating models**: manage rating metadata and individual user ratings.

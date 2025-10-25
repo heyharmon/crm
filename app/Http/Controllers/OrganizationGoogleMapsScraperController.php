@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Jobs\StartApifyActorJob;
 use App\Services\ApifyGoogleMapsScraperService;
-use App\Services\Processors\GoogleMapsResultsProcessor;
+use App\Services\Processors\OrganizationGoogleMapsResultsProcessor;
 use App\Models\ApifyRun;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class GoogleMapsScraperController extends Controller
+class OrganizationGoogleMapsScraperController extends Controller
 {
     public function startImport(Request $request)
     {
@@ -24,7 +24,7 @@ class GoogleMapsScraperController extends Controller
             $validated,
             Auth::id(),
             ApifyGoogleMapsScraperService::class,
-            GoogleMapsResultsProcessor::class
+            OrganizationGoogleMapsResultsProcessor::class
         );
         return response()->json([
             'message' => 'Google Maps import started successfully. You will be notified when it completes.',

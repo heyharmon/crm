@@ -6,7 +6,7 @@ use App\Models\ApifyRun;
 use App\Services\OrganizationImportService;
 use App\Services\Processors\Contracts\ApifyResultsProcessor;
 
-class GoogleMapsResultsProcessor implements ApifyResultsProcessor
+class OrganizationGoogleMapsResultsProcessor implements ApifyResultsProcessor
 {
     public function __construct(private OrganizationImportService $importService)
     {
@@ -17,4 +17,3 @@ class GoogleMapsResultsProcessor implements ApifyResultsProcessor
         return $this->importService->importFromApifyData($items, $apifyRun);
     }
 }
-

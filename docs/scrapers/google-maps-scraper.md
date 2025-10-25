@@ -6,10 +6,10 @@ Imports organizations into the CRM by running an Apify Google Maps actor and map
 ## Flow
 - Page: `resources/js/pages/organizations/OrganizationImport.vue`
 - Store: `resources/js/stores/apifyImportStore.js` (calls `/api/google-maps-scraper/*`)
-- Controller: `app/Http/Controllers/GoogleMapsScraperController.php`
+- Controller: `app/Http/Controllers/OrganizationGoogleMapsScraperController.php`
 - Jobs (generic): `StartApifyActorJob` → `MonitorApifyRunJob` → `ProcessApifyResultsJob`
 - Services: `ApifyGoogleMapsScraperService` (actor run/status/results)
-- Processor: `GoogleMapsResultsProcessor` → `OrganizationImportService`
+- Processor: `OrganizationGoogleMapsResultsProcessor` → `OrganizationImportService`
 - Model: `ApifyRun`
 
 ## API
