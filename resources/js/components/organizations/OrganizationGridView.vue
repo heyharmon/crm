@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from 'vue'
 import Button from '@/components/ui/Button.vue'
-import Pagination from '@/components/Pagination.vue'
+import Pagination from '@/components/ui/Pagination.vue'
 
 const props = defineProps({
     organizations: {

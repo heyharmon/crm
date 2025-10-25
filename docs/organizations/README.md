@@ -17,5 +17,5 @@ Stores businesses or clients in the CRM and provides browsing, creation and edit
 - **Organization Categories**: `resources/js/pages/organization-categories/Index.vue` manages category records.
 - **Website Rating Options**: `resources/js/pages/organization-websites/OrganizationWebsiteRatingOptions.vue` manages rating option records.
 - **Website Ratings**: `docs/website-ratings/README.md` describes the 5-point scale and Bayesian weighting.
-- **Components**: `resources/js/components/OrganizationForm.vue` and `OrganizationFilters.vue` share form and filter UI.
+- **Components**: `resources/js/components/organizations/OrganizationForm.vue` and `resources/js/components/organizations/OrganizationFilters.vue` share form and filter UI.
 - **Store**: `resources/js/stores/organizationStore.js` manages organization data, filters and pagination.

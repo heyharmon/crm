@@ -2,7 +2,7 @@
 import { useRouter } from 'vue-router';
 import { useOrganizationStore } from '@/stores/organizationStore';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
-import OrganizationForm from '@/components/OrganizationForm.vue';
+import OrganizationForm from '@/components/organizations/OrganizationForm.vue';
 
 const router = useRouter();
 const organizationStore = useOrganizationStore();
