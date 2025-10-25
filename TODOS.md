@@ -12,3 +12,9 @@
 3. **Add sitemap crawler job**
    - Implement a job that fetches `sitemap.xml` (including nested sitemap index files) for a given organization’s website and traverses all linked XML documents to enumerate pages.
    - Handle diverse sitemap structures (multiple child sitemaps for posts/pages/etc.) and ensure every discovered URL creates or updates `Page` records just like `ApifyWebCrawlerService::processResults`.
+
+4. **Detect last major website redesign via Wayback Machine**
+   - Build a service that calls the Internet Archive CDX API (e.g., `https://web.archive.org/cdx/search/cdx?url=:domain&output=json&fl=timestamp,digest&collapse=digest`) to retrieve the digest timeline for an organization’s homepage.
+   - Analyze the digest sequence to find the most recent “major change” defined as a digest shift that then remains stable across subsequent captures for at least several months (configurable window).
+   - Store the derived “last major redesign” date on the organization, expose it via API responses, and surface it in the UI where appropriate.
+   - Include fallbacks for sites with sparse archives (e.g., return `null` when no stable change is detected) and unit tests covering digest parsing and change detection edge cases.
