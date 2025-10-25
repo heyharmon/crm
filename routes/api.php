@@ -60,7 +60,5 @@ Route::middleware('auth:sanctum')->group(function () {
     // Web scraper routes
     Route::prefix('web-scraper')->group(function () {
         Route::post('start', [WebsitePageScraperController::class, 'startScraping']);
-        Route::get('runs', [WebsitePageScraperController::class, 'getScrapingRuns']);
-        Route::get('runs/{apifyRun}', [WebsitePageScraperController::class, 'getScrapingRun']);
     });
 });

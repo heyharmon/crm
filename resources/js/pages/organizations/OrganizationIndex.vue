@@ -142,10 +142,8 @@ const startWebScraping = async (organization) => {
     }
 
     try {
-        const data = await api.post('/web-scraper/start', {
-            organization_id: organization.id,
-            max_pages: 50,
-            max_depth: 2
+        await api.post('/web-scraper/start', {
+            organization_id: organization.id
         })
     } catch (error) {
         console.error('Error starting web scraping:', error)
