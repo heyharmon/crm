@@ -1,4 +1,5 @@
 <script setup>
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import { getRatingLabel, getRatingPillClasses } from '@/utils/ratingStyles'
 
@@ -18,6 +19,38 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['open-sidebar', 'start-web-scraping', 'delete-organization', 'page-change'])
+const openMenuId = ref(null)
+const toggleMenu = (organizationId) => {
+    openMenuId.value = openMenuId.value === organizationId ? null : organizationId
+}
+const closeMenu = () => {
+    openMenuId.value = null
+}
+const handleDocumentClick = () => {
+    closeMenu()
+}
+const handleEdit = (organizationId) => {
+    emit('open-sidebar', { mode: 'edit', id: organizationId })
+    closeMenu()
+}
+const handleScrape = (organization) => {
+    emit('start-web-scraping', organization)
+    closeMenu()
+}
+const handleDelete = (organizationId) => {
+    emit('delete-organization', organizationId)
+    closeMenu()
+}
+onMounted(() => {
+    if (typeof document !== 'undefined') {
+        document.addEventListener('click', handleDocumentClick)
+    }
+})
+onBeforeUnmount(() => {
+    if (typeof document !== 'undefined') {
+        document.removeEventListener('click', handleDocumentClick)
+    }
+})
 
 const formatRatingSummary = (slug) => getRatingLabel(slug)
 const ratingSummaryClasses = (slug) => getRatingPillClasses(slug)
@@ -26,7 +59,6 @@ const formatAverage = (value) => {
     if (value === null || value === undefined) return null
     return Number(value).toFixed(2)
 }
-
 const formatPagesCount = (organization) => {
     if (!organization?.website) return '-'
     const count = organization.pages_count
@@ -134,9 +166,7 @@ const formatPagesCount = (organization) => {
                                     <span v-if="organization.website_rating_average !== null">
                                         ({{ formatAverage(organization.website_rating_average) }})
                                     </span>
-                                    <span v-if="organization.website_rating_count">
-                                        {{ organization.website_rating_count }} ratings
-                                    </span>
+                                    <span v-if="organization.website_rating_count"> {{ organization.website_rating_count }} ratings </span>
                                 </div>
                             </div>
                         </td>
@@ -144,26 +174,48 @@ const formatPagesCount = (organization) => {
                             {{ formatPagesCount(organization) }}
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-neutral-700">
-                            <div class="flex items-center gap-2">
+                            <div class="relative flex justify-end" @keydown.escape.stop="closeMenu">
                                 <button
-                                    class="inline-flex items-center rounded-full border border-neutral-200 px-3 py-1 text-xs font-semibold text-green-700 transition hover:border-green-200 hover:bg-green-50"
-                                    @click.stop="emit('open-sidebar', { mode: 'edit', id: organization.id })"
+                                    class="inline-flex items-center justify-center rounded-full border border-neutral-200 p-2 text-neutral-600 transition hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900 focus-visible:outline-neutral-400"
+                                    type="button"
+                                    :aria-expanded="openMenuId === organization.id"
+                                    @click.stop="toggleMenu(organization.id)"
                                 >
-                                    Edit
+                                    <span class="sr-only">Open actions</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                                        <circle cx="4" cy="10" r="1.5" />
+                                        <circle cx="10" cy="10" r="1.5" />
+                                        <circle cx="16" cy="10" r="1.5" />
+                                    </svg>
                                 </button>
-                                <button
-                                    v-if="organization.website"
-                                    class="inline-flex items-center rounded-full border border-neutral-200 px-3 py-1 text-xs font-semibold text-purple-700 transition hover:border-purple-200 hover:bg-purple-50"
-                                    @click.stop="emit('start-web-scraping', organization)"
+                                <div
+                                    v-if="openMenuId === organization.id"
+                                    class="absolute right-0 top-10 z-20 w-40 rounded-lg border border-neutral-200 bg-white py-1 shadow-lg"
+                                    @click.stop
                                 >
-                                    Scrape
-                                </button>
-                                <button
-                                    class="inline-flex items-center rounded-full border border-neutral-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:border-red-200 hover:bg-red-50"
-                                    @click.stop="emit('delete-organization', organization.id)"
-                                >
-                                    Delete
-                                </button>
+                                    <button
+                                        class="flex w-full items-center px-3 py-2 text-sm text-neutral-700 transition hover:bg-neutral-50"
+                                        type="button"
+                                        @click.stop="handleEdit(organization.id)"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        v-if="organization.website"
+                                        class="flex w-full items-center px-3 py-2 text-sm text-neutral-700 transition hover:bg-neutral-50"
+                                        type="button"
+                                        @click.stop="handleScrape(organization)"
+                                    >
+                                        Scrape
+                                    </button>
+                                    <button
+                                        class="flex w-full items-center px-3 py-2 text-sm text-red-600 transition hover:bg-red-50"
+                                        type="button"
+                                        @click.stop="handleDelete(organization.id)"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
                             </div>
                         </td>
                     </tr>

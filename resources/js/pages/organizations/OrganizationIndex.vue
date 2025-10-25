@@ -197,6 +197,11 @@ const clearWebsiteRating = async (organizationId) => {
 const sidebarMode = ref(null) // 'view' | 'edit' | null
 const sidebarOrgId = ref(null)
 const isDrawerOpen = computed(() => !!sidebarMode.value && !!sidebarOrgId.value)
+const filteredTotalLabel = computed(() => {
+    const total = organizationStore.pagination?.total
+    if (total === null || total === undefined) return null
+    return Number.isFinite(total) ? total.toLocaleString() : String(total)
+})
 
 const syncFromRoute = () => {
     const { org, mode } = route.query
@@ -282,7 +287,10 @@ const editFormRef = ref(null)
         <div class="flex h-full flex-col min-h-0">
             <div class="border-b border-neutral-200 bg-white px-4 py-3 lg:px-6">
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <h1 class="text-xl font-semibold text-neutral-900">Organizations</h1>
+                    <h1 class="text-xl font-semibold text-neutral-900">
+                        Organizations
+                        <span v-if="filteredTotalLabel !== null" class="text-sm font-normal text-neutral-500">({{ filteredTotalLabel }})</span>
+                    </h1>
                     <div class="flex flex-wrap items-center gap-3">
                         <div class="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-white p-1">
                             <button
