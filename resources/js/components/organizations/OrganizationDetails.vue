@@ -8,6 +8,7 @@ const props = defineProps({
 })
 
 const organizationStore = useOrganizationStore()
+const APIFLASH_ACCESS_KEY = '3725d3868ee3426e82b2a3b9eebde219'
 const isLoadingLocal = ref(false)
 const error = ref(null)
 const screenshotStatus = ref('idle') // idle | loading | ready | error | empty
@@ -46,17 +47,21 @@ const normalizeWebsite = (url) => {
     return /^https?:\/\//i.test(url) ? url : `https://${url}`
 }
 
-function getScreenshotUrl(website) {
-    if (!website) return null
+function buildApiflashUrl(targetUrl) {
+    if (!targetUrl) return null
     const baseUrl = 'https://api.apiflash.com/v1/urltoimage'
-    const accessKey = '3725d3868ee3426e82b2a3b9eebde219'
     const params = new URLSearchParams({
-        access_key: accessKey,
+        access_key: APIFLASH_ACCESS_KEY,
         wait_until: 'network_idle',
         no_cookie_banners: 'true',
-        url: normalizeWebsite(website)
+        url: targetUrl
     })
     return `${baseUrl}?${params.toString()}`
+}
+
+function getScreenshotUrl(website) {
+    if (!website) return null
+    return buildApiflashUrl(normalizeWebsite(website))
 }
 
 function resetScreenshot(status = 'idle') {
@@ -104,6 +109,21 @@ function loadScreenshot(organization) {
         screenshotSrc.value = null
     }
     img.src = screenshotUrl
+}
+
+const buildArchivedUrl = (event) => {
+    if (!event) return null
+    const timestamp = event.wayback_timestamp || event.timestamp
+    const baseWebsite = org()?.website
+    if (!timestamp || !baseWebsite) return null
+    const encodedOriginal = normalizeWebsite(baseWebsite)
+    return `https://web.archive.org/web/${timestamp}/${encodedOriginal}`
+}
+
+const getRedesignScreenshotUrl = (event) => {
+    const archivedUrl = buildArchivedUrl(event)
+    if (!archivedUrl) return null
+    return buildApiflashUrl(archivedUrl)
 }
 
 watch(() => props.organizationId, load)
@@ -217,17 +237,44 @@ watch(
                         </span>
                         <span v-else class="text-neutral-400"> Not detected </span>
                     </div>
-                    <div v-if="org().website_redesigns && org().website_redesigns.length" class="space-y-2">
+                    <div v-if="org().website_redesigns && org().website_redesigns.length" class="space-y-3">
                         <div
                             v-for="event in org().website_redesigns"
                             :key="event.id || event.wayback_timestamp"
-                            class="rounded-lg border border-neutral-200 bg-neutral-50 px-3 py-2"
+                            class="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden"
                         >
-                            <div class="flex items-center justify-between text-sm font-medium text-neutral-900">
-                                <span>{{ formatDate(event.captured_at) }}</span>
-                                <span class="text-xs text-neutral-500">≈ {{ event.persistence_days }} days stable</span>
+                            <div class="h-40 bg-neutral-100 relative">
+                                <img
+                                    v-if="getRedesignScreenshotUrl(event)"
+                                    :src="getRedesignScreenshotUrl(event)"
+                                    :alt="`Archived screenshot from ${formatDate(event.captured_at)}`"
+                                    class="absolute inset-0 h-full w-full object-cover"
+                                    loading="lazy"
+                                    @error="(e) => (e.target.style.display = 'none')"
+                                />
+                                <div class="absolute inset-0 flex items-center justify-center text-xs font-medium text-neutral-500" v-else>
+                                    Preview unavailable
+                                </div>
                             </div>
-                            <p class="mt-1 text-xs text-neutral-500 break-words">Digest: {{ event.digest || 'n/a' }}</p>
+                            <div class="px-4 py-3 space-y-2 text-sm text-neutral-700">
+                                <div class="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold text-neutral-900">
+                                    <span>{{ formatDate(event.captured_at) }}</span>
+                                    <span class="text-xs font-medium text-neutral-500">≈ {{ event.persistence_days }} days stable</span>
+                                </div>
+                                <p class="text-xs text-neutral-500 break-words">Digest: {{ event.digest || 'n/a' }}</p>
+                                <div class="flex items-center justify-between text-xs">
+                                    <a
+                                        v-if="buildArchivedUrl(event)"
+                                        :href="buildArchivedUrl(event)"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        class="text-blue-600 hover:text-blue-800 font-medium"
+                                    >
+                                        View archived site →
+                                    </a>
+                                    <span class="text-neutral-400">Wayback Machine</span>
+                                </div>
+                            </div>
                         </div>
                         <p class="text-xs text-neutral-400">Data from the Internet Archive Wayback Machine</p>
                     </div>
