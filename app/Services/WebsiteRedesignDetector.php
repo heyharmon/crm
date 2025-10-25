@@ -40,7 +40,7 @@ class WebsiteRedesignDetector
                 ->get(config('redesign.cdx_endpoint'), [
                     'url' => $normalized,
                     'output' => 'json',
-                    'fl' => 'timestamp,digest',
+                    'fl' => 'timestamp,digest,statuscode,mimetype,length',
                     'collapse' => 'digest',
                 ]);
         } catch (\Throwable $exception) {
@@ -65,11 +65,30 @@ class WebsiteRedesignDetector
         }
 
         $rows = array_slice($payload, 1);
+        $allowedStatusCodes = $this->allowedStatusCodes();
+        $allowedMimeTypes = $this->allowedMimeTypes();
+        $minPayloadBytes = $this->minPayloadBytes();
         $snapshots = [];
 
         foreach ($rows as $row) {
             $timestamp = Arr::get($row, 0);
             $digest = Arr::get($row, 1);
+            $statusCodeRaw = Arr::get($row, 2);
+            $statusCode = is_numeric($statusCodeRaw) ? (int) $statusCodeRaw : null;
+            $mimeType = Arr::get($row, 3);
+            $payloadBytesRaw = Arr::get($row, 4);
+            $payloadBytes = is_numeric($payloadBytesRaw) ? (int) $payloadBytesRaw : null;
+
+            if (!$this->snapshotPassesFilters(
+                $statusCode,
+                is_string($mimeType) ? $mimeType : null,
+                $payloadBytes,
+                $allowedStatusCodes,
+                $allowedMimeTypes,
+                $minPayloadBytes
+            )) {
+                continue;
+            }
 
             if (!is_string($timestamp) || $timestamp === '') {
                 continue;
@@ -156,5 +175,77 @@ class WebsiteRedesignDetector
         }
 
         return $parts['host'];
+    }
+
+    /**
+     * @return array<int>
+     */
+    private function allowedStatusCodes(): array
+    {
+        $codes = config('redesign.allowed_status_codes');
+
+        if (!is_array($codes) || empty($codes)) {
+            return [200];
+        }
+
+        return array_values(array_filter(array_map(static function ($value) {
+            $code = (int) $value;
+
+            return $code > 0 ? $code : null;
+        }, $codes)));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function allowedMimeTypes(): array
+    {
+        $types = config('redesign.allowed_mimetypes');
+
+        if (!is_array($types) || empty($types)) {
+            return ['text/html'];
+        }
+
+        return array_values(array_filter(array_map(static function ($value) {
+            $type = Str::lower(trim((string) $value));
+
+            return $type !== '' ? $type : null;
+        }, $types)));
+    }
+
+    private function minPayloadBytes(): int
+    {
+        return max(0, (int) config('redesign.min_payload_bytes', 10240));
+    }
+
+    private function snapshotPassesFilters(
+        ?int $statusCode,
+        ?string $mimeType,
+        ?int $payloadBytes,
+        array $allowedStatusCodes,
+        array $allowedMimeTypes,
+        int $minPayloadBytes
+    ): bool {
+        if (!empty($allowedStatusCodes) && ($statusCode === null || !in_array($statusCode, $allowedStatusCodes, true))) {
+            return false;
+        }
+
+        if (!empty($allowedMimeTypes)) {
+            if ($mimeType === null) {
+                return false;
+            }
+
+            if (!in_array(Str::lower($mimeType), $allowedMimeTypes, true)) {
+                return false;
+            }
+        }
+
+        if ($minPayloadBytes > 0) {
+            if ($payloadBytes === null || $payloadBytes < $minPayloadBytes) {
+                return false;
+            }
+        }
+
+        return true;
     }
 }
