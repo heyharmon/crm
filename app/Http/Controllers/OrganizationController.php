@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Organization;
+use App\Models\OrganizationWebsiteRating;
+use App\Models\WebsiteRatingOption;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -18,6 +20,16 @@ class OrganizationController extends Controller
             ->leftJoin('organization_categories', 'organization_categories.id', '=', 'organizations.organization_category_id')
             // Append base columns; keep the withCount-added select intact
             ->addSelect('organizations.*');
+
+        $userId = Auth::id();
+        if ($userId) {
+            $query->addSelect([
+                'my_website_rating_option_id' => OrganizationWebsiteRating::select('website_rating_option_id')
+                    ->whereColumn('organization_id', 'organizations.id')
+                    ->where('user_id', $userId)
+                    ->limit(1),
+            ]);
+        }
         if ($request->filled('search')) {
             $search = $request->get('search');
             $query->where(function ($q) use ($search) {
@@ -32,6 +44,19 @@ class OrganizationController extends Controller
         }
         if ($request->filled('state')) {
             $query->byLocation(null, $request->get('state'));
+        }
+
+        if ($userId && $request->filled('my_website_rating')) {
+            $myRatingFilter = $request->get('my_website_rating');
+            if ($myRatingFilter === 'none') {
+                $query->whereDoesntHave('websiteRatings', function ($q) use ($userId) {
+                    $q->where('user_id', $userId);
+                });
+            } elseif ($myRatingFilter === 'any') {
+                $query->whereHas('websiteRatings', function ($q) use ($userId) {
+                    $q->where('user_id', $userId);
+                });
+            }
         }
         if ($request->filled('category')) {
             $query->where('organization_categories.name', 'LIKE', "%{$request->get('category')}%");
@@ -50,16 +75,14 @@ class OrganizationController extends Controller
         }
         if ($request->filled('website_rating')) {
             $rating = $request->get('website_rating');
-            if (in_array($rating, ['good', 'okay', 'bad'])) {
-                $query->where('organizations.website_rating', $rating);
-            } elseif ($rating === 'none') {
-                $query->where(function ($q) {
-                    $q->whereNull('organizations.website_rating')
-                        ->orWhere('organizations.website_rating', '=', '');
-                });
+            if ($rating === 'none') {
+                $query->whereNull('organizations.website_rating_summary');
+            } else {
+                $query->where('organizations.website_rating_summary', $rating);
             }
         }
-        $allowedSorts = ['name', 'city', 'state', 'category', 'score', 'reviews', 'website_rating', 'created_at'];
+
+        $allowedSorts = ['name', 'city', 'state', 'category', 'score', 'reviews', 'website_rating', 'website_rating_average', 'website_rating_weighted', 'created_at'];
 
         // Support multi-sort via sort[]="field:direction"
         $sorts = $request->input('sort', []);
@@ -75,6 +98,10 @@ class OrganizationController extends Controller
                 if (in_array($field, $allowedSorts)) {
                     if ($field === 'category') {
                         $query->orderBy('organization_categories.name', $dir);
+                    } elseif ($field === 'website_rating') {
+                        $query->orderBy('organizations.website_rating_average', $dir);
+                    } elseif ($field === 'website_rating_weighted') {
+                        $query->orderBy('organizations.website_rating_weighted', $dir);
                     } else {
                         $query->orderBy('organizations.' . $field, $dir);
                     }
@@ -87,6 +114,10 @@ class OrganizationController extends Controller
             if ($sortBy && in_array($sortBy, $allowedSorts)) {
                 if ($sortBy === 'category') {
                     $query->orderBy('organization_categories.name', $sortDirection);
+                } elseif ($sortBy === 'website_rating') {
+                    $query->orderBy('organizations.website_rating_average', $sortDirection);
+                } elseif ($sortBy === 'website_rating_weighted') {
+                    $query->orderBy('organizations.website_rating_weighted', $sortDirection);
                 } else {
                     $query->orderBy('organizations.' . $sortBy, $sortDirection);
                 }
@@ -99,6 +130,17 @@ class OrganizationController extends Controller
     public function show(Organization $organization)
     {
         $organization->load(['category'])->loadCount('pages');
+        if (Auth::check()) {
+            $myRating = $organization->websiteRatings()
+                ->where('user_id', Auth::id())
+                ->with('option')
+                ->first();
+
+            $organization->setAttribute('my_website_rating_option_id', $myRating?->website_rating_option_id);
+            $organization->setAttribute('my_website_rating_option_slug', $myRating?->option?->slug);
+            $organization->setAttribute('my_website_rating_option_name', $myRating?->option?->name);
+        }
+
         return response()->json($organization);
     }
 
@@ -114,7 +156,6 @@ class OrganizationController extends Controller
             'state' => 'nullable|string|max:100',
             'country_code' => 'nullable|string|size:2',
             'website' => 'nullable|url|max:500',
-            'website_rating' => 'nullable|in:good,okay,bad',
             'phone' => 'nullable|string|max:50',
             'organization_category_id' => 'nullable|exists:organization_categories,id',
             'notes' => 'nullable|string|max:2000',
@@ -136,7 +177,6 @@ class OrganizationController extends Controller
             'state' => 'nullable|string|max:100',
             'country_code' => 'nullable|string|size:2',
             'website' => 'nullable|url|max:500',
-            'website_rating' => 'nullable|in:good,okay,bad',
             'phone' => 'nullable|string|max:50',
             'organization_category_id' => 'nullable|exists:organization_categories,id',
             'notes' => 'nullable|string|max:2000',

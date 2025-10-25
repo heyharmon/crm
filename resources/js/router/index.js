@@ -8,12 +8,12 @@ import TeamIndex from '@/pages/teams/TeamIndex.vue'
 import TeamShow from '@/pages/teams/TeamShow.vue'
 // Organization pages
 import OrganizationIndex from '@/pages/organizations/OrganizationIndex.vue'
-import OrganizationShow from '@/pages/organizations/OrganizationShow.vue'
 import OrganizationCreate from '@/pages/organizations/OrganizationCreate.vue'
 import OrganizationEdit from '@/pages/organizations/OrganizationEdit.vue'
 import OrganizationImport from '@/pages/organizations/OrganizationImport.vue'
 import OrganizationCategoriesIndex from '@/pages/organization-categories/OrganizationCategoriesIndex.vue'
-import WebsiteRatings from '@/pages/WebsiteRatings.vue'
+import WebsiteRatingOptions from '@/pages/websites/WebsiteRatingOptions.vue'
+import WebsiteRatings from '@/pages/websites/WebsiteRatings.vue'
 
 const routes = [
     {
@@ -70,12 +70,6 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
-        path: '/organizations/:id',
-        name: 'organizations.show',
-        component: OrganizationShow,
-        meta: { requiresAuth: true }
-    },
-    {
         path: '/organizations/:id/edit',
         name: 'organizations.edit',
         component: OrganizationEdit,
@@ -88,9 +82,35 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
-        path: '/website-ratings',
-        name: 'website-ratings',
+        path: '/websites/options',
+        name: 'websites.options',
+        component: WebsiteRatingOptions,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/websites/ratings',
+        name: 'websites.ratings',
         component: WebsiteRatings,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/website-rating-options',
+        redirect: { name: 'websites.options' },
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/website-ratings',
+        redirect: { name: 'websites.ratings' },
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/organization-websites/options',
+        redirect: { name: 'websites.options' },
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/organization-websites/ratings',
+        redirect: { name: 'websites.ratings' },
         meta: { requiresAuth: true }
     }
 ]

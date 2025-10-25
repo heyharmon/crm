@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\OrganizationCategory;
+use App\Models\OrganizationWebsiteRating;
 
 class Organization extends Model
 {
@@ -24,7 +25,6 @@ class Organization extends Model
         'state',
         'country_code',
         'website',
-        'website_rating',
         'phone',
         'organization_category_id',
         'map_url',
@@ -34,6 +34,9 @@ class Organization extends Model
     protected $casts = [
         'score' => 'decimal:1',
         'reviews' => 'integer',
+        'website_rating_average' => 'float',
+        'website_rating_count' => 'integer',
+        'website_rating_weighted' => 'float',
     ];
 
     public function getFullAddressAttribute()
@@ -82,5 +85,10 @@ class Organization extends Model
     public function pages(): HasMany
     {
         return $this->hasMany(Page::class);
+    }
+
+    public function websiteRatings(): HasMany
+    {
+        return $this->hasMany(OrganizationWebsiteRating::class);
     }
 }

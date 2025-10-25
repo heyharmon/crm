@@ -1,5 +1,7 @@
 <script setup>
-import Pagination from '@/components/Pagination.vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
+import Pagination from '@/components/ui/Pagination.vue'
+import { getRatingLabel, getRatingPillClasses } from '@/utils/ratingStyles'
 
 const props = defineProps({
     organizations: {
@@ -16,7 +18,55 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['open-sidebar', 'start-web-scraping', 'delete-organization', 'update-website-rating', 'page-change'])
+const emit = defineEmits(['open-sidebar', 'start-web-scraping', 'delete-organization', 'page-change'])
+const openMenuId = ref(null)
+const toggleMenu = (organizationId) => {
+    openMenuId.value = openMenuId.value === organizationId ? null : organizationId
+}
+const closeMenu = () => {
+    openMenuId.value = null
+}
+const handleDocumentClick = () => {
+    closeMenu()
+}
+const handleEdit = (organizationId) => {
+    emit('open-sidebar', { mode: 'edit', id: organizationId })
+    closeMenu()
+}
+const handleScrape = (organization) => {
+    emit('start-web-scraping', organization)
+    closeMenu()
+}
+const handleDelete = (organizationId) => {
+    emit('delete-organization', organizationId)
+    closeMenu()
+}
+onMounted(() => {
+    if (typeof document !== 'undefined') {
+        document.addEventListener('click', handleDocumentClick)
+    }
+})
+onBeforeUnmount(() => {
+    if (typeof document !== 'undefined') {
+        document.removeEventListener('click', handleDocumentClick)
+    }
+})
+
+const formatRatingSummary = (slug) => getRatingLabel(slug)
+const ratingSummaryClasses = (slug) => getRatingPillClasses(slug)
+
+const formatAverage = (value) => {
+    if (value === null || value === undefined) return null
+    return Number(value).toFixed(2)
+}
+const formatPagesCount = (organization) => {
+    if (!organization?.website) return '-'
+    const count = organization.pages_count
+    if (count === null || count === undefined) return '—'
+    const numericCount = Number(count)
+    if (!Number.isFinite(numericCount)) return '—'
+    return numericCount === 0 ? '—' : count
+}
 </script>
 
 <template>
@@ -78,8 +128,8 @@ const emit = defineEmits(['open-sidebar', 'start-web-scraping', 'delete-organiza
                             {{ organization.category?.name || '-' }}
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
-                            <div class="font-medium text-neutral-900">{{ organization.city || '-' }}</div>
-                            <div class="text-xs text-neutral-500">{{ organization.state || '-' }}</div>
+                            <div class="font-medium text-neutral-700">{{ organization.state || '-' }}</div>
+                            <div class="text-xs text-neutral-500">{{ organization.city || '-' }}</div>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             <div v-if="organization.score" class="flex items-center gap-1 text-xs font-medium text-neutral-700">
@@ -95,49 +145,77 @@ const emit = defineEmits(['open-sidebar', 'start-web-scraping', 'delete-organiza
                             <span v-else>-</span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
-                            <span
-                                v-if="organization.website_rating"
-                                :class="{
-                                    'border border-green-200 bg-green-100 text-green-700': organization.website_rating === 'good',
-                                    'border border-yellow-200 bg-yellow-100 text-yellow-700': organization.website_rating === 'okay',
-                                    'border border-red-200 bg-red-100 text-red-600': organization.website_rating === 'bad'
-                                }"
-                                class="rounded-full px-2.5 py-1 text-xs font-medium capitalize"
-                            >
-                                {{ organization.website_rating }}
-                            </span>
                             <div
-                                v-else-if="!organization.website"
+                                v-if="!organization.website"
                                 class="inline-flex items-center rounded-full border border-dashed border-neutral-300 px-2.5 py-1 text-xs font-medium text-neutral-500"
                             >
                                 No Website
                             </div>
-                            <span v-else>-</span>
+                            <div v-else class="flex flex-col gap-1">
+                                <div class="flex items-center gap-2">
+                                    <span
+                                        v-if="organization.website_rating_summary"
+                                        class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold"
+                                        :class="ratingSummaryClasses(organization.website_rating_summary)"
+                                    >
+                                        {{ formatRatingSummary(organization.website_rating_summary) }}
+                                    </span>
+                                    <span v-else class="text-xs font-medium text-neutral-400">No ratings yet</span>
+                                </div>
+                                <div class="flex flex-wrap items-center gap-1 text-xs text-neutral-500">
+                                    <span v-if="organization.website_rating_average !== null">
+                                        ({{ formatAverage(organization.website_rating_average) }})
+                                    </span>
+                                    <span v-if="organization.website_rating_count"> {{ organization.website_rating_count }} ratings </span>
+                                </div>
+                            </div>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
-                            {{ organization.website ? organization.pages_count || 0 : '-' }}
+                            {{ formatPagesCount(organization) }}
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-neutral-700">
-                            <div class="flex items-center gap-2">
+                            <div class="relative flex justify-end" @keydown.escape.stop="closeMenu">
                                 <button
-                                    class="inline-flex items-center rounded-full border border-neutral-200 px-3 py-1 text-xs font-semibold text-green-700 transition hover:border-green-200 hover:bg-green-50"
-                                    @click.stop="emit('open-sidebar', { mode: 'edit', id: organization.id })"
+                                    class="inline-flex items-center justify-center rounded-full border border-neutral-200 p-2 text-neutral-600 transition hover:border-neutral-300 hover:bg-neutral-50 hover:text-neutral-900 focus-visible:outline-neutral-400"
+                                    type="button"
+                                    :aria-expanded="openMenuId === organization.id"
+                                    @click.stop="toggleMenu(organization.id)"
                                 >
-                                    Edit
+                                    <span class="sr-only">Open actions</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="h-4 w-4">
+                                        <circle cx="4" cy="10" r="1.5" />
+                                        <circle cx="10" cy="10" r="1.5" />
+                                        <circle cx="16" cy="10" r="1.5" />
+                                    </svg>
                                 </button>
-                                <button
-                                    v-if="organization.website"
-                                    class="inline-flex items-center rounded-full border border-neutral-200 px-3 py-1 text-xs font-semibold text-purple-700 transition hover:border-purple-200 hover:bg-purple-50"
-                                    @click.stop="emit('start-web-scraping', organization)"
+                                <div
+                                    v-if="openMenuId === organization.id"
+                                    class="absolute right-0 top-10 z-20 w-40 rounded-lg border border-neutral-200 bg-white py-1 shadow-lg"
+                                    @click.stop
                                 >
-                                    Scrape
-                                </button>
-                                <button
-                                    class="inline-flex items-center rounded-full border border-neutral-200 px-3 py-1 text-xs font-semibold text-red-600 transition hover:border-red-200 hover:bg-red-50"
-                                    @click.stop="emit('delete-organization', organization.id)"
-                                >
-                                    Delete
-                                </button>
+                                    <button
+                                        class="flex w-full items-center px-3 py-2 text-sm text-neutral-700 transition hover:bg-neutral-50"
+                                        type="button"
+                                        @click.stop="handleEdit(organization.id)"
+                                    >
+                                        Edit
+                                    </button>
+                                    <button
+                                        v-if="organization.website"
+                                        class="flex w-full items-center px-3 py-2 text-sm text-neutral-700 transition hover:bg-neutral-50"
+                                        type="button"
+                                        @click.stop="handleScrape(organization)"
+                                    >
+                                        Scrape
+                                    </button>
+                                    <button
+                                        class="flex w-full items-center px-3 py-2 text-sm text-red-600 transition hover:bg-red-50"
+                                        type="button"
+                                        @click.stop="handleDelete(organization.id)"
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
                             </div>
                         </td>
                     </tr>

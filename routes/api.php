@@ -6,8 +6,10 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationCategoryController;
-use App\Http\Controllers\GoogleMapsScraperController;
-use App\Http\Controllers\WebScraperController;
+use App\Http\Controllers\WebsiteRatingController;
+use App\Http\Controllers\OrganizationGoogleMapsScraperController;
+use App\Http\Controllers\WebsitePageScraperController;
+use App\Http\Controllers\WebsiteRatingOptionController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -39,17 +41,26 @@ Route::middleware('auth:sanctum')->group(function () {
         'index', 'store', 'update', 'destroy'
     ]);
 
+    // Website rating options
+    Route::resource('website-rating-options', WebsiteRatingOptionController::class)->only([
+        'index', 'store', 'update', 'destroy'
+    ]);
+
+    // Organization website ratings
+    Route::post('organizations/{organization}/website-ratings', [WebsiteRatingController::class, 'store']);
+    Route::delete('organizations/{organization}/website-ratings', [WebsiteRatingController::class, 'destroy']);
+
     // Google Maps scraper routes
     Route::prefix('google-maps-scraper')->group(function () {
-        Route::post('start', [GoogleMapsScraperController::class, 'startImport']);
-        Route::get('runs', [GoogleMapsScraperController::class, 'getImports']);
-        Route::get('runs/{apifyRun}', [GoogleMapsScraperController::class, 'getImport']);
+        Route::post('start', [OrganizationGoogleMapsScraperController::class, 'startImport']);
+        Route::get('runs', [OrganizationGoogleMapsScraperController::class, 'getImports']);
+        Route::get('runs/{apifyRun}', [OrganizationGoogleMapsScraperController::class, 'getImport']);
     });
 
     // Web scraper routes
     Route::prefix('web-scraper')->group(function () {
-        Route::post('start', [WebScraperController::class, 'startScraping']);
-        Route::get('runs', [WebScraperController::class, 'getScrapingRuns']);
-        Route::get('runs/{apifyRun}', [WebScraperController::class, 'getScrapingRun']);
+        Route::post('start', [WebsitePageScraperController::class, 'startScraping']);
+        Route::get('runs', [WebsitePageScraperController::class, 'getScrapingRuns']);
+        Route::get('runs/{apifyRun}', [WebsitePageScraperController::class, 'getScrapingRun']);
     });
 });

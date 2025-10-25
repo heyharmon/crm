@@ -7,6 +7,10 @@ const props = defineProps({
     filters: {
         type: Object,
         required: true
+    },
+    ratingOptions: {
+        type: Array,
+        default: () => []
     }
 })
 
@@ -159,28 +163,14 @@ const getSortIcon = (column) => {
                             Any
                         </Button>
                         <Button
+                            v-for="option in ratingOptions"
+                            :key="option.id"
                             size="sm"
-                            :variant="filters.website_rating === 'good' ? 'default' : 'outline'"
+                            :variant="filters.website_rating === option.slug ? 'default' : 'outline'"
                             class="rounded-full border-neutral-200 px-3 py-1 text-xs"
-                            @click="setWebsiteRatingFilter('good')"
+                            @click="setWebsiteRatingFilter(option.slug)"
                         >
-                            Good
-                        </Button>
-                        <Button
-                            size="sm"
-                            :variant="filters.website_rating === 'okay' ? 'default' : 'outline'"
-                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
-                            @click="setWebsiteRatingFilter('okay')"
-                        >
-                            Okay
-                        </Button>
-                        <Button
-                            size="sm"
-                            :variant="filters.website_rating === 'bad' ? 'default' : 'outline'"
-                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
-                            @click="setWebsiteRatingFilter('bad')"
-                        >
-                            Bad
+                            {{ option.name }}
                         </Button>
                         <Button
                             size="sm"
@@ -244,6 +234,14 @@ const getSortIcon = (column) => {
                         class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                     >
                         Website Rating {{ getSortIcon('website_rating') }}
+                    </Button>
+                    <Button
+                        @click="handleSort('website_rating_weighted')"
+                        :variant="(filters.sort || []).some((s) => s.startsWith('website_rating_weighted:')) ? 'default' : 'outline'"
+                        size="sm"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                    >
+                        Weighted Rating {{ getSortIcon('website_rating_weighted') }}
                     </Button>
                 </div>
             </div>

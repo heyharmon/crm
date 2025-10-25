@@ -113,6 +113,70 @@ export const useOrganizationStore = defineStore('organization', {
             }
         },
 
+        async setWebsiteRating(organizationId, optionId) {
+            this.error = null
+
+            try {
+                const response = await api.post(`/organizations/${organizationId}/website-ratings`, {
+                    website_rating_option_id: optionId
+                })
+
+                this.applyRatingUpdate(response)
+                return response
+            } catch (error) {
+                this.error = error.message || 'Failed to submit website rating'
+                console.error('Error submitting website rating:', error)
+                throw error
+            }
+        },
+
+        async clearWebsiteRating(organizationId) {
+            this.error = null
+
+            try {
+                const response = await api.delete(`/organizations/${organizationId}/website-ratings`)
+                this.applyRatingUpdate(response)
+                return response
+            } catch (error) {
+                this.error = error.message || 'Failed to clear website rating'
+                console.error('Error clearing website rating:', error)
+                throw error
+            }
+        },
+
+        applyRatingUpdate(payload) {
+            if (!payload || !payload.organization_id) return
+
+            const {
+                organization_id: organizationId,
+                website_rating_average,
+                website_rating_summary,
+                website_rating_count,
+                my_website_rating_option_id,
+                my_website_rating_option_slug = null,
+                my_website_rating_option_name = null,
+                website_rating_weighted = null
+            } = payload
+
+            const update = (org) => {
+                if (!org || org.id !== organizationId) return
+                org.website_rating_average = website_rating_average
+                org.website_rating_summary = website_rating_summary
+                org.website_rating_count = website_rating_count
+                org.website_rating_weighted = website_rating_weighted
+                org.my_website_rating_option_id = my_website_rating_option_id
+                org.my_website_rating_option_slug = my_website_rating_option_slug
+                org.my_website_rating_option_name = my_website_rating_option_name
+            }
+
+            const organization = this.organizations.find((o) => o.id === organizationId)
+            update(organization)
+
+            if (this.currentOrganization && this.currentOrganization.id === organizationId) {
+                update(this.currentOrganization)
+            }
+        },
+
         async deleteOrganization(id) {
             // Do not toggle global isLoading to avoid list flashing
             this.error = null

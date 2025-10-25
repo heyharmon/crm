@@ -3,9 +3,11 @@ import { ref, computed, onMounted, watch, reactive } from 'vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Button from '@/components/ui/Button.vue'
 import api from '@/services/api'
+import { getRatingButtonClasses } from '@/utils/ratingStyles'
 
 const queue = ref([])
 const currentOrg = ref(null)
+const ratingOptions = ref([])
 const nextPage = ref(1)
 const lastPage = ref(null)
 const isLoading = ref(false)
@@ -17,6 +19,27 @@ const screenshotError = ref(null)
 const screenshotCache = reactive({})
 
 const hasMorePages = computed(() => lastPage.value === null || nextPage.value <= lastPage.value)
+const optionBySlug = computed(() =>
+    (ratingOptions.value || []).reduce((map, option) => {
+        map[option.slug] = option
+        return map
+    }, {})
+)
+const myRatingOptionId = computed(() => currentOrg.value?.my_website_rating_option_id ?? null)
+const formatAverage = (value) => {
+    if (value === null || value === undefined) return null
+    return Number(value).toFixed(2)
+}
+const ratingButtonClasses = (option) => getRatingButtonClasses(option.slug, myRatingOptionId.value === option.id)
+
+const loadRatingOptions = async () => {
+    try {
+        ratingOptions.value = await api.get('/website-rating-options')
+    } catch (err) {
+        console.error('Failed to load rating options:', err)
+        ratingOptions.value = []
+    }
+}
 
 const getScreenshotUrl = (website) => {
     if (!website) return null
@@ -90,11 +113,12 @@ const fetchNextBatch = async () => {
                 params: {
                     page: nextPage.value,
                     website: 'present',
-                    website_rating: 'none'
+                    my_website_rating: 'none'
                 }
             })
 
             const data = Array.isArray(response.data) ? response.data : []
+            const unrated = data.filter((org) => !org.my_website_rating_option_id)
 
             if (typeof response.last_page === 'number') {
                 lastPage.value = response.last_page
@@ -106,13 +130,13 @@ const fetchNextBatch = async () => {
                 nextPage.value += 1
             }
 
-            if (data.length) {
-                queue.value.push(...data)
+            if (unrated.length) {
+                queue.value.push(...unrated)
                 finished.value = false
                 preloadUpcoming()
             }
 
-            return data.length > 0
+            return unrated.length > 0
         } catch (err) {
             error.value = err?.message || 'Failed to load websites.'
             console.error('Error fetching unrated organizations:', err)
@@ -157,17 +181,24 @@ const loadNextOrganization = async () => {
 }
 
 const initialize = async () => {
+    await loadRatingOptions()
+    if (!ratingOptions.value.length) {
+        finished.value = true
+        currentOrg.value = null
+        queue.value = []
+        return
+    }
     await loadNextOrganization()
 }
 
-const rateWebsite = async (rating) => {
-    if (!currentOrg.value || isRating.value) return
+const rateWebsite = async (optionId) => {
+    if (!currentOrg.value || isRating.value || !optionId) return
 
     isRating.value = true
     error.value = null
 
     try {
-        await api.put(`/organizations/${currentOrg.value.id}`, { website_rating: rating })
+        await api.post(`/organizations/${currentOrg.value.id}/website-ratings`, { website_rating_option_id: optionId })
         await loadNextOrganization()
     } catch (err) {
         error.value = err?.message || 'Failed to update website rating.'
@@ -250,6 +281,10 @@ onMounted(() => {
                     {{ error }}
                 </div>
 
+                <div v-if="!ratingOptions.length && !isLoading" class="rounded-xl border border-yellow-200 bg-yellow-50 px-4 py-3 text-sm text-yellow-700">
+                    No rating options are configured yet. Add options first so users can submit website ratings.
+                </div>
+
                 <div v-if="currentOrg" class="flex flex-col gap-6">
                     <div class="flex flex-col gap-2">
                         <div class="flex flex-wrap items-start justify-between gap-4">
@@ -268,46 +303,35 @@ onMounted(() => {
                                 </a>
                             </div>
                             <div class="flex flex-col items-end gap-3">
+                                <div class="text-right text-xs text-neutral-500">
+                                    <template v-if="currentOrg.website_rating_summary">
+                                        <span class="font-semibold text-neutral-700">
+                                            Average: {{ optionBySlug[currentOrg.website_rating_summary]?.name || currentOrg.website_rating_summary }}
+                                        </span>
+                                        <span v-if="currentOrg.website_rating_average !== null">
+                                            ({{ formatAverage(currentOrg.website_rating_average) }})
+                                        </span>
+                                        <span v-if="currentOrg.website_rating_count"> • {{ currentOrg.website_rating_count }} ratings </span>
+                                    </template>
+                                    <span v-else class="text-neutral-400">No ratings yet</span>
+                                </div>
                                 <div class="flex flex-wrap justify-end gap-3">
                                     <Button
+                                        v-for="option in ratingOptions"
+                                        :key="option.id"
                                         size="lg"
                                         variant="ghost"
-                                        class="rounded-full bg-green-600 px-6 py-2 text-white hover:bg-green-700"
+                                        class="rounded-full px-6 py-2 text-sm font-semibold transition focus-visible:outline-offset-2"
+                                        :class="ratingButtonClasses(option)"
                                         :disabled="isRating"
-                                        @click="rateWebsite('good')"
+                                        @click="rateWebsite(option.id)"
                                     >
-                                        Good
-                                    </Button>
-                                    <Button
-                                        size="lg"
-                                        variant="ghost"
-                                        class="rounded-full bg-yellow-500 px-6 py-2 text-neutral-900 hover:bg-yellow-600"
-                                        :disabled="isRating"
-                                        @click="rateWebsite('okay')"
-                                    >
-                                        Okay
-                                    </Button>
-                                    <Button
-                                        size="lg"
-                                        variant="ghost"
-                                        class="rounded-full bg-red-600 px-6 py-2 text-white hover:bg-red-700"
-                                        :disabled="isRating"
-                                        @click="rateWebsite('bad')"
-                                    >
-                                        Bad
+                                        {{ option.name }}
                                     </Button>
                                 </div>
                                 <div class="flex flex-wrap items-center justify-end gap-3">
                                     <span v-if="isRating" class="text-xs text-neutral-400">Saving rating…</span>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        class="rounded-full border-neutral-200 px-4 py-1.5 text-xs font-semibold text-neutral-600 hover:bg-neutral-100"
-                                        :disabled="isRating"
-                                        @click="skipWebsite"
-                                    >
-                                        Skip
-                                    </Button>
+                                    <Button variant="outline" size="sm" :disabled="isRating" @click="skipWebsite"> Skip </Button>
                                 </div>
                             </div>
                         </div>

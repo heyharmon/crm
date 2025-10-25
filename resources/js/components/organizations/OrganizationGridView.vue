@@ -1,6 +1,7 @@
 <script setup>
+import { computed } from 'vue'
 import Button from '@/components/ui/Button.vue'
-import Pagination from '@/components/Pagination.vue'
+import Pagination from '@/components/ui/Pagination.vue'
 
 const props = defineProps({
     organizations: {
@@ -14,10 +15,36 @@ const props = defineProps({
     columns: {
         type: Number,
         default: 3
+    },
+    ratingOptions: {
+        type: Array,
+        default: () => []
     }
 })
 
-const emit = defineEmits(['update:columns', 'open-sidebar', 'delete-organization', 'update-website-rating', 'page-change'])
+const emit = defineEmits(['update:columns', 'open-sidebar', 'delete-organization', 'update-website-rating', 'clear-website-rating', 'page-change'])
+
+const optionsBySlug = computed(() => {
+    return (props.ratingOptions || []).reduce((map, option) => {
+        map[option.slug] = option
+        return map
+    }, {})
+})
+
+const optionNameById = computed(() => {
+    return (props.ratingOptions || []).reduce((map, option) => {
+        map[option.id] = option.name
+        return map
+    }, {})
+})
+
+const getOptionLabelFromSlug = (slug) => optionsBySlug.value?.[slug]?.name || slug || '-'
+const getOptionLabelFromId = (id, fallback) => optionNameById.value?.[id] || fallback || null
+
+const formatAverage = (value) => {
+    if (value === null || value === undefined) return null
+    return Number(value).toFixed(2)
+}
 
 const getScreenshotUrl = (website) => {
     if (!website) return null
@@ -33,28 +60,28 @@ const getScreenshotUrl = (website) => {
             <span class="text-xs font-semibold uppercase tracking-wide text-neutral-400">Columns</span>
             <div class="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-white p-1">
                 <button
-                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
+                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
                     :class="props.columns === 1 ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
                     @click="emit('update:columns', 1)"
                 >
                     1
                 </button>
                 <button
-                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
+                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
                     :class="props.columns === 2 ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
                     @click="emit('update:columns', 2)"
                 >
                     2
                 </button>
                 <button
-                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
+                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
                     :class="props.columns === 3 ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
                     @click="emit('update:columns', 3)"
                 >
                     3
                 </button>
                 <button
-                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
+                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
                     :class="props.columns === 4 ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
                     @click="emit('update:columns', 4)"
                 >
@@ -117,40 +144,55 @@ const getScreenshotUrl = (website) => {
                     </div>
 
                     <div v-if="organization.website" class="space-y-2">
-                        <label class="block text-xs font-medium uppercase tracking-wide text-neutral-500">Website Rating</label>
-                        <div class="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-white p-1">
-                            <button
-                                class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
-                                :class="
-                                    organization.website_rating === 'good' ? 'bg-green-600 text-white shadow-sm' : 'hover:bg-green-50 hover:text-neutral-900'
-                                "
-                                @click="emit('update-website-rating', { id: organization.id, rating: 'good' })"
-                            >
-                                Good
-                            </button>
-                            <button
-                                class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
-                                :class="
-                                    organization.website_rating === 'okay' ? 'bg-yellow-500 text-white shadow-sm' : 'hover:bg-yellow-50 hover:text-neutral-900'
-                                "
-                                @click="emit('update-website-rating', { id: organization.id, rating: 'okay' })"
-                            >
-                                Okay
-                            </button>
-                            <button
-                                class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-400"
-                                :class="organization.website_rating === 'bad' ? 'bg-red-600 text-white shadow-sm' : 'hover:bg-red-50 hover:text-neutral-900'"
-                                @click="emit('update-website-rating', { id: organization.id, rating: 'bad' })"
-                            >
-                                Bad
-                            </button>
+                        <label class="block text-xs font-medium uppercase tracking-wide text-neutral-500">Website Ratings</label>
+                        <div class="flex flex-col gap-2">
+                            <div class="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-white p-1">
+                                <button
+                                    v-for="option in ratingOptions"
+                                    :key="option.id"
+                                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
+                                    :class="
+                                        organization.my_website_rating_option_id === option.id
+                                            ? 'bg-neutral-900 text-white shadow-sm'
+                                            : 'hover:bg-neutral-100 hover:text-neutral-900'
+                                    "
+                                    @click="emit('update-website-rating', { id: organization.id, optionId: option.id })"
+                                >
+                                    {{ option.name }}
+                                </button>
+                            </div>
+                            <div class="flex items-center justify-between text-xs text-neutral-500">
+                                <div class="flex flex-col items-end gap-1 text-right">
+                                    <span v-if="organization.website_rating_summary" class="inline-flex items-center gap-2">
+                                        <span class="font-medium text-neutral-700">
+                                            Average: {{ getOptionLabelFromSlug(organization.website_rating_summary) }}
+                                        </span>
+                                        <span v-if="organization.website_rating_average !== null">
+                                            ({{ formatAverage(organization.website_rating_average) }})
+                                        </span>
+                                        <span v-if="organization.website_rating_count"> • {{ organization.website_rating_count }} ratings </span>
+                                    </span>
+                                    <span v-else class="text-neutral-400">No ratings yet</span>
+                                    <span v-if="organization.website_rating_weighted !== null" class="inline-flex items-center gap-1 text-neutral-500">
+                                        Weighted: {{ formatAverage(organization.website_rating_weighted) }}
+                                    </span>
+                                    <span
+                                        v-if="getOptionLabelFromId(organization.my_website_rating_option_id, organization.my_website_rating_option_name)"
+                                        class="text-neutral-500"
+                                    >
+                                        Your rating:
+                                        {{ getOptionLabelFromId(organization.my_website_rating_option_id, organization.my_website_rating_option_name) }}
+                                    </span>
+                                </div>
+                                <button
+                                    class="text-xs font-medium text-neutral-500 underline underline-offset-4 transition-colors hover:text-neutral-700"
+                                    :disabled="!organization.my_website_rating_option_id"
+                                    @click="emit('clear-website-rating', organization.id)"
+                                >
+                                    Clear
+                                </button>
+                            </div>
                         </div>
-                        <button
-                            class="text-xs font-medium text-neutral-500 underline underline-offset-4 transition-colors hover:text-neutral-700"
-                            @click="emit('update-website-rating', { id: organization.id, rating: null })"
-                        >
-                            Clear
-                        </button>
                     </div>
 
                     <div class="mt-auto flex items-center gap-2">

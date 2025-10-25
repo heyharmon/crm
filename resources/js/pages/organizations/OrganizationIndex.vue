@@ -4,17 +4,18 @@ import { useRoute, useRouter } from 'vue-router'
 import { useOrganizationStore } from '@/stores/organizationStore'
 import TwoColumnLayout from '@/layouts/TwoColumnLayout.vue'
 import Button from '@/components/ui/Button.vue'
-import OrganizationFilters from '@/components/OrganizationFilters.vue'
+import OrganizationFilters from '@/components/organizations/OrganizationFilters.vue'
 import api from '@/services/api'
 import RightDrawer from '@/components/ui/RightDrawer.vue'
-import OrganizationForm from '@/components/OrganizationForm.vue'
-import OrganizationDetails from '@/components/OrganizationDetails.vue'
+import OrganizationForm from '@/components/organizations/OrganizationForm.vue'
+import OrganizationDetails from '@/components/organizations/OrganizationDetails.vue'
 import OrganizationTableView from '@/components/organizations/OrganizationTableView.vue'
 import OrganizationGridView from '@/components/organizations/OrganizationGridView.vue'
 
 const organizationStore = useOrganizationStore()
 const route = useRoute()
 const router = useRouter()
+const ratingOptions = ref([])
 
 // --- Query <-> Filters sync helpers ---
 const syncingQuery = ref(false)
@@ -59,6 +60,15 @@ const buildQueryFromFilters = (filters, page, base = {}) => {
     return q
 }
 
+const fetchRatingOptions = async () => {
+    try {
+        ratingOptions.value = await api.get('/website-rating-options')
+    } catch (error) {
+        console.error('Failed to load website rating options:', error)
+        ratingOptions.value = []
+    }
+}
+
 onMounted(async () => {
     // Hydrate filters and page from the URL on load
     const { filters, page } = parseFiltersFromQuery(route.query)
@@ -69,6 +79,7 @@ onMounted(async () => {
     } finally {
         syncingQuery.value = false
     }
+    await fetchRatingOptions()
     await organizationStore.fetchOrganizations(page)
 })
 
@@ -165,13 +176,19 @@ watch(view, (v) => {
 
 // Grid helpers
 const columns = ref(3)
-const updateWebsiteRating = async (organizationId, rating) => {
+const submitWebsiteRating = async (organizationId, optionId) => {
     try {
-        await organizationStore.updateOrganization(organizationId, { website_rating: rating })
-        const org = organizationStore.organizations.find((o) => o.id === organizationId)
-        if (org) org.website_rating = rating
+        await organizationStore.setWebsiteRating(organizationId, optionId)
     } catch (error) {
-        console.error('Error updating website rating:', error)
+        console.error('Error submitting website rating:', error)
+    }
+}
+
+const clearWebsiteRating = async (organizationId) => {
+    try {
+        await organizationStore.clearWebsiteRating(organizationId)
+    } catch (error) {
+        console.error('Error clearing website rating:', error)
     }
 }
 
@@ -180,6 +197,11 @@ const updateWebsiteRating = async (organizationId, rating) => {
 const sidebarMode = ref(null) // 'view' | 'edit' | null
 const sidebarOrgId = ref(null)
 const isDrawerOpen = computed(() => !!sidebarMode.value && !!sidebarOrgId.value)
+const filteredTotalLabel = computed(() => {
+    const total = organizationStore.pagination?.total
+    if (total === null || total === undefined) return null
+    return Number.isFinite(total) ? total.toLocaleString() : String(total)
+})
 
 const syncFromRoute = () => {
     const { org, mode } = route.query
@@ -255,6 +277,7 @@ const editFormRef = ref(null)
         <template #sidebar>
             <OrganizationFilters
                 :filters="organizationStore.filters"
+                :rating-options="ratingOptions"
                 @update:filters="organizationStore.setFilters"
                 @reset-filters="organizationStore.resetFilters"
                 @search="handleSearch"
@@ -264,7 +287,10 @@ const editFormRef = ref(null)
         <div class="flex h-full flex-col min-h-0">
             <div class="border-b border-neutral-200 bg-white px-4 py-3 lg:px-6">
                 <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <h1 class="text-xl font-semibold text-neutral-900">Organizations</h1>
+                    <h1 class="text-xl font-semibold text-neutral-900">
+                        Organizations
+                        <span v-if="filteredTotalLabel !== null" class="text-sm font-normal text-neutral-500">({{ filteredTotalLabel }})</span>
+                    </h1>
                     <div class="flex flex-wrap items-center gap-3">
                         <div class="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-white p-1">
                             <button
@@ -300,6 +326,7 @@ const editFormRef = ref(null)
             <div class="border-b border-neutral-200 bg-white px-4 py-4 lg:hidden">
                 <OrganizationFilters
                     :filters="organizationStore.filters"
+                    :rating-options="ratingOptions"
                     @update:filters="organizationStore.setFilters"
                     @reset-filters="organizationStore.resetFilters"
                     @search="handleSearch"
@@ -324,7 +351,6 @@ const editFormRef = ref(null)
                         @open-sidebar="({ mode, id }) => openSidebar(mode, id)"
                         @start-web-scraping="startWebScraping"
                         @delete-organization="deleteOrganization"
-                        @update-website-rating="({ id, rating }) => updateWebsiteRating(id, rating)"
                         @page-change="handlePageChange"
                     />
 
@@ -333,10 +359,12 @@ const editFormRef = ref(null)
                         :organizations="organizationStore.organizations"
                         :pagination="organizationStore.pagination"
                         :columns="columns"
+                        :rating-options="ratingOptions"
                         @update:columns="(value) => (columns = value)"
                         @open-sidebar="({ mode, id }) => openSidebar(mode, id)"
                         @delete-organization="deleteOrganization"
-                        @update-website-rating="({ id, rating }) => updateWebsiteRating(id, rating)"
+                        @update-website-rating="({ id, optionId }) => submitWebsiteRating(id, optionId)"
+                        @clear-website-rating="(id) => clearWebsiteRating(id)"
                         @page-change="handlePageChange"
                     />
                 </div>
