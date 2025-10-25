@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
-class OrganizationWebsiteRatingOptionController extends Controller
+class WebsiteRatingOptionController extends Controller
 {
     public function __construct(
         protected OrganizationWebsiteRatingService $ratingService

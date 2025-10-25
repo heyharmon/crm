@@ -6,10 +6,10 @@
 
 2. **Use website screenshots in organization details**
    - Swap the Google Maps image in the organization details component for the website screenshot.
-   - Reuse the simplest approach from `resources/js/pages/organization-websites/OrganizationWebsiteRatings.vue` for fetching/rendering the screenshot so the detail view shows the website preview at the top.
+   - Reuse the simplest approach from `resources/js/pages/websites/WebsiteRatings.vue` for fetching/rendering the screenshot so the detail view shows the website preview at the top.
 
 3. **Color-code website rating UI**
-   - Style the rating buttons on `resources/js/pages/organization-websites/OrganizationWebsiteRatings.vue` so the labels map to colors (excellent → green, good → light green, okay → yellow, poor → orange, really bad → red) for instant visual feedback.
+   - Style the rating buttons on `resources/js/pages/websites/WebsiteRatings.vue` so the labels map to colors (excellent → green, good → light green, okay → yellow, poor → orange, really bad → red) for instant visual feedback.
    - Apply the same color scheme to the website rating summary badge in `OrganizationTableView.vue` based on each row’s `website_rating_summary`.
    - Mirror that treatment in the Organization Details component so its `website_rating_summary` reflects the matching color.
 

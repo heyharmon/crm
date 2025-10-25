@@ -5,13 +5,13 @@ Scrapes an organization's website using an Apify crawler actor and stores discov
 
 ## Flow
 - **Trigger**: `resources/js/pages/organizations/OrganizationIndex.vue` calls `POST /api/web-scraper/start` from the listing actions.
-- **Controller**: `app/Http/Controllers/OrganizationWebsitePageController.php` validates input and dispatches jobs.
+- **Controller**: `app/Http/Controllers/WebsitePageController.php` validates input and dispatches jobs.
 - **Jobs** (generic):
   - `app/Jobs/StartApifyActorJob.php`: starts the Apify run via `ApifyWebCrawlerService`.
   - `app/Jobs/MonitorApifyRunJob.php`: polls run status until completion.
-  - `app/Jobs/ProcessApifyResultsJob.php`: fetches dataset and delegates to `OrganizationWebsitePageResultsProcessor`.
+  - `app/Jobs/ProcessApifyResultsJob.php`: fetches dataset and delegates to `WebsitePageResultsProcessor`.
 - **Service**: `app/Services/ApifyWebCrawlerService.php` (actor run, status, dataset).
-- **Processor**: `app/Services/Processors/OrganizationWebsitePageResultsProcessor.php` persists `Page` records.
+- **Processor**: `app/Services/Processors/WebsitePageResultsProcessor.php` persists `Page` records.
 - **Model**: `app/Models/ApifyRun.php` stores run metadata.
 
 ## API
@@ -35,7 +35,7 @@ Scrapes an organization's website using an Apify crawler actor and stores discov
 You can swap to a Puppeteer actor by changing `ApifyWebCrawlerService::ACTOR_ID`.
 
 ## Result Processing
-`ProcessApifyResultsJob` delegates to `OrganizationWebsitePageResultsProcessor`, which calls `ApifyWebCrawlerService::processResults()` to:
+`ProcessApifyResultsJob` delegates to `WebsitePageResultsProcessor`, which calls `ApifyWebCrawlerService::processResults()` to:
 - Reads the organization id from the run input data
 - Upserts `Page` records by `(organization_id, url)` and updates `title`
 - Returns a summary of created/updated pages

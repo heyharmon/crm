@@ -8,7 +8,7 @@ use App\Services\OrganizationWebsiteRatingService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
-class OrganizationWebsiteRatingController extends Controller
+class WebsiteRatingController extends Controller
 {
     public function __construct(
         protected OrganizationWebsiteRatingService $ratingService

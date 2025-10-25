@@ -13,8 +13,8 @@ import OrganizationCreate from '@/pages/organizations/OrganizationCreate.vue'
 import OrganizationEdit from '@/pages/organizations/OrganizationEdit.vue'
 import OrganizationImport from '@/pages/organizations/OrganizationImport.vue'
 import OrganizationCategoriesIndex from '@/pages/organization-categories/OrganizationCategoriesIndex.vue'
-import OrganizationWebsiteRatingOptions from '@/pages/organization-websites/OrganizationWebsiteRatingOptions.vue'
-import OrganizationWebsiteRatings from '@/pages/organization-websites/OrganizationWebsiteRatings.vue'
+import WebsiteRatingOptions from '@/pages/websites/WebsiteRatingOptions.vue'
+import WebsiteRatings from '@/pages/websites/WebsiteRatings.vue'
 
 const routes = [
     {
@@ -89,25 +89,35 @@ const routes = [
         meta: { requiresAuth: true }
     },
     {
-        path: '/organization-websites/options',
-        name: 'organization-websites.options',
-        component: OrganizationWebsiteRatingOptions,
+        path: '/websites/options',
+        name: 'websites.options',
+        component: WebsiteRatingOptions,
         meta: { requiresAuth: true }
     },
     {
-        path: '/organization-websites/ratings',
-        name: 'organization-websites.ratings',
-        component: OrganizationWebsiteRatings,
+        path: '/websites/ratings',
+        name: 'websites.ratings',
+        component: WebsiteRatings,
         meta: { requiresAuth: true }
     },
     {
         path: '/website-rating-options',
-        redirect: { name: 'organization-websites.options' },
+        redirect: { name: 'websites.options' },
         meta: { requiresAuth: true }
     },
     {
         path: '/website-ratings',
-        redirect: { name: 'organization-websites.ratings' },
+        redirect: { name: 'websites.ratings' },
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/organization-websites/options',
+        redirect: { name: 'websites.options' },
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/organization-websites/ratings',
+        redirect: { name: 'websites.ratings' },
         meta: { requiresAuth: true }
     }
 ]
