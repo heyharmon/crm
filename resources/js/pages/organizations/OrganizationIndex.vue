@@ -17,15 +17,9 @@ const organizationStore = useOrganizationStore()
 const route = useRoute()
 const router = useRouter()
 const ratingOptions = ref([])
-const {
-    selectedIds,
-    selectedCount,
-    allVisibleSelected,
-    isIndeterminate,
-    toggleRow,
-    toggleAllVisible,
-    clearSelection
-} = useOrganizationSelection(computed(() => organizationStore.organizations))
+const { selectedIds, selectedCount, allVisibleSelected, isIndeterminate, toggleRow, toggleAllVisible, clearSelection } = useOrganizationSelection(
+    computed(() => organizationStore.organizations)
+)
 const batchActionLoading = ref(null)
 
 // --- Query <-> Filters sync helpers ---
@@ -368,7 +362,7 @@ const editFormRef = ref(null)
                                 variant="outline"
                                 class="rounded-full border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-100"
                             >
-                                Import from Google Maps
+                                Import
                             </Button>
                         </router-link>
                         <router-link to="/organizations/create">
@@ -401,14 +395,8 @@ const editFormRef = ref(null)
                     <div v-if="view === 'table' && selectedCount" class="border-b border-neutral-200 bg-neutral-50/60 px-4 py-3 lg:px-6">
                         <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                             <div>
-                                <p class="text-sm font-semibold text-neutral-900">
-                                    {{ selectedCount }} selected
-                                </p>
-                                <button
-                                    type="button"
-                                    class="text-xs font-medium text-neutral-500 transition hover:text-neutral-900"
-                                    @click="clearSelection"
-                                >
+                                <p class="text-sm font-semibold text-neutral-900">{{ selectedCount }} selected</p>
+                                <button type="button" class="text-xs font-medium text-neutral-500 transition hover:text-neutral-900" @click="clearSelection">
                                     Clear selection
                                 </button>
                             </div>

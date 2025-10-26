@@ -15,8 +15,10 @@
 
 4. Import NCUA data about credit union assets into this app.
 
-5. Add ability to import organizations from Hubspot. Add a screen where I can drop. a csv export of companies from Hubspot.
+5. On the WebsiteRatings.vue I can rate organization websites. When I rate a website another organization website that I have not yet rated is loaded. The websites are loaded in default id order from the database. Instead of default id order, I want them to be random–not by id, or name/title or anything else–I want the website that I am rating to be a random website I have not yet loaded. The reason for this is that I when users are rating websites I want the best chance for all websites to have at least 1 rating. If the organization website is loaded at random for the user, then we can get more coverage.
 
-6. On the WebsiteRatings.vue I can rate organization websites. When I rate a website another organization website that I have not yet rated is loaded. The websites are loaded in default id order from the database. Instead of default id order, I want them to be random–not by id, or name/title or anything else–I want the website that I am rating to be a random website I have not yet loaded. The reason for this is that I when users are rating websites I want the best chance for all websites to have at least 1 rating. If the organization website is loaded at random for the user, then we can get more coverage.
+6. Add a delay to the DetectWebsiteRedesignJob.php job. I want to add a delay so that when this job is run for many websites at a time we do not overwhelm the Wayback Machine server and hit a rate limit.
 
-7. Add a delay to the DetectWebsiteRedesignJob.php job. I want to add a delay so that when this job is run for many websites at a time we do not overwhelm the Wayback Machine server and hit a rate limit.
+7. Rename OrganizationImportService to GoogleMapsOrganizationImportService.
+
+8. On the organization index page I can select multiple organizations and run Count pages or Detect redesign for the selected organizations. I need you to add a third option, Archive as an action I can take on the selected organizations. We already have a controller method for this and it works but this use case is for deleting a batch of orgs.

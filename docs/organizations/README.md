@@ -11,6 +11,7 @@ Stores businesses or clients in the CRM and provides browsing, creation and edit
 - **Organization model**: represents an organization with address, contact, and aggregate rating data; related `Page` records hold scraped website pages.
 - **WebsiteRatingOption & OrganizationWebsiteRating models**: manage rating metadata and individual user ratings.
 - **OrganizationImportService**: maps external scraper results into organization records and syncs categories.
+- **HubspotOrganizationImportService**: parses HubSpot CSV exports, matches by website domain, and fills in missing organization data without overwriting existing values.
 
 ## Frontend
 - **Pages**: `resources/js/pages/organizations/Index.vue` and `Browse.vue` list organizations; `Show.vue` displays details; `Create.vue` and `Edit.vue` handle forms; `Import.vue` triggers scraper-based imports.

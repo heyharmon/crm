@@ -6,6 +6,7 @@ import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/Input.vue'
 import { formatDisplayDate } from '@/utils/date'
+import api from '@/services/api'
 
 const router = useRouter()
 const apifyImportStore = useApifyImportStore()
@@ -28,6 +29,11 @@ const maxCostDisplay = computed(() => {
     const cost = (places * PRICE_PER_THOUSAND) / 1000
     return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cost)
 })
+
+const hubspotFileInput = ref(null)
+const isUploadingHubspot = ref(false)
+const hubspotUploadError = ref(null)
+const hubspotImportResult = ref(null)
 
 onMounted(async () => {
     await apifyImportStore.fetchImports()
@@ -76,6 +82,48 @@ const getStatusBadgeClass = (status) => {
 const refreshImports = async () => {
     await apifyImportStore.fetchImports()
 }
+
+const triggerHubspotPicker = () => {
+    hubspotFileInput.value?.click()
+}
+
+const handleHubspotFileChange = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) {
+        return
+    }
+    await uploadHubspotCsv(file)
+    event.target.value = ''
+}
+
+const uploadHubspotCsv = async (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    hubspotUploadError.value = null
+    hubspotImportResult.value = null
+    isUploadingHubspot.value = true
+
+    try {
+        const response = await api.post('/organizations/import/hubspot', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        })
+
+        hubspotImportResult.value = {
+            filename: file.name,
+            ...response
+        }
+    } catch (error) {
+        if (error?.errors) {
+            const messages = Object.values(error.errors).flat()
+            hubspotUploadError.value = messages.join(' ')
+        } else {
+            hubspotUploadError.value = error?.message || 'Failed to import HubSpot CSV.'
+        }
+    } finally {
+        isUploadingHubspot.value = false
+    }
+}
 </script>
 
 <template>
@@ -83,8 +131,89 @@ const refreshImports = async () => {
         <div class="container mx-auto py-8 px-4 max-w-4xl">
             <div class="mb-8">
                 <router-link to="/organizations" class="text-blue-600 hover:text-blue-800 text-sm mb-2 inline-block"> ← Back to Organizations </router-link>
-                <h1 class="text-2xl font-bold">Import Organizations from Google Maps</h1>
-                <p class="text-neutral-600 mt-2">Use this tool to scrape organizations from Google Maps and automatically import them into your CRM.</p>
+                <h1 class="text-2xl font-bold">Import Organizations</h1>
+                <p class="text-neutral-600 mt-2">Upload HubSpot exports or use our Google Maps scraper to keep your CRM up to date.</p>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-8">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-semibold">Import Organizations from HubSpot</h2>
+                        <p class="text-neutral-600 text-sm mt-1">
+                            Upload your HubSpot company export (CSV). We will match organizations by website root domain and fill in any missing address or phone data without overwriting existing values.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input
+                            ref="hubspotFileInput"
+                            type="file"
+                            accept=".csv,text/csv"
+                            class="hidden"
+                            @change="handleHubspotFileChange"
+                        />
+                        <Button
+                            type="button"
+                            class="bg-neutral-900 text-white hover:bg-neutral-800"
+                            :disabled="isUploadingHubspot"
+                            @click="triggerHubspotPicker"
+                        >
+                            {{ isUploadingHubspot ? 'Uploading...' : 'Upload HubSpot CSV' }}
+                        </Button>
+                    </div>
+                </div>
+
+                <ul class="text-sm text-neutral-600 list-disc pl-5 mt-4 space-y-1">
+                    <li>Required headings: <span class="font-medium">Company name, Website URL, Phone Number, City, State/Region, Street Address</span></li>
+                    <li>Website comparisons ignore protocol, subdomains, paths, and trailing slashes.</li>
+                    <li>Existing organization fields keep their values; only blank fields are filled.</li>
+                </ul>
+
+                <div v-if="hubspotUploadError" class="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                    {{ hubspotUploadError }}
+                </div>
+
+                <div v-if="hubspotImportResult" class="mt-4 rounded-md border border-green-200 bg-green-50 p-4">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                        <div>
+                            <div class="text-xs uppercase tracking-wide text-green-700 font-semibold">Import summary</div>
+                            <div class="text-sm text-green-900">
+                                {{ hubspotImportResult.filename }} processed with {{ hubspotImportResult.rows_processed }} rows.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 text-sm">
+                        <div>
+                            <div class="text-xs uppercase text-neutral-600">Processed</div>
+                            <div class="text-xl font-semibold text-neutral-900">{{ hubspotImportResult.rows_processed }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs uppercase text-neutral-600">Imported</div>
+                            <div class="text-xl font-semibold text-neutral-900">{{ hubspotImportResult.imported }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs uppercase text-neutral-600">Updated</div>
+                            <div class="text-xl font-semibold text-neutral-900">{{ hubspotImportResult.updated }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs uppercase text-neutral-600">Skipped</div>
+                            <div class="text-xl font-semibold text-neutral-900">{{ hubspotImportResult.skipped }}</div>
+                        </div>
+                    </div>
+
+                    <div v-if="hubspotImportResult.errors?.length" class="mt-4 text-sm text-neutral-700">
+                        <div class="font-semibold mb-2">Rows skipped</div>
+                        <ul class="space-y-1 max-h-40 overflow-y-auto">
+                            <li
+                                v-for="error in hubspotImportResult.errors"
+                                :key="`${error.row}-${error.reason}`"
+                                class="text-xs text-neutral-600"
+                            >
+                                Row {{ error.row }} — {{ error.reason }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
             </div>
 
             <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-8">
