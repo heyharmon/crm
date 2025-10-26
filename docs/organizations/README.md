@@ -10,7 +10,7 @@ Stores businesses or clients in the CRM and provides browsing, creation and edit
 - **WebsiteRatingController**: handles per-user rating submissions and clearing ratings.
 - **Organization model**: represents an organization with address, contact, and aggregate rating data; related `Page` records hold scraped website pages.
 - **WebsiteRatingOption & OrganizationWebsiteRating models**: manage rating metadata and individual user ratings.
-- **OrganizationImportService**: maps external scraper results into organization records and syncs categories.
+- **GoogleMapsOrganizationImportService**: maps Google Maps scraper results into organization records and syncs categories.
 - **HubspotOrganizationImportService**: parses HubSpot CSV exports, matches by website domain, and fills in missing organization data without overwriting existing values.
 
 ## Frontend

@@ -3,12 +3,12 @@
 namespace App\Services\Processors;
 
 use App\Models\ApifyRun;
-use App\Services\OrganizationImportService;
+use App\Services\GoogleMapsOrganizationImportService;
 use App\Services\Processors\Contracts\ApifyResultsProcessor;
 
 class OrganizationGoogleMapsResultsProcessor implements ApifyResultsProcessor
 {
-    public function __construct(private OrganizationImportService $importService)
+    public function __construct(private GoogleMapsOrganizationImportService $importService)
     {
     }
 

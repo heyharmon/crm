@@ -289,9 +289,17 @@ const runBatchAction = async (actionKey) => {
     batchActionLoading.value = actionKey
     try {
         const response = await organizationStore.runBatchOrganizationAction(actionKey, selectedIds.value)
+        if (actionKey === 'archive') {
+            await organizationStore.fetchOrganizations(organizationStore.pagination.current_page)
+        }
         const queued = response?.queued ?? 0
         const skipped = Array.isArray(response?.skipped) ? response.skipped.length : 0
-        const message = response?.message || (actionKey === 'count_pages' ? 'Count pages jobs queued.' : 'Website redesign detection queued.')
+        const fallbackMessages = {
+            count_pages: 'Count pages jobs queued.',
+            detect_redesign: 'Website redesign detection queued.',
+            archive: 'Organizations archived.'
+        }
+        const message = response?.message || fallbackMessages[actionKey] || 'Batch action completed.'
         const details = []
         if (queued) details.push(`${queued} queued`)
         if (skipped) details.push(`${skipped} skipped`)
@@ -418,6 +426,15 @@ const editFormRef = ref(null)
                                 >
                                     <span v-if="batchActionLoading === 'detect_redesign'">Queuing...</span>
                                     <span v-else>Detect redesign</span>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600"
+                                    :disabled="batchActionLoading === 'archive'"
+                                    @click="runBatchAction('archive')"
+                                >
+                                    <span v-if="batchActionLoading === 'archive'">Archiving...</span>
+                                    <span v-else>Archive</span>
                                 </Button>
                             </div>
                         </div>

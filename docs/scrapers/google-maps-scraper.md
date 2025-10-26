@@ -9,7 +9,7 @@ Imports organizations into the CRM by running an Apify Google Maps actor and map
 - Controller: `app/Http/Controllers/OrganizationGoogleMapsScraperController.php`
 - Jobs (generic): `StartApifyActorJob` → `MonitorApifyRunJob` → `ProcessApifyResultsJob`
 - Services: `ApifyGoogleMapsScraperService` (actor run/status/results)
-- Processor: `OrganizationGoogleMapsResultsProcessor` → `OrganizationImportService`
+- Processor: `OrganizationGoogleMapsResultsProcessor` → `GoogleMapsOrganizationImportService`
 - Model: `ApifyRun`
 
 ## API
@@ -18,7 +18,7 @@ Imports organizations into the CRM by running an Apify Google Maps actor and map
 - GET `/api/google-maps-scraper/runs/{apifyRun}`
 
 ## Data Mapping
-`OrganizationImportService` maps dataset items to `organizations` with dedupe by `google_place_id`. Creates/updates orgs; links/creates categories.
+`GoogleMapsOrganizationImportService` maps dataset items to `organizations` with dedupe by `google_place_id`. Creates/updates orgs; links/creates categories.
 
 ## Config
 - `services.apify.token`

@@ -8,7 +8,7 @@ use App\Models\ApifyRun;
 use Illuminate\Support\Facades\Log;
 use App\Support\WebsiteUrl;
 
-class OrganizationImportService
+class GoogleMapsOrganizationImportService
 {
     private int $imported = 0;
     private int $updated = 0;
