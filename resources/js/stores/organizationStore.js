@@ -214,6 +214,21 @@ export const useOrganizationStore = defineStore('organization', {
             }
         },
 
+        async runBatchOrganizationAction(action, organizationIds) {
+            this.error = null
+
+            try {
+                return await api.post('/organizations/batch/actions', {
+                    action,
+                    organization_ids: organizationIds
+                })
+            } catch (error) {
+                this.error = error.message || 'Failed to run batch organization action'
+                console.error('Error running batch organization action:', error)
+                throw error
+            }
+        },
+
         resetOrganizationRedesignData(organizationId) {
             const clearData = (org) => {
                 if (!org || org.id !== organizationId) return

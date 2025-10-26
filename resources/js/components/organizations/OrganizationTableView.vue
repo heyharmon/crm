@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import { getRatingLabel, getRatingPillClasses } from '@/utils/ratingStyles'
 import { formatDisplayDate } from '@/utils/date'
@@ -16,10 +16,34 @@ const props = defineProps({
     formatWebsite: {
         type: Function,
         required: true
+    },
+    selectable: {
+        type: Boolean,
+        default: false
+    },
+    selectedIds: {
+        type: Array,
+        default: () => []
+    },
+    selectAllChecked: {
+        type: Boolean,
+        default: false
+    },
+    selectAllIndeterminate: {
+        type: Boolean,
+        default: false
     }
 })
 
-const emit = defineEmits(['open-sidebar', 'start-web-scraping', 'delete-organization', 'detect-redesign', 'page-change'])
+const emit = defineEmits([
+    'open-sidebar',
+    'start-web-scraping',
+    'delete-organization',
+    'detect-redesign',
+    'page-change',
+    'toggle-row-selection',
+    'toggle-select-all'
+])
 const openMenuId = ref(null)
 const toggleMenu = (organizationId) => {
     openMenuId.value = openMenuId.value === organizationId ? null : organizationId
@@ -45,6 +69,33 @@ const handleDelete = (organizationId) => {
 const handleDetectRedesign = (organization) => {
     emit('detect-redesign', organization)
     closeMenu()
+}
+
+const headerCheckbox = ref(null)
+
+watch(
+    () => props.selectAllIndeterminate,
+    (value) => {
+        if (headerCheckbox.value) {
+            headerCheckbox.value.indeterminate = !!value
+        }
+    },
+    { immediate: true }
+)
+
+watch(
+    () => headerCheckbox.value,
+    (checkbox) => {
+        if (checkbox) {
+            checkbox.indeterminate = !!props.selectAllIndeterminate
+        }
+    }
+)
+
+const rowIsSelected = (organizationId) => {
+    const normalized = Number(organizationId)
+    if (!Number.isFinite(normalized)) return false
+    return props.selectedIds.includes(normalized)
 }
 onMounted(() => {
     if (typeof document !== 'undefined') {
@@ -81,6 +132,15 @@ const formatPagesCount = (organization) => {
             <table class="min-w-full divide-y divide-neutral-200 text-left text-sm">
                 <thead class="bg-neutral-50 text-xs tracking-wide uppercase text-neutral-500">
                     <tr>
+                        <th v-if="props.selectable" class="border-b border-neutral-200 px-4 py-3">
+                            <input
+                                ref="headerCheckbox"
+                                type="checkbox"
+                                class="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-500"
+                                :checked="props.selectAllChecked"
+                                @change.stop="emit('toggle-select-all', $event.target.checked)"
+                            />
+                        </th>
                         <th class="border-b border-neutral-200 px-4 py-3">Name</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Category</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Location</th>
@@ -97,11 +157,24 @@ const formatPagesCount = (organization) => {
                         v-for="organization in props.organizations"
                         :key="organization.id"
                         class="cursor-pointer border-b border-neutral-200 transition-colors hover:bg-neutral-50 focus-within:bg-neutral-50"
+                        :class="props.selectable && rowIsSelected(organization.id) ? 'bg-neutral-50/80' : ''"
                         @click="emit('open-sidebar', { mode: 'view', id: organization.id })"
                         tabindex="0"
                         @keydown.enter="emit('open-sidebar', { mode: 'view', id: organization.id })"
                         @keydown.space.prevent="emit('open-sidebar', { mode: 'view', id: organization.id })"
                     >
+                        <td v-if="props.selectable" class="px-4 py-3 align-top" @click.stop>
+                            <input
+                                type="checkbox"
+                                class="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-500"
+                                :checked="rowIsSelected(organization.id)"
+                                @change.stop="emit('toggle-row-selection', {
+                                    organization,
+                                    checked: $event.target.checked,
+                                    shiftKey: $event.shiftKey
+                                })"
+                            />
+                        </td>
                         <td class="px-4 py-3 align-top">
                             <div class="flex items-start gap-3">
                                 <img

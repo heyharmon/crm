@@ -1,6 +1,3 @@
-# Herd CRM
-This is a small Laravel CRM application.
+# AI Coding Agents
 
-## Guidelines For AI Agents
-- Do **not** create new automated tests or modify existing ones.
-- Do **not** run the test suite or any test-related tooling.
+Read the README.md for agents in 'docs/agents'

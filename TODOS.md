@@ -11,12 +11,12 @@
     - Scaffold a simple dashboard layout showing total organizations, rating distribution counts per option, the number of organizations without ratings, and how many websites the current user has rated.
     - Keep the UI lightweight but visually consistent with the rest of the app (cards, typography, spacing).
 
-3. In the OrganizationGridView.vue, OrganizationForm.vue and OrganizationDetails components, remove the formatDate function and use moment instead. Then search the codebase frontend for other instances of manual data formatting. Search for formatDate, DateTimeFormat and Intl in the codebase frontend to attempt finding other instances.
+3. Clean up some database table naming
 
-4. Clean up some database table naming
+4. Import NCUA data about credit union assets into this app.
 
-5. Rename the config/redesign.php config file to waybackmachine.php because it relates to the wayback machine and so this name is more appropriate. When you rename the file, make sure references to the variables elsewhere in the code are fixed and remain functional after this rename.
+5. Add ability to import organizations from Hubspot. Add a screen where I can drop. a csv export of companies from Hubspot.
 
-6. Import NCUA data about credit union assets into this app.
+6. On the WebsiteRatings.vue I can rate organization websites. When I rate a website another organization website that I have not yet rated is loaded. The websites are loaded in default id order from the database. Instead of default id order, I want them to be random–not by id, or name/title or anything else–I want the website that I am rating to be a random website I have not yet loaded. The reason for this is that I when users are rating websites I want the best chance for all websites to have at least 1 rating. If the organization website is loaded at random for the user, then we can get more coverage.
 
-7. Add the ability to multi select organizations from the organizations index page. I can select individual orgs by row, each row shows a checkbox. I can also hold the shift key and select a group of orgs in the table by selecting one holding shift then selecting another in the table and have all orgs between the two be selected. I can also check a select all checkbox that selects all the orgs on the screen (given the query). When I have one or more orgs selected more options appear for running actions against the group of selected orgs, namely the option to "Count pages" and "Detect redesign" for all the selected orgs. Keep this new feature as clean and simple as possible. Abstract code into a composable if necessary in order to keep the pages and other components simple. Follow patterns seen in other pages and components to maintain consistency of the frontend and backend. Create a dedicated controller or batch organization operations.
+7. Add a delay to the DetectWebsiteRedesignJob.php job. I want to add a delay so that when this job is run for many websites at a time we do not overwhelm the Wayback Machine server and hit a rate limit.

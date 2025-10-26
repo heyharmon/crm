@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\OrganizationBatchActionController;
 use App\Http\Controllers\OrganizationCategoryController;
 use App\Http\Controllers\WebsiteRatingController;
 use App\Http\Controllers\OrganizationGoogleMapsScraperController;
@@ -32,6 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('teams/{team}/members/{user}/role', [TeamController::class, 'updateMemberRole']);
 
     // Organization routes
+    Route::post('organizations/batch/actions', OrganizationBatchActionController::class);
     Route::resource('organizations', OrganizationController::class);
     Route::post('organizations/{id}/restore', [OrganizationController::class, 'restore']);
 

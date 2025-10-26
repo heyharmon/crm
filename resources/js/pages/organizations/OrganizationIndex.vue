@@ -11,11 +11,22 @@ import OrganizationForm from '@/components/organizations/OrganizationForm.vue'
 import OrganizationDetails from '@/components/organizations/OrganizationDetails.vue'
 import OrganizationTableView from '@/components/organizations/OrganizationTableView.vue'
 import OrganizationGridView from '@/components/organizations/OrganizationGridView.vue'
+import { useOrganizationSelection } from '@/composables/useOrganizationSelection'
 
 const organizationStore = useOrganizationStore()
 const route = useRoute()
 const router = useRouter()
 const ratingOptions = ref([])
+const {
+    selectedIds,
+    selectedCount,
+    allVisibleSelected,
+    isIndeterminate,
+    toggleRow,
+    toggleAllVisible,
+    clearSelection
+} = useOrganizationSelection(computed(() => organizationStore.organizations))
+const batchActionLoading = ref(null)
 
 // --- Query <-> Filters sync helpers ---
 const syncingQuery = ref(false)
@@ -98,6 +109,7 @@ watch(
         } finally {
             syncingQuery.value = false
         }
+        clearSelection()
         await organizationStore.fetchOrganizations(page)
     },
     { deep: true }
@@ -112,6 +124,7 @@ const handleSearch = async () => {
     } finally {
         syncingQuery.value = false
     }
+    clearSelection()
     await organizationStore.fetchOrganizations(1)
 }
 
@@ -124,6 +137,7 @@ const handlePageChange = async (page) => {
     } finally {
         syncingQuery.value = false
     }
+    clearSelection()
     await organizationStore.fetchOrganizations(page)
 }
 
@@ -165,11 +179,14 @@ watch(
         view.value = v === 'grid' ? 'grid' : 'table'
     }
 )
-watch(view, (v) => {
+watch(view, async (v) => {
     const q = { ...route.query }
     if (v === 'grid') q.view = 'grid'
     else delete q.view
-    router.replace({ query: q })
+    await router.replace({ query: q })
+    if (v !== 'table') {
+        clearSelection()
+    }
 })
 
 // Grid helpers
@@ -235,6 +252,7 @@ watch(
 
         const { filters, page } = parseFiltersFromQuery(q)
         organizationStore.setFilters(filters)
+        clearSelection()
         await organizationStore.fetchOrganizations(page)
     },
     { deep: true }
@@ -262,6 +280,36 @@ const selectedOrganization = computed(() => {
     const id = Number(sidebarOrgId.value)
     return organizationStore.organizations.find((o) => o.id === id) || organizationStore.currentOrganization
 })
+
+const handleRowSelection = ({ organization, checked, shiftKey }) => {
+    if (!organization?.id) return
+    toggleRow(organization.id, checked, { shiftKey })
+}
+
+const handleSelectAllRows = (checked) => {
+    toggleAllVisible(checked)
+}
+
+const runBatchAction = async (actionKey) => {
+    if (!selectedIds.value.length || batchActionLoading.value) return
+    batchActionLoading.value = actionKey
+    try {
+        const response = await organizationStore.runBatchOrganizationAction(actionKey, selectedIds.value)
+        const queued = response?.queued ?? 0
+        const skipped = Array.isArray(response?.skipped) ? response.skipped.length : 0
+        const message = response?.message || (actionKey === 'count_pages' ? 'Count pages jobs queued.' : 'Website redesign detection queued.')
+        const details = []
+        if (queued) details.push(`${queued} queued`)
+        if (skipped) details.push(`${skipped} skipped`)
+        alert(details.length ? `${message} (${details.join(', ')})` : message)
+        clearSelection()
+    } catch (error) {
+        const errorMessage = error?.message || 'Failed to run batch action. Please try again.'
+        alert(errorMessage)
+    } finally {
+        batchActionLoading.value = null
+    }
+}
 
 const handleEditSubmit = async (organizationData) => {
     if (!sidebarOrgId.value) return
@@ -350,15 +398,57 @@ const editFormRef = ref(null)
                 </div>
 
                 <div v-else class="flex flex-1 flex-col min-h-0">
+                    <div v-if="view === 'table' && selectedCount" class="border-b border-neutral-200 bg-neutral-50/60 px-4 py-3 lg:px-6">
+                        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                            <div>
+                                <p class="text-sm font-semibold text-neutral-900">
+                                    {{ selectedCount }} selected
+                                </p>
+                                <button
+                                    type="button"
+                                    class="text-xs font-medium text-neutral-500 transition hover:text-neutral-900"
+                                    @click="clearSelection"
+                                >
+                                    Clear selection
+                                </button>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium"
+                                    :disabled="batchActionLoading === 'count_pages'"
+                                    @click="runBatchAction('count_pages')"
+                                >
+                                    <span v-if="batchActionLoading === 'count_pages'">Counting...</span>
+                                    <span v-else>Count pages</span>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium"
+                                    :disabled="batchActionLoading === 'detect_redesign'"
+                                    @click="runBatchAction('detect_redesign')"
+                                >
+                                    <span v-if="batchActionLoading === 'detect_redesign'">Queuing...</span>
+                                    <span v-else>Detect redesign</span>
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
                     <OrganizationTableView
                         v-if="view === 'table'"
                         :organizations="organizationStore.organizations"
                         :pagination="organizationStore.pagination"
                         :format-website="formatWebsite"
+                        selectable
+                        :selected-ids="selectedIds"
+                        :select-all-checked="allVisibleSelected"
+                        :select-all-indeterminate="isIndeterminate"
                         @open-sidebar="({ mode, id }) => openSidebar(mode, id)"
                         @start-web-scraping="startWebScraping"
                         @detect-redesign="detectWebsiteRedesign"
                         @delete-organization="deleteOrganization"
+                        @toggle-row-selection="handleRowSelection"
+                        @toggle-select-all="handleSelectAllRows"
                         @page-change="handlePageChange"
                     />
 

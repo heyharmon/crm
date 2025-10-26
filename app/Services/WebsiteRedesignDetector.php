@@ -37,7 +37,7 @@ class WebsiteRedesignDetector
         try {
             $response = Http::timeout(20)
                 ->acceptJson()
-                ->get(config('redesign.cdx_endpoint'), [
+                ->get(config('waybackmachine.cdx_endpoint'), [
                     'url' => $normalized,
                     'output' => 'json',
                     'fl' => 'timestamp,digest,statuscode,mimetype,length',
@@ -126,8 +126,8 @@ class WebsiteRedesignDetector
             return [];
         }
 
-        $minPersistenceDays = max(1, (int) config('redesign.min_persistence_days', 120));
-        $maxEvents = max(1, (int) config('redesign.max_events', 5));
+        $minPersistenceDays = max(1, (int) config('waybackmachine.min_persistence_days', 120));
+        $maxEvents = max(1, (int) config('waybackmachine.max_events', 5));
         $now = Carbon::now('UTC');
         $candidates = [];
 
@@ -182,7 +182,7 @@ class WebsiteRedesignDetector
      */
     private function allowedStatusCodes(): array
     {
-        $codes = config('redesign.allowed_status_codes');
+        $codes = config('waybackmachine.allowed_status_codes');
 
         if (!is_array($codes) || empty($codes)) {
             return [200];
@@ -200,7 +200,7 @@ class WebsiteRedesignDetector
      */
     private function allowedMimeTypes(): array
     {
-        $types = config('redesign.allowed_mimetypes');
+        $types = config('waybackmachine.allowed_mimetypes');
 
         if (!is_array($types) || empty($types)) {
             return ['text/html'];
@@ -215,7 +215,7 @@ class WebsiteRedesignDetector
 
     private function minPayloadBytes(): int
     {
-        return max(0, (int) config('redesign.min_payload_bytes', 10240));
+        return max(0, (int) config('waybackmachine.min_payload_bytes', 10240));
     }
 
     private function snapshotPassesFilters(

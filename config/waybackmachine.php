@@ -10,7 +10,7 @@ return [
     // Minimum payload size in bytes (default 10240); smaller captures (often WAF challenges) are ignored.
     'min_payload_bytes' => (int) env('WAYBACK_MIN_PAYLOAD_BYTES', 20480),
 
-    // Cap on how many redesign events we keep per organization (newest events win).
+    // Cap on how many redesign events (default 5) we keep per organization (newest events win).
     'max_events' => (int) env('WAYBACK_MAX_REDESIGN_EVENTS', 5),
 
     // Only snapshots with these HTTP status codes are considered; others are discarded as noise.

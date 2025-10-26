@@ -132,7 +132,7 @@ class OrganizationController extends Controller
         $organization->load([
             'category',
             'websiteRedesigns' => function ($query) {
-                $query->latest('captured_at')->limit(config('redesign.max_events', 5));
+                $query->latest('captured_at')->limit(config('waybackmachine.max_events', 5));
             },
         ])->loadCount('pages');
         if (Auth::check()) {
