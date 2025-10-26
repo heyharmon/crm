@@ -38,6 +38,14 @@ class DetectWebsiteRedesignJob implements ShouldQueue
             return;
         }
 
+        if ($organization->last_major_redesign_at) {
+            DB::transaction(function () use ($organization) {
+                $organization->websiteRedesigns()->delete();
+                $organization->last_major_redesign_at = null;
+                $organization->save();
+            });
+        }
+
         $events = $detector->detect($organization->website);
 
         DB::transaction(function () use ($organization, $events) {

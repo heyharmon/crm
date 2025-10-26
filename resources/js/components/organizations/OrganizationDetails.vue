@@ -17,6 +17,10 @@ const screenshotError = ref(null)
 const screenshotSrc = ref(null)
 const activeScreenshotKey = ref(null)
 
+const isDetectingRedesign = ref(false)
+const redesignActionError = ref(null)
+const redesignPreviewStates = ref({})
+
 const load = async () => {
     try {
         isLoadingLocal.value = true
@@ -119,11 +123,91 @@ const getRedesignScreenshotUrl = (event) => {
     return buildApiflashUrl(archivedUrl)
 }
 
+const redesignEventKey = (event) => {
+    if (!event) return null
+    return event.id ?? event.wayback_timestamp ?? event.timestamp ?? null
+}
+
+const setRedesignPreviewState = (event, state) => {
+    const key = redesignEventKey(event)
+    if (!key) return
+
+    redesignPreviewStates.value = {
+        ...redesignPreviewStates.value,
+        [key]: state
+    }
+}
+
+const getRedesignPreviewState = (event) => {
+    const key = redesignEventKey(event)
+    return key ? redesignPreviewStates.value[key] : null
+}
+
+const isRedesignPreviewLoading = (event) => getRedesignPreviewState(event) === 'loading'
+const hasRedesignPreviewError = (event) => getRedesignPreviewState(event) === 'error'
+
+const syncRedesignPreviewStates = (organization) => {
+    if (!organization?.website_redesigns?.length) {
+        redesignPreviewStates.value = {}
+        return
+    }
+
+    const nextStates = {}
+
+    organization.website_redesigns.forEach((event) => {
+        const key = redesignEventKey(event)
+        if (!key) {
+            return
+        }
+
+        const screenshotUrl = getRedesignScreenshotUrl(event)
+        if (!screenshotUrl) {
+            nextStates[key] = 'error'
+            return
+        }
+
+        const currentState = redesignPreviewStates.value[key]
+        nextStates[key] = currentState === 'ready' ? 'ready' : 'loading'
+    })
+
+    redesignPreviewStates.value = nextStates
+}
+
+const handleRedesignPreviewLoad = (event) => {
+    setRedesignPreviewState(event, 'ready')
+}
+
+const handleRedesignPreviewError = (event) => {
+    setRedesignPreviewState(event, 'error')
+}
+
+const detectWebsiteRedesign = async () => {
+    const organization = org()
+    if (!organization?.id || isDetectingRedesign.value) {
+        return
+    }
+
+    try {
+        redesignActionError.value = null
+        isDetectingRedesign.value = true
+        organizationStore.resetOrganizationRedesignData(organization.id)
+        syncRedesignPreviewStates(organizationStore.currentOrganization)
+        await organizationStore.detectWebsiteRedesign(organization.id)
+        await organizationStore.fetchOrganization(organization.id)
+    } catch (e) {
+        redesignActionError.value = e?.message || 'Failed to detect redesign.'
+    } finally {
+        isDetectingRedesign.value = false
+    }
+}
+
 watch(() => props.organizationId, load)
 watch(
     () => organizationStore.currentOrganization,
     (organization) => {
         loadScreenshot(organization)
+        syncRedesignPreviewStates(organization)
+        redesignActionError.value = null
     },
     { immediate: true }
 )
@@ -221,14 +305,43 @@ watch(
             </div>
 
             <div class="bg-white rounded-lg border border-neutral-200 p-4">
-                <h3 class="font-semibold mb-3">Website History</h3>
+                <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                    <h3 class="font-semibold">Website History</h3>
+                    <button
+                        v-if="org().website"
+                        type="button"
+                        class="inline-flex items-center justify-center rounded-full border border-neutral-200 px-3 py-1.5 text-xs font-semibold text-neutral-700 transition hover:border-neutral-300 hover:bg-neutral-100 disabled:cursor-not-allowed disabled:opacity-60"
+                        :disabled="isDetectingRedesign"
+                        @click="detectWebsiteRedesign"
+                    >
+                        <span v-if="isDetectingRedesign" class="flex items-center gap-1">
+                            <svg class="h-3.5 w-3.5 animate-spin text-neutral-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z" />
+                            </svg>
+                            Detecting…
+                        </span>
+                        <span v-else>
+                            {{ org().last_major_redesign_at ? 'Redetect redesign' : 'Detect redesign' }}
+                        </span>
+                    </button>
+                </div>
+                <p v-if="redesignActionError" class="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                    {{ redesignActionError }}
+                </p>
                 <div class="space-y-3 text-sm text-neutral-700">
-                    <div class="flex items-center justify-between">
-                        <span class="font-medium text-neutral-900">Last major redesign:</span>
-                        <span v-if="org().last_major_redesign_at" class="text-neutral-700">
+                    <div
+                        class="flex flex-col gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+                        v-if="org().last_major_redesign_at"
+                    >
+                        <span class="font-semibold text-emerald-900">Last major redesign:</span>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-emerald-700">
                             {{ formatDisplayDate(org().last_major_redesign_at) }}
                         </span>
-                        <span v-else class="text-neutral-400"> Not detected </span>
+                    </div>
+                    <div v-else class="flex items-center justify-between">
+                        <span class="font-medium text-neutral-900">Last major redesign:</span>
+                        <span class="text-neutral-400"> Not detected </span>
                     </div>
                     <div v-if="org().website_redesigns && org().website_redesigns.length" class="space-y-3">
                         <div
@@ -236,16 +349,31 @@ watch(
                             :key="event.id || event.wayback_timestamp"
                             class="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden"
                         >
-                            <div class="h-40 bg-neutral-100 relative">
+                            <div class="h-40 bg-neutral-100 relative overflow-hidden">
                                 <img
                                     v-if="getRedesignScreenshotUrl(event)"
                                     :src="getRedesignScreenshotUrl(event)"
                                     :alt="`Archived screenshot from ${formatDisplayDate(event.captured_at)}`"
-                                    class="absolute inset-0 h-full w-full object-cover"
+                                    class="absolute inset-0 h-full w-full object-cover transition-opacity duration-200"
+                                    :class="isRedesignPreviewLoading(event) ? 'opacity-0' : 'opacity-100'"
                                     loading="lazy"
-                                    @error="(e) => (e.target.style.display = 'none')"
+                                    @load="handleRedesignPreviewLoad(event)"
+                                    @error="handleRedesignPreviewError(event)"
                                 />
-                                <div class="absolute inset-0 flex items-center justify-center text-xs font-medium text-neutral-500" v-else>
+                                <div
+                                    v-if="isRedesignPreviewLoading(event)"
+                                    class="absolute inset-0 flex items-center justify-center gap-2 bg-white/75 text-xs font-medium text-neutral-600"
+                                >
+                                    <svg class="h-4 w-4 animate-spin text-neutral-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z" />
+                                    </svg>
+                                    Loading screenshot…
+                                </div>
+                                <div
+                                    v-else-if="hasRedesignPreviewError(event) || !getRedesignScreenshotUrl(event)"
+                                    class="absolute inset-0 flex items-center justify-center text-xs font-medium text-neutral-500"
+                                >
                                     Preview unavailable
                                 </div>
                             </div>

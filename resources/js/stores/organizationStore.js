@@ -214,6 +214,20 @@ export const useOrganizationStore = defineStore('organization', {
             }
         },
 
+        resetOrganizationRedesignData(organizationId) {
+            const clearData = (org) => {
+                if (!org || org.id !== organizationId) return
+                org.last_major_redesign_at = null
+                org.website_redesigns = []
+            }
+
+            this.organizations.forEach((organization) => {
+                clearData(organization)
+            })
+
+            clearData(this.currentOrganization)
+        },
+
         setFilters(newFilters) {
             this.filters = { ...this.filters, ...newFilters }
         },
