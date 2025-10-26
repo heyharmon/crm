@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Button from '@/components/ui/Button.vue'
 import Pagination from '@/components/ui/Pagination.vue'
+import { formatDisplayDate } from '@/utils/date'
 
 const props = defineProps({
     organizations: {
@@ -115,6 +116,9 @@ const getScreenshotUrl = (website) => {
                             </div>
                             <div v-if="organization.city || organization.state" class="text-sm text-neutral-500">
                                 {{ [organization.city, organization.state].filter(Boolean).join(', ') }}
+                            </div>
+                            <div v-if="organization.last_major_redesign_at" class="text-xs font-medium text-emerald-700">
+                                Last redesign · {{ formatDisplayDate(organization.last_major_redesign_at) }}
                             </div>
                         </div>
                         <div

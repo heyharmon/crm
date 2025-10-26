@@ -5,11 +5,13 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\TeamController;
 use App\Http\Controllers\OrganizationController;
+use App\Http\Controllers\OrganizationBatchActionController;
 use App\Http\Controllers\OrganizationCategoryController;
 use App\Http\Controllers\WebsiteRatingController;
 use App\Http\Controllers\OrganizationGoogleMapsScraperController;
 use App\Http\Controllers\WebsitePageScraperController;
 use App\Http\Controllers\WebsiteRatingOptionController;
+use App\Http\Controllers\OrganizationWebsiteRedesignController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -31,6 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('teams/{team}/members/{user}/role', [TeamController::class, 'updateMemberRole']);
 
     // Organization routes
+    Route::post('organizations/batch/actions', OrganizationBatchActionController::class);
     Route::resource('organizations', OrganizationController::class);
     Route::post('organizations/{id}/restore', [OrganizationController::class, 'restore']);
 
@@ -49,6 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Organization website ratings
     Route::post('organizations/{organization}/website-ratings', [WebsiteRatingController::class, 'store']);
     Route::delete('organizations/{organization}/website-ratings', [WebsiteRatingController::class, 'destroy']);
+    Route::post('organizations/{organization}/website-redesigns', [OrganizationWebsiteRedesignController::class, 'store']);
 
     // Google Maps scraper routes
     Route::prefix('google-maps-scraper')->group(function () {

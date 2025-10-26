@@ -202,6 +202,47 @@ export const useOrganizationStore = defineStore('organization', {
             }
         },
 
+        async detectWebsiteRedesign(organizationId) {
+            this.error = null
+
+            try {
+                return await api.post(`/organizations/${organizationId}/website-redesigns`)
+            } catch (error) {
+                this.error = error.message || 'Failed to queue redesign detection'
+                console.error('Error queuing redesign detection:', error)
+                throw error
+            }
+        },
+
+        async runBatchOrganizationAction(action, organizationIds) {
+            this.error = null
+
+            try {
+                return await api.post('/organizations/batch/actions', {
+                    action,
+                    organization_ids: organizationIds
+                })
+            } catch (error) {
+                this.error = error.message || 'Failed to run batch organization action'
+                console.error('Error running batch organization action:', error)
+                throw error
+            }
+        },
+
+        resetOrganizationRedesignData(organizationId) {
+            const clearData = (org) => {
+                if (!org || org.id !== organizationId) return
+                org.last_major_redesign_at = null
+                org.website_redesigns = []
+            }
+
+            this.organizations.forEach((organization) => {
+                clearData(organization)
+            })
+
+            clearData(this.currentOrganization)
+        },
+
         setFilters(newFilters) {
             this.filters = { ...this.filters, ...newFilters }
         },

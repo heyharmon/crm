@@ -5,6 +5,7 @@ import { useTeamStore } from '@/stores/teamStore';
 import auth from '@/services/auth';
 import DefaultLayout from '@/layouts/DefaultLayout.vue';
 import Button from '@/components/ui/Button.vue';
+import { formatDisplayDate } from '@/utils/date';
 
 const route = useRoute();
 const teamStore = useTeamStore();
@@ -197,7 +198,7 @@ const updateRole = async (userId, role) => {
                 <div class="font-medium">{{ member.name }}</div>
                 <div class="text-sm text-neutral-500">{{ member.email }}</div>
                 <div class="text-xs text-neutral-400 mt-1">
-                  Invited: {{ new Date(member.pivot.invitation_sent_at).toLocaleDateString() }}
+                  Invited: {{ formatDisplayDate(member.pivot.invitation_sent_at) }}
                 </div>
               </div>
               <div class="flex items-center space-x-4">
