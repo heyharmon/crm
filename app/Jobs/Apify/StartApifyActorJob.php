@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Apify;
 
 use App\Services\BaseApifyService;
 use Illuminate\Bus\Queueable;
@@ -39,4 +39,3 @@ class StartApifyActorJob implements ShouldQueue
         }
     }
 }
-

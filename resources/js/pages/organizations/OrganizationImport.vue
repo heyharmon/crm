@@ -140,17 +140,12 @@ const uploadHubspotCsv = async (file) => {
                     <div>
                         <h2 class="text-xl font-semibold">Import Organizations from HubSpot</h2>
                         <p class="text-neutral-600 text-sm mt-1">
-                            Upload your HubSpot company export (CSV). We will match organizations by website root domain and fill in any missing address or phone data without overwriting existing values.
+                            Upload your HubSpot company export (CSV). We will match organizations by website root domain and fill in any missing address or
+                            phone data without overwriting existing values.
                         </p>
                     </div>
                     <div class="flex items-center gap-3">
-                        <input
-                            ref="hubspotFileInput"
-                            type="file"
-                            accept=".csv,text/csv"
-                            class="hidden"
-                            @change="handleHubspotFileChange"
-                        />
+                        <input ref="hubspotFileInput" type="file" accept=".csv,text/csv" class="hidden" @change="handleHubspotFileChange" />
                         <Button
                             type="button"
                             class="bg-neutral-900 text-white hover:bg-neutral-800"
@@ -204,11 +199,7 @@ const uploadHubspotCsv = async (file) => {
                     <div v-if="hubspotImportResult.errors?.length" class="mt-4 text-sm text-neutral-700">
                         <div class="font-semibold mb-2">Rows skipped</div>
                         <ul class="space-y-1 max-h-40 overflow-y-auto">
-                            <li
-                                v-for="error in hubspotImportResult.errors"
-                                :key="`${error.row}-${error.reason}`"
-                                class="text-xs text-neutral-600"
-                            >
+                            <li v-for="error in hubspotImportResult.errors" :key="`${error.row}-${error.reason}`" class="text-xs text-neutral-600">
                                 Row {{ error.row }} — {{ error.reason }}
                             </li>
                         </ul>
@@ -237,7 +228,6 @@ const uploadHubspotCsv = async (file) => {
                             <label class="block text-sm font-medium text-neutral-700 mb-1">Max Places</label>
                             <Input v-model="form.max_places" type="number" min="1" max="1000" placeholder="100" />
                             <p class="text-xs text-neutral-500 mt-1">Maximum number of organizations to import</p>
-                            
                         </div>
 
                         <div>

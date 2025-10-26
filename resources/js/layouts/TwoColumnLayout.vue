@@ -4,7 +4,7 @@ import AppNav from '@/components/globals/AppNav.vue'
 defineProps({
     sidebarWidth: {
         type: String,
-        default: 'w-80 xl:w-96'
+        default: 'w-72 xl:w-80'
     }
 })
 </script>

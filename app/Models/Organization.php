@@ -15,6 +15,11 @@ class Organization extends Model
 {
     use HasFactory, SoftDeletes;
 
+    public const WEBSITE_STATUS_UP = 'up';
+    public const WEBSITE_STATUS_DOWN = 'down';
+    public const WEBSITE_STATUS_REDIRECTED = 'redirected';
+    public const WEBSITE_STATUS_UNKNOWN = 'unknown';
+
     protected $fillable = [
         'name',
         'google_place_id',
@@ -26,6 +31,7 @@ class Organization extends Model
         'state',
         'country_code',
         'website',
+        'website_status',
         'phone',
         'organization_category_id',
         'map_url',
@@ -39,6 +45,10 @@ class Organization extends Model
         'website_rating_count' => 'integer',
         'website_rating_weighted' => 'float',
         'last_major_redesign_at' => 'date',
+    ];
+
+    protected $attributes = [
+        'website_status' => self::WEBSITE_STATUS_UNKNOWN,
     ];
 
     public function getFullAddressAttribute()

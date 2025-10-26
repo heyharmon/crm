@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Jobs;
+namespace App\Jobs\Apify;
 
 use App\Models\ApifyRun;
 use App\Services\BaseApifyService;
@@ -59,4 +59,3 @@ class ProcessApifyResultsJob implements ShouldQueue
         }
     }
 }
-

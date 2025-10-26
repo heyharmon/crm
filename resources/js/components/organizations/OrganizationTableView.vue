@@ -124,6 +124,25 @@ const formatPagesCount = (organization) => {
     if (!Number.isFinite(numericCount)) return '—'
     return numericCount === 0 ? '—' : count
 }
+
+const WEBSITE_STATUS_META = {
+    up: { label: 'Up', classes: 'border-green-100 bg-green-50 text-green-700' },
+    down: { label: 'Down', classes: 'border-red-100 bg-red-50 text-red-700' },
+    redirected: { label: 'Redirected', classes: 'border-amber-100 bg-amber-50 text-amber-700' },
+    unknown: { label: 'Unknown', classes: 'border-neutral-100 bg-neutral-50 text-neutral-600' }
+}
+
+const normalizeWebsiteStatus = (status) => {
+    if (!status) return 'unknown'
+    if (['missing', 'cert-error', 'timeout'].includes(status)) {
+        return 'down'
+    }
+    return status
+}
+
+const formatWebsiteStatus = (status) => WEBSITE_STATUS_META[normalizeWebsiteStatus(status)]?.label ?? 'Unknown'
+
+const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteStatus(status)]?.classes ?? 'border-neutral-100 bg-neutral-50 text-neutral-600'
 </script>
 
 <template>
@@ -148,6 +167,7 @@ const formatPagesCount = (organization) => {
                         <th class="border-b border-neutral-200 px-4 py-3">Reviews</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Last Redesign</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Website Rating</th>
+                        <th class="border-b border-neutral-200 px-4 py-3">Website Status</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Pages</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Actions</th>
                     </tr>
@@ -255,6 +275,13 @@ const formatPagesCount = (organization) => {
                                     <span v-if="organization.website_rating_count"> {{ organization.website_rating_count }} ratings </span>
                                 </div>
                             </div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
+                            <span
+                                class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold"
+                                :class="websiteStatusClasses(organization.website_status)">
+                                {{ formatWebsiteStatus(organization.website_status) }}
+                            </span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             {{ formatPagesCount(organization) }}

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('banner')->nullable();
             $table->decimal('score', 2, 1)->nullable();
             $table->integer('reviews')->nullable();
-            $table->string('street')->nullable();
+            $table->text('street')->nullable();
             $table->string('city')->nullable();
             $table->string('state')->nullable();
             $table->string('country_code', 2)->nullable();

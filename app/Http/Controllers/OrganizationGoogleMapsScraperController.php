@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Jobs\StartApifyActorJob;
+use App\Jobs\Apify\StartApifyActorJob;
 use App\Services\ApifyGoogleMapsScraperService;
 use App\Services\Processors\OrganizationGoogleMapsResultsProcessor;
 use App\Models\ApifyRun;

@@ -82,48 +82,72 @@ class OrganizationController extends Controller
             }
         }
 
-        $allowedSorts = ['name', 'city', 'state', 'category', 'score', 'reviews', 'website_rating', 'website_rating_average', 'website_rating_weighted', 'created_at'];
-
-        // Support multi-sort via sort[]="field:direction"
-        $sorts = $request->input('sort', []);
-        if (!is_array($sorts)) {
-            $sorts = [$sorts];
+        $websiteStatus = $request->input('website_status');
+        if ($websiteStatus) {
+            $statuses = is_array($websiteStatus) ? $websiteStatus : [$websiteStatus];
+            $allowedStatuses = [
+                Organization::WEBSITE_STATUS_UP,
+                Organization::WEBSITE_STATUS_DOWN,
+                Organization::WEBSITE_STATUS_REDIRECTED,
+                Organization::WEBSITE_STATUS_UNKNOWN,
+            ];
+            $statuses = array_values(array_intersect($statuses, $allowedStatuses));
+            if (!empty($statuses)) {
+                $query->whereIn('organizations.website_status', $statuses);
+            }
         }
 
-        if (count($sorts) > 0) {
-            foreach ($sorts as $s) {
-                if (!is_string($s)) continue;
-                [$field, $dir] = array_pad(explode(':', $s), 2, 'desc');
-                $dir = strtolower($dir) === 'asc' ? 'asc' : 'desc';
-                if (in_array($field, $allowedSorts)) {
-                    if ($field === 'category') {
-                        $query->orderBy('organization_categories.name', $dir);
-                    } elseif ($field === 'website_rating') {
-                        $query->orderBy('organizations.website_rating_average', $dir);
-                    } elseif ($field === 'website_rating_weighted') {
-                        $query->orderBy('organizations.website_rating_weighted', $dir);
+        $randomize = $request->boolean('random');
+        $allowedSorts = ['name', 'city', 'state', 'category', 'score', 'reviews', 'website_rating', 'website_rating_average', 'website_rating_weighted', 'created_at'];
+
+        if ($randomize) {
+            $query->inRandomOrder();
+        } else {
+            // Support multi-sort via sort[]="field:direction"
+            $sorts = $request->input('sort', []);
+            if (!is_array($sorts)) {
+                $sorts = [$sorts];
+            }
+
+            if (count($sorts) > 0) {
+                foreach ($sorts as $s) {
+                    if (!is_string($s)) continue;
+                    [$field, $dir] = array_pad(explode(':', $s), 2, 'desc');
+                    $dir = strtolower($dir) === 'asc' ? 'asc' : 'desc';
+                    if (in_array($field, $allowedSorts)) {
+                        if ($field === 'category') {
+                            $query->orderBy('organization_categories.name', $dir);
+                        } elseif ($field === 'website_rating') {
+                            $query->orderBy('organizations.website_rating_average', $dir);
+                        } elseif ($field === 'website_rating_weighted') {
+                            $query->orderBy('organizations.website_rating_weighted', $dir);
+                        } else {
+                            $query->orderBy('organizations.' . $field, $dir);
+                        }
+                    }
+                }
+            } else {
+                // Fallback to single sort params (no default sort)
+                $sortBy = $request->get('sort_by');
+                $sortDirection = $request->get('sort_direction', 'asc');
+                if ($sortBy && in_array($sortBy, $allowedSorts)) {
+                    if ($sortBy === 'category') {
+                        $query->orderBy('organization_categories.name', $sortDirection);
+                    } elseif ($sortBy === 'website_rating') {
+                        $query->orderBy('organizations.website_rating_average', $sortDirection);
+                    } elseif ($sortBy === 'website_rating_weighted') {
+                        $query->orderBy('organizations.website_rating_weighted', $sortDirection);
                     } else {
-                        $query->orderBy('organizations.' . $field, $dir);
+                        $query->orderBy('organizations.' . $sortBy, $sortDirection);
                     }
                 }
             }
-        } else {
-            // Fallback to single sort params (no default sort)
-            $sortBy = $request->get('sort_by');
-            $sortDirection = $request->get('sort_direction', 'asc');
-            if ($sortBy && in_array($sortBy, $allowedSorts)) {
-                if ($sortBy === 'category') {
-                    $query->orderBy('organization_categories.name', $sortDirection);
-                } elseif ($sortBy === 'website_rating') {
-                    $query->orderBy('organizations.website_rating_average', $sortDirection);
-                } elseif ($sortBy === 'website_rating_weighted') {
-                    $query->orderBy('organizations.website_rating_weighted', $sortDirection);
-                } else {
-                    $query->orderBy('organizations.' . $sortBy, $sortDirection);
-                }
-            }
         }
-        $organizations = $query->paginate(20);
+
+        $perPage = (int) $request->input('per_page', 20);
+        $perPage = max(1, min($perPage, 100));
+
+        $organizations = $query->paginate($perPage);
         return response()->json($organizations);
     }
 

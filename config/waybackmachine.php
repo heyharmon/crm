@@ -13,6 +13,9 @@ return [
     // Cap on how many redesign events (default 5) we keep per organization (newest events win).
     'max_events' => (int) env('WAYBACK_MAX_REDESIGN_EVENTS', 5),
 
+    // Optional delay (milliseconds) inserted before calling Wayback to avoid hammering their API.
+    'request_delay_ms' => (int) env('WAYBACK_REQUEST_DELAY_MS', 1000),
+
     // Only snapshots with these HTTP status codes are considered; others are discarded as noise.
     'allowed_status_codes' => array_values(array_filter(array_map(
         static function ($value) {

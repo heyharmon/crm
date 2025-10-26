@@ -5,6 +5,8 @@ import Button from '@/components/ui/Button.vue'
 import api from '@/services/api'
 import { getRatingButtonClasses } from '@/utils/ratingStyles'
 
+const RANDOMIZE_UNRATED_WEBSITES = true
+
 const queue = ref([])
 const currentOrg = ref(null)
 const ratingOptions = ref([])
@@ -18,7 +20,12 @@ const screenshotReady = ref(false)
 const screenshotError = ref(null)
 const screenshotCache = reactive({})
 
-const hasMorePages = computed(() => lastPage.value === null || nextPage.value <= lastPage.value)
+const hasMorePages = computed(() => {
+    if (RANDOMIZE_UNRATED_WEBSITES) {
+        return true
+    }
+    return lastPage.value === null || nextPage.value <= lastPage.value
+})
 const optionBySlug = computed(() =>
     (ratingOptions.value || []).reduce((map, option) => {
         map[option.slug] = option
@@ -109,25 +116,35 @@ const fetchNextBatch = async () => {
 
     pendingFetch = (async () => {
         try {
-            const response = await api.get('/organizations', {
-                params: {
-                    page: nextPage.value,
-                    website: 'present',
-                    my_website_rating: 'none'
-                }
-            })
+            const params = {
+                website: 'present',
+                my_website_rating: 'none'
+            }
+
+            if (RANDOMIZE_UNRATED_WEBSITES) {
+                params.random = true
+            } else {
+                params.page = nextPage.value
+            }
+
+            const response = await api.get('/organizations', { params })
 
             const data = Array.isArray(response.data) ? response.data : []
             const unrated = data.filter((org) => !org.my_website_rating_option_id)
 
-            if (typeof response.last_page === 'number') {
-                lastPage.value = response.last_page
-            }
-
-            if (typeof response.current_page === 'number') {
-                nextPage.value = response.current_page + 1
+            if (RANDOMIZE_UNRATED_WEBSITES) {
+                lastPage.value = null
+                nextPage.value = 1
             } else {
-                nextPage.value += 1
+                if (typeof response.last_page === 'number') {
+                    lastPage.value = response.last_page
+                }
+
+                if (typeof response.current_page === 'number') {
+                    nextPage.value = response.current_page + 1
+                } else {
+                    nextPage.value += 1
+                }
             }
 
             if (unrated.length) {

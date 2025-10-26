@@ -21,6 +21,7 @@ export const useOrganizationStore = defineStore('organization', {
             category: '',
             website: '',
             website_rating: '',
+            website_status: [],
             // Multi-sort: ordered list of "field:direction"; empty by default (no sorting)
             sort: []
         },
@@ -255,6 +256,7 @@ export const useOrganizationStore = defineStore('organization', {
                 category: '',
                 website: '',
                 website_rating: '',
+                website_status: [],
                 sort: []
             }
         }

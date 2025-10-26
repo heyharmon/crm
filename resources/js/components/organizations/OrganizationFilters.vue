@@ -14,6 +14,13 @@ const props = defineProps({
     }
 })
 
+const WEBSITE_STATUS_OPTIONS = [
+    { value: 'up', label: 'Up' },
+    { value: 'down', label: 'Down' },
+    { value: 'redirected', label: 'Redirected' },
+    { value: 'unknown', label: 'Unknown' }
+]
+
 const emit = defineEmits(['update:filters', 'reset-filters', 'search'])
 
 const updateFilter = (key, value) => {
@@ -31,6 +38,19 @@ const setWebsiteRatingFilter = (value) => {
     emit('update:filters', { website_rating: next })
 }
 
+const toggleWebsiteStatus = (value) => {
+    const current = Array.isArray(props.filters.website_status) ? [...props.filters.website_status] : []
+    const index = current.indexOf(value)
+    if (index >= 0) {
+        current.splice(index, 1)
+    } else {
+        current.push(value)
+    }
+    emit('update:filters', { website_status: current })
+}
+
+const hasWebsiteStatus = (value) => Array.isArray(props.filters.website_status) && props.filters.website_status.includes(value)
+
 const handleSearch = () => {
     emit('search')
 }
@@ -42,7 +62,7 @@ const resetFilters = () => {
 const hasActiveFilters = computed(() => {
     const filterEntries = Object.entries(props.filters || {})
     return filterEntries.some(([key, value]) => {
-        if (key === 'sort') return Array.isArray(value) && value.length > 0
+        if (['sort', 'website_status'].includes(key)) return Array.isArray(value) && value.length > 0
         return Boolean(value)
     })
 })
@@ -182,6 +202,30 @@ const getSortIcon = (column) => {
                         </Button>
                     </div>
                 </div>
+
+                <div>
+                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Website Status</label>
+                    <div class="flex flex-wrap gap-2">
+                        <Button
+                            size="sm"
+                            :variant="!Array.isArray(filters.website_status) || !filters.website_status.length ? 'default' : 'outline'"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                            @click="updateFilter('website_status', [])"
+                        >
+                            Any
+                        </Button>
+                        <Button
+                            v-for="option in WEBSITE_STATUS_OPTIONS"
+                            :key="option.value"
+                            size="sm"
+                            :variant="hasWebsiteStatus(option.value) ? 'default' : 'outline'"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                            @click="toggleWebsiteStatus(option.value)"
+                        >
+                            {{ option.label }}
+                        </Button>
+                    </div>
+                </div>
             </div>
 
             <div>
@@ -242,6 +286,14 @@ const getSortIcon = (column) => {
                         class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                     >
                         Weighted Rating {{ getSortIcon('website_rating_weighted') }}
+                    </Button>
+                    <Button
+                        @click="handleSort('website_status')"
+                        :variant="(filters.sort || []).some((s) => s.startsWith('website_status:')) ? 'default' : 'outline'"
+                        size="sm"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                    >
+                        Website Status {{ getSortIcon('website_status') }}
                     </Button>
                 </div>
             </div>
