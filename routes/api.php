@@ -13,6 +13,7 @@ use App\Http\Controllers\OrganizationHubspotImportController;
 use App\Http\Controllers\WebsitePageScraperController;
 use App\Http\Controllers\WebsiteRatingOptionController;
 use App\Http\Controllers\OrganizationWebsiteRedesignController;
+use App\Http\Controllers\DashboardController;
 
 // Public routes
 Route::post('/register', [AuthController::class, 'register']);
@@ -24,6 +25,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+    Route::get('/dashboard', DashboardController::class);
 
     // Team routes
     Route::resource('teams', TeamController::class);

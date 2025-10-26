@@ -20,8 +20,17 @@ const logout = async () => {
                 <router-link to="/" class="text-base font-bold text-neutral-900"> CRM </router-link>
 
                 <div v-if="isAuthenticated" class="hidden items-center text-sm font-medium text-neutral-500 md:flex">
-                    <router-link to="/organizations" class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900">
+                    <router-link
+                        :to="{ name: 'dashboard' }"
+                        class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900"
+                    >
                         Dashboard
+                    </router-link>
+                    <router-link
+                        :to="{ name: 'organizations.index' }"
+                        class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900"
+                    >
+                        Organizations
                     </router-link>
                     <router-link to="/organization-categories" class="rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900">
                         Categories

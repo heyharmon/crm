@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 // Import pages
-import Home from '@/pages/Home.vue'
+import Dashboard from '@/pages/Dashboard.vue'
 import Login from '@/pages/auth/Login.vue'
 import Register from '@/pages/auth/Register.vue'
 import TeamIndex from '@/pages/teams/TeamIndex.vue'
@@ -18,8 +18,8 @@ import WebsiteRatings from '@/pages/websites/WebsiteRatings.vue'
 const routes = [
     {
         path: '/',
-        name: 'home',
-        component: Home,
+        name: 'dashboard',
+        component: Dashboard,
         meta: { requiresAuth: true }
     },
     {
@@ -132,7 +132,7 @@ router.beforeEach((to, from, next) => {
         }
     } else if (to.matched.some((record) => record.meta.guest)) {
         if (token) {
-            next({ name: 'home' })
+            next({ name: 'dashboard' })
         } else {
             next()
         }
