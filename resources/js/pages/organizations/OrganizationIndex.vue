@@ -34,6 +34,7 @@ const parseFiltersFromQuery = (q) => {
             city: toStr(q.city),
             state: toStr(q.state),
             category: toStr(q.category),
+            cms: toStr(q.cms),
             website: toStr(q.website),
             website_rating: toStr(q.website_rating),
             website_status: toArr(q.website_status),
@@ -50,6 +51,7 @@ const buildQueryFromFilters = (filters, page, base = {}) => {
     delete q.city
     delete q.state
     delete q.category
+    delete q.cms
     delete q.website
     delete q.website_rating
     delete q.website_status
@@ -60,6 +62,7 @@ const buildQueryFromFilters = (filters, page, base = {}) => {
     if (filters.city) q.city = filters.city
     if (filters.state) q.state = filters.state
     if (filters.category) q.category = filters.category
+    if (filters.cms) q.cms = filters.cms
     if (filters.website) q.website = filters.website
     if (filters.website_rating) q.website_rating = filters.website_rating
     if (Array.isArray(filters.website_status) && filters.website_status.length) q.website_status = [...filters.website_status]
@@ -229,6 +232,25 @@ const detectWebsiteRedesign = async (organization) => {
     }
 }
 
+const detectWebsiteCms = async (organization) => {
+    if (!organization?.id) return
+
+    if (!organization.website) {
+        alert('This organization does not have a website to analyze.')
+        return
+    }
+
+    try {
+        const response = await organizationStore.detectOrganizationCms(organization.id)
+        const message = response?.message || 'CMS detection queued.'
+        alert(message)
+    } catch (error) {
+        console.error('Error queuing CMS detection:', error)
+        const errorMessage = error?.message || 'Failed to queue CMS detection. Please try again.'
+        alert(errorMessage)
+    }
+}
+
 // Taller screenshot heights for 1–2 column modes
 // Sidebar state synced with route query
 const sidebarMode = ref(null) // 'view' | 'edit' | null
@@ -259,7 +281,7 @@ watch(
     () => route.query,
     async (q, prevQ) => {
         if (syncingQuery.value) return
-        const keys = ['search', 'city', 'state', 'category', 'sort', 'page']
+        const keys = ['search', 'city', 'state', 'category', 'cms', 'sort', 'page']
         const relevantChanged = keys.some((k) => JSON.stringify(q[k]) !== JSON.stringify(prevQ?.[k]))
         if (!relevantChanged) return
 
@@ -316,6 +338,7 @@ const runBatchAction = async (actionKey) => {
         const fallbackMessages = {
             count_pages: 'Count pages jobs queued.',
             detect_redesign: 'Website redesign detection queued.',
+            detect_cms: 'CMS detection queued.',
             archive: 'Organizations archived.'
         }
         const message = response?.message || fallbackMessages[actionKey] || 'Batch action completed.'
@@ -524,6 +547,15 @@ const editFormRef = ref(null)
                                 </Button>
                                 <Button
                                     variant="outline"
+                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium"
+                                    :disabled="batchActionLoading === 'detect_cms'"
+                                    @click="runBatchAction('detect_cms')"
+                                >
+                                    <span v-if="batchActionLoading === 'detect_cms'">Queuing...</span>
+                                    <span v-else>Detect CMS</span>
+                                </Button>
+                                <Button
+                                    variant="outline"
                                     class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600"
                                     :disabled="batchActionLoading === 'archive'"
                                     @click="runBatchAction('archive')"
@@ -546,6 +578,7 @@ const editFormRef = ref(null)
                         @open-sidebar="({ mode, id }) => openSidebar(mode, id)"
                         @start-web-scraping="startWebScraping"
                         @detect-redesign="detectWebsiteRedesign"
+                        @detect-cms="detectWebsiteCms"
                         @delete-organization="deleteOrganization"
                         @toggle-row-selection="handleRowSelection"
                         @toggle-select-all="handleSelectAllRows"

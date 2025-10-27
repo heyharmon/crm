@@ -445,6 +445,10 @@ watch(
                             >{{ org().website }}</a
                         >
                     </div>
+                    <div>
+                        <span class="font-medium text-neutral-700">CMS:</span>
+                        <span class="ml-2 text-neutral-600">{{ org().cms || 'Not detected yet' }}</span>
+                    </div>
                 </div>
             </div>
 

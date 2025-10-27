@@ -44,4 +44,8 @@ return [
         'key' => env('APIFLASH_ACCESS_KEY'),
     ],
 
+    'whatcms' => [
+        'key' => env('WHATCMS_API_KEY'),
+    ],
+
 ];

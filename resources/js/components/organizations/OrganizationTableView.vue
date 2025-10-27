@@ -40,6 +40,7 @@ const emit = defineEmits([
     'start-web-scraping',
     'delete-organization',
     'detect-redesign',
+    'detect-cms',
     'page-change',
     'toggle-row-selection',
     'toggle-select-all'
@@ -68,6 +69,10 @@ const handleDelete = (organizationId) => {
 }
 const handleDetectRedesign = (organization) => {
     emit('detect-redesign', organization)
+    closeMenu()
+}
+const handleDetectCms = (organization) => {
+    emit('detect-cms', organization)
     closeMenu()
 }
 
@@ -372,6 +377,14 @@ const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteSta
                                         @click.stop="handleDetectRedesign(organization)"
                                     >
                                         Detect redesign
+                                    </button>
+                                    <button
+                                        v-if="organization.website"
+                                        class="flex w-full items-center px-3 py-2 text-sm text-neutral-700 transition hover:bg-neutral-50"
+                                        type="button"
+                                        @click.stop="handleDetectCms(organization)"
+                                    >
+                                        Detect CMS
                                     </button>
                                     <button
                                         class="flex w-full items-center px-3 py-2 text-sm text-red-600 transition hover:bg-red-50"
