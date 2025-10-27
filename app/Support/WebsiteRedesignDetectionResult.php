@@ -11,12 +11,20 @@ namespace App\Support;
  *     after_timestamp: string,
  *     after_captured_at: ?\Carbon\Carbon,
  *     nav_similarity: ?float,
- *     before_nav_link_count: ?int,
- *     after_nav_link_count: ?int,
- *     before_nav_links: array<int, string>,
- *     after_nav_links: array<int, string>,
- *     before_nav_html: ?string,
- *     after_nav_html: ?string
+ *     before_html_class_count: ?int,
+ *     after_html_class_count: ?int,
+ *     before_body_class_count: ?int,
+ *     after_body_class_count: ?int,
+ *     before_head_asset_count: ?int,
+ *     after_head_asset_count: ?int,
+ *     before_html_classes: array<int, string>,
+ *     after_html_classes: array<int, string>,
+ *     before_body_classes: array<int, string>,
+ *     after_body_classes: array<int, string>,
+ *     before_head_assets: array<int, string>,
+ *     after_head_assets: array<int, string>,
+ *     before_head_html: ?string,
+ *     after_head_html: ?string
  * }
  */
 class WebsiteRedesignDetectionResult

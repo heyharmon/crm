@@ -4,13 +4,14 @@
 |--------------------------------------------------------------------------
 | Wayback Redesign Tuning
 |--------------------------------------------------------------------------
-| The redesign detector samples one snapshot per year, compares the site’s
-| navigation structure, and drills into monthly captures to locate the month
+ | The redesign detector samples one snapshot per year, compares the site’s
+ | shell signature (html/body classes + head assets), and drills into monthly
+ | captures to locate the month
 | a major rebuild shipped. Tune these knobs to balance accuracy vs. runtime:
 |
 | - `nav_similarity_change_threshold` (0-1) governs how different the yearly
 |   signatures must be before we consider a redesign window. Lowering it will
-|   surface more candidate windows; raising it filters out subtle menu tweaks.
+|   surface more candidate windows; raising it filters out subtle class/markup tweaks.
 | - `nav_similarity_match_threshold` (0-1) is used during the monthly pass to
 |   confirm the first “after” snapshot. Increase it if noisy captures are being
 |   misclassified, or reduce it when the new nav is similar but not identical.

@@ -6,19 +6,17 @@ use App\Support\WebsiteRedesignDetectionResult;
 use Carbon\Carbon;
 use DOMDocument;
 use DOMElement;
-use DOMNode;
-use DOMXPath;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
- * Detects website redesigns by comparing navigation structure across Wayback snapshots.
+ * Detects website redesigns by comparing site-shell fingerprints across Wayback snapshots.
  *
  * Workflow:
- *  - collect coarse yearly snapshots and build navigation signatures
+ *  - collect coarse yearly snapshots and build shell signatures (html/body classes + head assets)
  *  - flag large signature changes to highlight candidate redesign windows
- *  - drill into monthly snapshots to find the first capture that reflects the new navigation
+ *  - drill into monthly snapshots to find the first capture that reflects the new shell
  */
 class WebsiteRedesignDetector
 {
@@ -27,7 +25,7 @@ class WebsiteRedesignDetector
     /**
      * @var array<string, array|null>
      */
-    private array $navSignatureCache = [];
+    private array $signatureCache = [];
 
     /**
      * Entry point used by the service. Returns a before/after snapshot pair for each detected redesign.
@@ -49,20 +47,20 @@ class WebsiteRedesignDetector
             return $failure;
         }
 
-        // Build coarse timeline of nav signatures using yearly snapshots.
+        // Build coarse timeline of shell signatures using yearly snapshots.
         $yearlyTimeline = $this->buildSignatureTimeline($normalized, $yearlySnapshots['snapshots']);
 
-        // Identify the windows where the nav changed enough to investigate further.
+        // Identify the windows where the shell changed enough to investigate further.
         $changeWindows = $this->detectChangeWindows($yearlyTimeline);
         if (empty($changeWindows)) {
             return WebsiteRedesignDetectionResult::noMajorEvents(
-                'Navigation analysis did not detect any major redesigns.'
+                'Site shell analysis did not detect any major redesigns.'
             );
         }
 
         $events = [];
         foreach ($changeWindows as $window) {
-            // Drill into monthly snapshots to pinpoint the first capture of the new navigation.
+            // Drill into monthly snapshots to pinpoint the first capture of the new shell.
             $event = $this->refineChangeWindow($normalized, $window);
 
             if ($event !== null) {
@@ -72,7 +70,7 @@ class WebsiteRedesignDetector
 
         if (empty($events)) {
             return WebsiteRedesignDetectionResult::noMajorEvents(
-                'Unable to pinpoint a redesign window after refining navigation changes.'
+                'Unable to pinpoint a redesign window after refining shell changes.'
             );
         }
 
@@ -85,7 +83,7 @@ class WebsiteRedesignDetector
     }
 
     /**
-     * Builds a chronological list of snapshots enriched with their extracted navigation signature.
+     * Builds a chronological list of snapshots enriched with their extracted signature.
      *
      * @param array<int, array{timestamp: string, captured_at: Carbon, length: ?int}> $snapshots
      * @return array<int, array{timestamp: string, captured_at: Carbon, signature: ?array}>
@@ -98,7 +96,7 @@ class WebsiteRedesignDetector
             $timeline[] = [
                 'timestamp' => $snapshot['timestamp'],
                 'captured_at' => $snapshot['captured_at'],
-                'signature' => $this->getNavSignatureForTimestamp($host, $snapshot['timestamp']),
+                'signature' => $this->getSnapshotSignatureForTimestamp($host, $snapshot['timestamp']),
             ];
         }
 
@@ -119,7 +117,7 @@ class WebsiteRedesignDetector
      */
     private function detectChangeWindows(array $timeline): array
     {
-        $threshold = $this->navChangeThreshold();
+        $threshold = $this->signatureChangeThreshold();
         $windows = [];
 
         for ($index = 1, $count = count($timeline); $index < $count; $index++) {
@@ -145,7 +143,7 @@ class WebsiteRedesignDetector
     }
 
     /**
-     * Zooms into the coarse window and finds the first monthly snapshot that matches the new navigation.
+     * Zooms into the coarse window and finds the first monthly snapshot that matches the new shell.
      *
      * @param array{
      *     previous: array{timestamp: string, captured_at: Carbon, signature: ?array},
@@ -174,7 +172,7 @@ class WebsiteRedesignDetector
         $monthlyTimeline = $this->buildSignatureTimeline($host, $monthlySnapshots['snapshots']);
         $monthlyTimeline = $this->mergeTimelines($monthlyTimeline, [$previous, $current]);
 
-        $matchThreshold = $this->navMatchThreshold();
+        $matchThreshold = $this->signatureMatchThreshold();
         $eventEntry = null;
 
         foreach ($monthlyTimeline as $entry) {
@@ -240,12 +238,20 @@ class WebsiteRedesignDetector
      *     after_timestamp: string,
      *     after_captured_at: Carbon,
      *     nav_similarity: ?float,
-     *     before_nav_link_count: ?int,
-     *     after_nav_link_count: ?int,
-     *     before_nav_links: array<int, string>,
-     *     after_nav_links: array<int, string>,
-     *     before_nav_html: ?string,
-     *     after_nav_html: ?string
+     *     before_html_class_count: ?int,
+     *     after_html_class_count: ?int,
+     *     before_body_class_count: ?int,
+     *     after_body_class_count: ?int,
+     *     before_head_asset_count: ?int,
+     *     after_head_asset_count: ?int,
+     *     before_html_classes: array<int, string>,
+     *     after_html_classes: array<int, string>,
+     *     before_body_classes: array<int, string>,
+     *     after_body_classes: array<int, string>,
+     *     before_head_assets: array<int, string>,
+     *     after_head_assets: array<int, string>,
+     *     before_head_html: ?string,
+     *     after_head_html: ?string
      * }
      */
     private function buildEventFromSnapshot(array $previous, array $event, array $previousSignature, array $eventSignature): array
@@ -263,17 +269,25 @@ class WebsiteRedesignDetector
             'after_timestamp' => $event['timestamp'],
             'after_captured_at' => $event['captured_at'],
             'nav_similarity' => $navSimilarity,
-            'before_nav_link_count' => $previousSignature['link_count'] ?? null,
-            'after_nav_link_count' => $afterSignature['link_count'] ?? null,
-            'before_nav_links' => $previousSignature['links'] ?? [],
-            'after_nav_links' => $afterSignature['links'] ?? [],
-            'before_nav_html' => $previousSignature['html'] ?? null,
-            'after_nav_html' => $afterSignature['html'] ?? null,
+            'before_html_class_count' => $previousSignature['html_class_count'] ?? null,
+            'after_html_class_count' => $afterSignature['html_class_count'] ?? null,
+            'before_body_class_count' => $previousSignature['body_class_count'] ?? null,
+            'after_body_class_count' => $afterSignature['body_class_count'] ?? null,
+            'before_head_asset_count' => $previousSignature['head_asset_count'] ?? null,
+            'after_head_asset_count' => $afterSignature['head_asset_count'] ?? null,
+            'before_html_classes' => $previousSignature['html_classes'] ?? [],
+            'after_html_classes' => $afterSignature['html_classes'] ?? [],
+            'before_body_classes' => $previousSignature['body_classes'] ?? [],
+            'after_body_classes' => $afterSignature['body_classes'] ?? [],
+            'before_head_assets' => $previousSignature['head_assets'] ?? [],
+            'after_head_assets' => $afterSignature['head_assets'] ?? [],
+            'before_head_html' => $previousSignature['head_html'] ?? null,
+            'after_head_html' => $afterSignature['head_html'] ?? null,
         ];
     }
 
     /**
-     * Fetches a collapsed set of yearly snapshots to get a broad view of navigation changes.
+     * Fetches a collapsed set of yearly snapshots to get a broad view of shell changes.
      *
      * @return array{
      *     snapshots: array<int, array{timestamp: string, captured_at: Carbon, length: ?int}>,
@@ -470,9 +484,9 @@ class WebsiteRedesignDetector
     }
 
     /**
-     * Minimum similarity score required for two nav signatures to be considered different enough.
+     * Minimum similarity score required for two shell signatures to be considered different enough.
      */
-    private function navChangeThreshold(): float
+    private function signatureChangeThreshold(): float
     {
         $value = (float) config('waybackmachine.nav_similarity_change_threshold', 0.6);
 
@@ -482,7 +496,7 @@ class WebsiteRedesignDetector
     /**
      * Similarity threshold used when confirming the first snapshot of the new design.
      */
-    private function navMatchThreshold(): float
+    private function signatureMatchThreshold(): float
     {
         $value = (float) config('waybackmachine.nav_similarity_match_threshold', 0.75);
 
@@ -490,34 +504,36 @@ class WebsiteRedesignDetector
     }
 
     /**
-     * Retrieves (or caches) the navigation signature for the given snapshot timestamp.
+     * Retrieves (or caches) the shell signature for the given snapshot timestamp.
      *
      * @return array{
      *     hash: string,
-     *     structure: string,
-     *     links: array<int, string>,
-     *     normalized_links: array<int, string>,
-     *     link_count: int,
-     *     html: string
+     *     html_classes: array<int, string>,
+     *     html_class_count: int,
+     *     body_classes: array<int, string>,
+     *     body_class_count: int,
+     *     head_assets: array<int, string>,
+     *     head_asset_count: int,
+     *     head_html: ?string
      * }|null
      */
-    private function getNavSignatureForTimestamp(string $host, string $timestamp): ?array
+    private function getSnapshotSignatureForTimestamp(string $host, string $timestamp): ?array
     {
-        if (array_key_exists($timestamp, $this->navSignatureCache)) {
-            return $this->navSignatureCache[$timestamp];
+        if (array_key_exists($timestamp, $this->signatureCache)) {
+            return $this->signatureCache[$timestamp];
         }
 
         $html = $this->fetchSnapshotHtml($host, $timestamp);
 
         if ($html === null) {
-            $this->navSignatureCache[$timestamp] = null;
+            $this->signatureCache[$timestamp] = null;
 
             return null;
         }
 
-        $signature = $this->extractNavSignature($html);
+        $signature = $this->extractSnapshotSignature($html);
 
-        $this->navSignatureCache[$timestamp] = $signature;
+        $this->signatureCache[$timestamp] = $signature;
 
         return $signature;
     }
@@ -579,18 +595,20 @@ class WebsiteRedesignDetector
     }
 
     /**
-     * Converts the raw nav DOM into a lightweight signature we can compare.
+     * Converts the raw snapshot HTML into a lightweight shell signature we can compare.
      *
      * @return array{
      *     hash: string,
-     *     structure: string,
-     *     links: array<int, string>,
-     *     normalized_links: array<int, string>,
-     *     link_count: int,
-     *     html: string
+     *     html_classes: array<int, string>,
+     *     html_class_count: int,
+     *     body_classes: array<int, string>,
+     *     body_class_count: int,
+     *     head_assets: array<int, string>,
+     *     head_asset_count: int,
+     *     head_html: ?string
      * }|null
      */
-    private function extractNavSignature(string $html): ?array
+    private function extractSnapshotSignature(string $html): ?array
     {
         $dom = new DOMDocument();
 
@@ -604,186 +622,217 @@ class WebsiteRedesignDetector
 
         libxml_clear_errors();
 
-        $xpath = new DOMXPath($dom);
-        $navNode = $this->selectBestNavNode($xpath);
+        $htmlElement = $dom->getElementsByTagName('html')->item(0);
+        $bodyElement = $dom->getElementsByTagName('body')->item(0);
+        $headElement = $dom->getElementsByTagName('head')->item(0);
 
-        if (!$navNode) {
+        if (!$htmlElement && !$bodyElement && !$headElement) {
             return null;
         }
 
-        $structure = $this->collectStructureSignature($navNode);
-        $linkData = $this->collectLinkTexts($navNode);
+        $htmlClasses = $this->extractClassList($htmlElement);
+        $bodyClasses = $this->extractClassList($bodyElement);
+        $headData = $this->collectHeadAssetTokens($dom, $headElement);
 
-        $links = array_column($linkData, 'original');
-        $normalized = array_column($linkData, 'normalized');
-        $linkCount = count($links);
+        $signatureBasisParts = [
+            implode('|', $htmlClasses),
+            implode('|', $bodyClasses),
+            implode('|', $headData['tokens']),
+        ];
 
-        $signatureBasis = $structure . '|' . implode('|', $normalized);
+        $signatureBasis = implode('||', array_filter($signatureBasisParts, static fn($value) => $value !== ''));
+
+        if ($signatureBasis === '') {
+            $signatureBasis = substr(sha1($dom->saveHTML() ?: ''), 0, 32);
+        }
 
         return [
             'hash' => sha1($signatureBasis),
-            'structure' => $structure,
-            'links' => $links,
-            'normalized_links' => $normalized,
-            'link_count' => $linkCount,
-            'html' => trim($dom->saveHTML($navNode) ?: ''),
+            'html_classes' => $htmlClasses,
+            'html_class_count' => count($htmlClasses),
+            'body_classes' => $bodyClasses,
+            'body_class_count' => count($bodyClasses),
+            'head_assets' => $headData['tokens'],
+            'head_asset_count' => $headData['count'],
+            'head_html' => $headData['html'],
         ];
     }
 
     /**
-     * Picks the most representative navigation node from the DOM.
+     * Extracts and normalizes the class list from a single element.
      */
-    private function selectBestNavNode(DOMXPath $xpath): ?DOMElement
+    private function extractClassList(?DOMElement $element): array
     {
-        $candidates = [];
-
-        $navNodes = $xpath->query('//nav');
-        if ($navNodes !== false) {
-            foreach ($navNodes as $node) {
-                if ($node instanceof DOMElement) {
-                    $candidates[] = $node;
-                }
-            }
+        if (!$element) {
+            return [];
         }
 
-        if (empty($candidates)) {
-            $roleNodes = $xpath->query('//*[@role="navigation"]');
-            if ($roleNodes !== false) {
-                foreach ($roleNodes as $node) {
-                    if ($node instanceof DOMElement) {
-                        $candidates[] = $node;
-                    }
-                }
-            }
+        $classAttribute = trim((string) $element->getAttribute('class'));
+
+        if ($classAttribute === '') {
+            return [];
         }
 
-        if (empty($candidates)) {
-            $classNodes = $xpath->query('//*[@id[contains(translate(., "NAV", "nav"), "nav")] or contains(translate(@class, "NAV", "nav"), "nav")]');
-            if ($classNodes !== false) {
-                foreach ($classNodes as $node) {
-                    if ($node instanceof DOMElement) {
-                        $candidates[] = $node;
-                    }
-                }
-            }
-        }
+        $classes = [];
 
-        if (empty($candidates)) {
-            return null;
-        }
-
-        $bestNode = null;
-        $bestScore = -INF;
-
-        foreach ($candidates as $candidate) {
-            $anchorCount = $candidate->getElementsByTagName('a')->length;
-            $html = $candidate->ownerDocument?->saveHTML($candidate) ?? '';
-            $score = ($anchorCount * 10) + strlen($html);
-
-            if ($score > $bestScore) {
-                $bestScore = $score;
-                $bestNode = $candidate;
-            }
-        }
-
-        return $bestNode;
-    }
-
-    /**
-     * Produces a depth-annotated string describing the nav DOM hierarchy.
-     */
-    private function collectStructureSignature(DOMElement $element): string
-    {
-        $segments = [];
-
-        $this->walkDom($element, static function (DOMElement $node, int $depth) use (&$segments) {
-            $segments[] = str_repeat('.', $depth) . Str::lower($node->tagName);
-        });
-
-        return implode('|', $segments);
-    }
-
-    /**
-     * Returns the text content of each nav link in its original and lower-cased form.
-     *
-     * @return array<int, array{original: string, normalized: string}>
-     */
-    private function collectLinkTexts(DOMElement $element): array
-    {
-        $links = [];
-
-        foreach ($element->getElementsByTagName('a') as $anchor) {
-            $text = trim(preg_replace('/\s+/u', ' ', $anchor->textContent ?? '') ?? '');
-
-            if ($text === '') {
+        foreach (preg_split('/\s+/', $classAttribute) as $rawClass) {
+            $normalized = Str::lower(trim($rawClass));
+            if ($normalized === '') {
                 continue;
             }
 
-            $links[] = [
-                'original' => $text,
-                'normalized' => Str::lower($text),
+            $classes[] = $normalized;
+        }
+
+        $classes = array_values(array_unique($classes));
+        sort($classes);
+
+        return $classes;
+    }
+
+    /**
+     * Collects representative tokens for the contents of the <head> element.
+     */
+    private function collectHeadAssetTokens(DOMDocument $dom, ?DOMElement $head): array
+    {
+        if (!$head) {
+            return [
+                'tokens' => [],
+                'count' => 0,
+                'html' => null,
             ];
         }
 
-        return $links;
-    }
+        $tokens = [];
 
-    /**
-     * Depth-first traversal helper used when building structure signatures.
-     */
-    private function walkDom(DOMNode $node, callable $callback, int $depth = 0): void
-    {
-        if ($node instanceof DOMElement) {
-            $callback($node, $depth);
-        }
+        foreach ($head->childNodes as $child) {
+            if (!$child instanceof DOMElement) {
+                continue;
+            }
 
-        foreach ($node->childNodes as $child) {
-            if ($child instanceof DOMElement) {
-                $this->walkDom($child, $callback, $depth + 1);
+            $tag = Str::lower($child->tagName);
+            $token = null;
+
+            switch ($tag) {
+                case 'link':
+                    $rel = Str::lower(trim($child->getAttribute('rel')));
+                    $href = $this->normalizeAssetReference($child->getAttribute('href'));
+                    if ($href !== '') {
+                        $descriptor = $rel !== '' ? $rel : 'link';
+                        $token = sprintf('link:%s:%s', $descriptor, $href);
+                    }
+                    break;
+                case 'script':
+                    $src = $this->normalizeAssetReference($child->getAttribute('src'));
+                    if ($src !== '') {
+                        $token = sprintf('script:src:%s', $src);
+                        break;
+                    }
+
+                    $content = trim($child->textContent ?? '');
+                    if ($content !== '') {
+                        $token = sprintf('script:inline:%s', substr(sha1($content), 0, 16));
+                    }
+                    break;
+                case 'style':
+                    $styleContent = trim($child->textContent ?? '');
+                    if ($styleContent !== '') {
+                        $token = sprintf('style:inline:%s', substr(sha1($styleContent), 0, 16));
+                    }
+                    break;
+                case 'meta':
+                    $name = Str::lower(trim($child->getAttribute('name') ?: $child->getAttribute('property')));
+                    $content = trim($child->getAttribute('content'));
+                    if ($name !== '') {
+                        $token = sprintf('meta:%s:%s', $name, substr(sha1(Str::lower($content)), 0, 16));
+                    }
+                    break;
+                case 'title':
+                    $title = trim($child->textContent ?? '');
+                    if ($title !== '') {
+                        $token = sprintf('title:%s', substr(sha1(Str::lower($title)), 0, 16));
+                    }
+                    break;
+                default:
+                    $snippet = trim($dom->saveHTML($child) ?: '');
+                    if ($snippet !== '') {
+                        $token = sprintf('%s:%s', $tag, substr(sha1($snippet), 0, 16));
+                    }
+                    break;
+            }
+
+            if ($token !== null) {
+                $tokens[] = $token;
             }
         }
+
+        $tokens = array_values(array_unique($tokens));
+        sort($tokens);
+
+        $headHtml = trim($dom->saveHTML($head) ?: '');
+
+        if (empty($tokens) && $headHtml !== '') {
+            $tokens[] = 'head-html:' . substr(sha1($headHtml), 0, 16);
+        }
+
+        return [
+            'tokens' => $tokens,
+            'count' => count($tokens),
+            'html' => $headHtml !== '' ? $headHtml : null,
+        ];
     }
 
     /**
-     * Combines structural and link-set similarity into a single score.
+     * Normalizes asset references so CDN/version noise compares consistently.
+     */
+    private function normalizeAssetReference(?string $value): string
+    {
+        $value = trim((string) $value);
+
+        if ($value === '') {
+            return '';
+        }
+
+        if (Str::startsWith($value, ['http://', 'https://'])) {
+            $parts = parse_url($value);
+
+            if (is_array($parts)) {
+                $host = Str::lower($parts['host'] ?? '');
+                $path = $parts['path'] ?? '';
+                $query = isset($parts['query']) ? '?' . $parts['query'] : '';
+
+                return trim($host . $path . $query);
+            }
+        }
+
+        return Str::lower($value);
+    }
+
+    /**
+     * Combines HTML/body class and head asset similarity into a single score.
      *
      * @param array{
-     *     structure: string,
-     *     normalized_links: array<int, string>
+     *     html_classes: array<int, string>,
+     *     body_classes: array<int, string>,
+     *     head_assets: array<int, string>
      * } $a
      * @param array{
-     *     structure: string,
-     *     normalized_links: array<int, string>
+     *     html_classes: array<int, string>,
+     *     body_classes: array<int, string>,
+     *     head_assets: array<int, string>
      * } $b
      */
     private function calculateSimilarity(array $a, array $b): float
     {
-        $structureSimilarity = $this->stringSimilarity($a['structure'] ?? '', $b['structure'] ?? '');
-        $linkSimilarity = $this->jaccardSimilarity($a['normalized_links'] ?? [], $b['normalized_links'] ?? []);
+        $htmlClassSimilarity = $this->jaccardSimilarity($a['html_classes'] ?? [], $b['html_classes'] ?? []);
+        $bodyClassSimilarity = $this->jaccardSimilarity($a['body_classes'] ?? [], $b['body_classes'] ?? []);
+        $headAssetSimilarity = $this->jaccardSimilarity($a['head_assets'] ?? [], $b['head_assets'] ?? []);
 
-        return ($structureSimilarity + $linkSimilarity) / 2;
+        return ($headAssetSimilarity * 0.4) + ($htmlClassSimilarity * 0.3) + ($bodyClassSimilarity * 0.3);
     }
 
     /**
-     * Wrapper around `similar_text` that outputs a 0-1 score for structure strings.
-     */
-    private function stringSimilarity(string $a, string $b): float
-    {
-        if ($a === '' && $b === '') {
-            return 1.0;
-        }
-
-        if ($a === '' || $b === '') {
-            return 0.0;
-        }
-
-        similar_text($a, $b, $percent);
-
-        return max(0.0, min(1.0, $percent / 100));
-    }
-
-    /**
-     * Calculates the Jaccard similarity between two sets of navigation link labels.
+     * Calculates the Jaccard similarity between two sets of tokens.
      *
      * @param array<int, string> $a
      * @param array<int, string> $b

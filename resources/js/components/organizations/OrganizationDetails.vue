@@ -180,34 +180,121 @@ const getRedesignPreviewState = (event, view = 'after') => {
 const isRedesignPreviewLoading = (event, view = 'after') => getRedesignPreviewState(event, view) === 'loading'
 const hasRedesignPreviewError = (event, view = 'after') => getRedesignPreviewState(event, view) === 'error'
 
-const describeNavChange = (event) => {
+const describeShellChange = (event) => {
     if (!event || typeof event.nav_similarity !== 'number') return null
     const difference = Math.max(0, Math.min(1, 1 - event.nav_similarity))
-    return `Navigation changed ≈ ${Math.round(difference * 100)}%`
+    return `Site shell changed ≈ ${Math.round(difference * 100)}%`
 }
 
-const navLinkCountLabel = (event, view = 'after') => {
+const htmlClassCountLabel = (event, view = 'after') => {
     if (!event) return null
-    const count = view === 'before' ? event.before_nav_link_count : event.after_nav_link_count
-    if (typeof count !== 'number') return null
-    return `${count} links`
+    const count = view === 'before' ? event.before_html_class_count : event.after_html_class_count
+    if (typeof count !== 'number' || count <= 0) return null
+    return `${count} HTML class${count === 1 ? '' : 'es'}`
 }
 
-const summarizeNavLinks = (event, view = 'after') => {
+const bodyClassCountLabel = (event, view = 'after') => {
     if (!event) return null
-    const links = view === 'before' ? event.before_nav_links : event.after_nav_links
-    if (!Array.isArray(links)) return null
-    const cleaned = links
+    const count = view === 'before' ? event.before_body_class_count : event.after_body_class_count
+    if (typeof count !== 'number' || count <= 0) return null
+    return `${count} body class${count === 1 ? '' : 'es'}`
+}
+
+const headAssetCountLabel = (event, view = 'after') => {
+    if (!event) return null
+    const count = view === 'before' ? event.before_head_asset_count : event.after_head_asset_count
+    if (typeof count !== 'number' || count <= 0) return null
+    return `${count} head asset${count === 1 ? '' : 's'}`
+}
+
+const summarizeClassList = (classList) => {
+    if (!Array.isArray(classList)) return null
+
+    const cleaned = classList
         .map((value) => (typeof value === 'string' ? value.trim() : ''))
         .filter(Boolean)
 
     if (!cleaned.length) return null
 
+    const unique = [...new Set(cleaned)]
     const maxItems = 6
-    const subset = cleaned.slice(0, maxItems).join(', ')
-    const ellipsis = cleaned.length > maxItems ? '…' : ''
+    const subset = unique.slice(0, maxItems).join(', ')
+    const ellipsis = unique.length > maxItems ? '…' : ''
 
     return `${subset}${ellipsis}`
+}
+
+const summarizeHtmlClasses = (event, view = 'after') => {
+    if (!event) return null
+    const classList = view === 'before' ? event.before_html_classes : event.after_html_classes
+    const summary = summarizeClassList(classList)
+    return summary ? `HTML classes: ${summary}` : null
+}
+
+const summarizeBodyClasses = (event, view = 'after') => {
+    if (!event) return null
+    const classList = view === 'before' ? event.before_body_classes : event.after_body_classes
+    const summary = summarizeClassList(classList)
+    return summary ? `Body classes: ${summary}` : null
+}
+
+const formatHeadAssetToken = (token) => {
+    if (typeof token !== 'string' || token.trim() === '') return null
+    const segments = token.split(':').map((segment) => segment.trim()).filter(Boolean)
+    if (!segments.length) return null
+
+    if (segments.length >= 3) {
+        return `${segments[0]} ${segments[1]} ${segments.slice(2).join(':')}`
+    }
+
+    if (segments.length === 2) {
+        return `${segments[0]} ${segments[1]}`
+    }
+
+    return segments[0]
+}
+
+const summarizeHeadAssets = (event, view = 'after') => {
+    if (!event) return null
+    const assets = view === 'before' ? event.before_head_assets : event.after_head_assets
+    if (!Array.isArray(assets)) return null
+
+    const formatted = assets
+        .map(formatHeadAssetToken)
+        .filter(Boolean)
+
+    if (!formatted.length) return null
+
+    const unique = [...new Set(formatted)]
+    const maxItems = 5
+    const subset = unique.slice(0, maxItems).join(', ')
+    const ellipsis = unique.length > maxItems ? '…' : ''
+
+    return `Head assets: ${subset}${ellipsis}`
+}
+
+const summarizeShellSnapshot = (event, view = 'after') => {
+    const parts = [
+        summarizeHtmlClasses(event, view),
+        summarizeBodyClasses(event, view),
+        summarizeHeadAssets(event, view)
+    ].filter(Boolean)
+
+    if (!parts.length) return null
+
+    return parts.join(' • ')
+}
+
+const summarizeShellCounts = (event, view = 'after') => {
+    const counts = [
+        htmlClassCountLabel(event, view),
+        bodyClassCountLabel(event, view),
+        headAssetCountLabel(event, view)
+    ].filter(Boolean)
+
+    if (!counts.length) return null
+
+    return counts.join(' • ')
 }
 
 const REDESIGN_STATUS_META = {
@@ -220,7 +307,7 @@ const REDESIGN_STATUS_META = {
         banner: 'border-amber-200 bg-amber-50 text-amber-800'
     },
     no_major_events: {
-        label: 'Navigation analysis did not detect any major redesigns.',
+        label: 'Site shell analysis did not detect any major redesigns.',
         banner: 'border-blue-200 bg-blue-50 text-blue-700'
     }
 }
@@ -468,14 +555,14 @@ watch(
                                         </span>
                                     </div>
                                     <div class="text-right">
-                                        <span v-if="describeNavChange(event)" class="block text-xs font-medium text-emerald-600">
-                                            {{ describeNavChange(event) }}
+                                        <span v-if="describeShellChange(event)" class="block text-xs font-medium text-emerald-600">
+                                            {{ describeShellChange(event) }}
                                         </span>
-                                        <span v-if="navLinkCountLabel(event, 'after')" class="block text-xs text-neutral-500">
-                                            After nav: {{ navLinkCountLabel(event, 'after') }}
+                                        <span v-if="summarizeShellCounts(event, 'after')" class="block text-xs text-neutral-500">
+                                            After: {{ summarizeShellCounts(event, 'after') }}
                                         </span>
-                                        <span v-if="navLinkCountLabel(event, 'before')" class="block text-xs text-neutral-400">
-                                            Before nav: {{ navLinkCountLabel(event, 'before') }}
+                                        <span v-if="summarizeShellCounts(event, 'before')" class="block text-xs text-neutral-400">
+                                            Before: {{ summarizeShellCounts(event, 'before') }}
                                         </span>
                                     </div>
                                 </div>
@@ -524,8 +611,8 @@ watch(
                                         >
                                             View after snapshot →
                                         </a>
-                                        <p v-if="summarizeNavLinks(event, 'after')" class="text-[11px] text-neutral-500">
-                                            {{ summarizeNavLinks(event, 'after') }}
+                                        <p v-if="summarizeShellSnapshot(event, 'after')" class="text-[11px] text-neutral-500">
+                                            {{ summarizeShellSnapshot(event, 'after') }}
                                         </p>
                                     </div>
                                     <div class="space-y-2">
@@ -572,8 +659,8 @@ watch(
                                         >
                                             View before snapshot →
                                         </a>
-                                        <p v-if="summarizeNavLinks(event, 'before')" class="text-[11px] text-neutral-500">
-                                            {{ summarizeNavLinks(event, 'before') }}
+                                        <p v-if="summarizeShellSnapshot(event, 'before')" class="text-[11px] text-neutral-500">
+                                            {{ summarizeShellSnapshot(event, 'before') }}
                                         </p>
                                     </div>
                                 </div>
