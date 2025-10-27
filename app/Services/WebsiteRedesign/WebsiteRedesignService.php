@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\WebsiteRedesign;
 
 use App\Models\Organization;
 use Illuminate\Support\Facades\DB;

@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Services\HubspotOrganizationImportService;
+use App\Services\Imports\HubspotOrganizationImportService;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;

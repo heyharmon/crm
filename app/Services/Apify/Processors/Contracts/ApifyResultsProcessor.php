@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Processors\Contracts;
+namespace App\Services\Apify\Processors\Contracts;
 
 use App\Models\ApifyRun;
 
@@ -12,4 +12,3 @@ interface ApifyResultsProcessor
      */
     public function process(ApifyRun $apifyRun, array $items): array;
 }
-

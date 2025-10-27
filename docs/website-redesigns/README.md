@@ -33,7 +33,7 @@ Wayback crawls often alternate between full HTML pages and tiny responses genera
 ## Frontend Updates
 
 -   **OrganizationDetail panel** now shows the last redesign date plus a list of detected events, including how long each digest version stayed stable. When Wayback fails, has no data, or cannot find a stable redesign window, a banner explains the issue so users know why the history is empty.
--   **Grid/Table views** both show the cached “Last redesign” date when present and fall back to the status banner (“Wayback request failed”, “No snapshots”, “No stable redesign”, etc.) when no date is available.
+-   **Grid/Table views** both show the cached “Last redesign” date when present and fall back to the status banner
 
 ## Operations
 
@@ -43,9 +43,9 @@ Wayback crawls often alternate between full HTML pages and tiny responses genera
 
 ### Status Reference
 
-| Status | Meaning | Typical Message | Next Steps |
-| --- | --- | --- | --- |
-| `success` | Wayback returned data and at least one stable digest met the persistence threshold. | `null` (no banner) | Nothing to do; redesign data is current. |
-| `no_wayback_data` | The CDX API returned no usable snapshots. This happens when Wayback has never crawled the site or every capture was discarded (even after fallback filters) due to status, mimetype, or payload rules. | “Wayback Machine did not return any snapshots.” | Verify the site exists in Wayback; consider loosening filters or reducing the fallback thresholds if captures look legitimate. |
-| `no_major_events` | Wayback responded and snapshots survived filtering, but none stayed stable long enough to count as a “major” redesign (site changes too frequently or persistence threshold too high). | “Wayback responded, but no stable redesign window met the persistence threshold.” | Lower `WAYBACK_MIN_PERSISTENCE_DAYS` or inspect the snapshot history to confirm the site is in constant flux. |
-| `wayback_failed` | The CDX request itself failed (timeout, network issue, non-200 response). | “Wayback request failed…” (includes HTTP status or cURL error) | Retry later; increase timeout or check network connectivity if persistent. |
+| Status            | Meaning                                                                                                                                                                                                | Typical Message                                                                   | Next Steps                                                                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `success`         | Wayback returned data and at least one stable digest met the persistence threshold.                                                                                                                    | `null` (no banner)                                                                | Nothing to do; redesign data is current.                                                                                       |
+| `no_wayback_data` | The CDX API returned no usable snapshots. This happens when Wayback has never crawled the site or every capture was discarded (even after fallback filters) due to status, mimetype, or payload rules. | “Wayback Machine did not return any snapshots.”                                   | Verify the site exists in Wayback; consider loosening filters or reducing the fallback thresholds if captures look legitimate. |
+| `no_major_events` | Wayback responded and snapshots survived filtering, but none stayed stable long enough to count as a “major” redesign (site changes too frequently or persistence threshold too high).                 | “Wayback responded, but no stable redesign window met the persistence threshold.” | Lower `WAYBACK_MIN_PERSISTENCE_DAYS` or inspect the snapshot history to confirm the site is in constant flux.                  |
+| `wayback_failed`  | The CDX request itself failed (timeout, network issue, non-200 response).                                                                                                                              | “Wayback request failed…” (includes HTTP status or cURL error)                    | Retry later; increase timeout or check network connectivity if persistent.                                                     |

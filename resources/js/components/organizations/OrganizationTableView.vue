@@ -135,7 +135,7 @@ const REDESIGN_STATUS_META = {
         classes: 'border-amber-200 bg-amber-50 text-amber-800'
     },
     no_major_events: {
-        label: 'No stable redesign',
+        label: "Can't predict",
         classes: 'border-blue-200 bg-blue-50 text-blue-700'
     }
 }

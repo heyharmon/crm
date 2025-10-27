@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\WebsiteRedesign;
 
 use App\Support\WebsiteRedesignDetectionResult;
 use Carbon\Carbon;
@@ -31,7 +31,7 @@ class WebsiteRedesignDetector
 
         if (empty($events)) {
             return WebsiteRedesignDetectionResult::noMajorEvents(
-                'Wayback responded, but no stable redesign window met the persistence threshold.'
+                'Wayback responded, but no redesign window met the persistence threshold.'
             );
         }
 
