@@ -9,23 +9,17 @@ class WebsiteRedesignService
 {
     public function __construct(private WebsiteRedesignDetector $detector) {}
 
+    /**
+     * Pulls the latest redesign information from Wayback and refreshes the persisted snapshot pair.
+     */
     public function refreshOrganizationRedesigns(Organization $organization): void
     {
         $this->throttleWaybackRequests();
 
-        if ($organization->last_major_redesign_at || $organization->website_redesign_status) {
-            DB::transaction(function () use ($organization) {
-                $organization->websiteRedesigns()->delete();
-                $organization->last_major_redesign_at = null;
-                $organization->website_redesign_status = null;
-                $organization->website_redesign_status_message = null;
-                $organization->save();
-            });
-        }
-
         $result = $this->detector->detect($organization->website);
 
         DB::transaction(function () use ($organization, $result) {
+            // Always rebuild the redesign history so the database mirrors the detector output.
             $organization->websiteRedesigns()->delete();
 
             foreach ($result->events as $event) {
@@ -45,13 +39,18 @@ class WebsiteRedesignService
             }
 
             $lastEvent = empty($result->events) ? null : $result->events[count($result->events) - 1];
-            $organization->last_major_redesign_at = $lastEvent['after_captured_at'] ?? null;
-            $organization->website_redesign_status = $result->status;
-            $organization->website_redesign_status_message = $result->message;
-            $organization->save();
+
+            $organization->forceFill([
+                'last_major_redesign_at' => $lastEvent['after_captured_at'] ?? null,
+                'website_redesign_status' => $result->status,
+                'website_redesign_status_message' => $result->message,
+            ])->save();
         });
     }
 
+    /**
+     * Simple rate limiter so queued jobs do not overwhelm the archive.
+     */
     private function throttleWaybackRequests(): void
     {
         $delayMs = max(0, (int) config('waybackmachine.request_delay_ms', 1000));

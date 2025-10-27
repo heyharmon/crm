@@ -12,13 +12,26 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
+/**
+ * Detects website redesigns by comparing navigation structure across Wayback snapshots.
+ *
+ * Workflow:
+ *  - collect coarse yearly snapshots and build navigation signatures
+ *  - flag large signature changes to highlight candidate redesign windows
+ *  - drill into monthly snapshots to find the first capture that reflects the new navigation
+ */
 class WebsiteRedesignDetector
 {
+    private const WAYBACK_USER_AGENT = 'HerdCRM/WaybackDetector';
+
     /**
      * @var array<string, array|null>
      */
     private array $navSignatureCache = [];
 
+    /**
+     * Entry point used by the service. Returns a before/after snapshot pair for each detected redesign.
+     */
     public function detect(?string $website): WebsiteRedesignDetectionResult
     {
         $normalized = $this->normalizeWebsite($website);
@@ -28,20 +41,18 @@ class WebsiteRedesignDetector
 
         $yearlySnapshots = $this->fetchYearlySnapshots($normalized);
 
-        if ($yearlySnapshots['status'] === WebsiteRedesignDetectionResult::STATUS_WAYBACK_FAILED) {
-            return WebsiteRedesignDetectionResult::waybackFailure(
-                $yearlySnapshots['message'] ?? 'Wayback Machine request failed.'
-            );
+        if ($failure = $this->failureFromSnapshotFetch(
+            $yearlySnapshots,
+            'Wayback Machine did not return any snapshots for this website.',
+            'Wayback Machine request failed.'
+        )) {
+            return $failure;
         }
 
-        if ($yearlySnapshots['status'] === WebsiteRedesignDetectionResult::STATUS_NO_WAYBACK_DATA) {
-            return WebsiteRedesignDetectionResult::noWaybackData(
-                $yearlySnapshots['message'] ?? 'Wayback Machine did not return any snapshots for this website.'
-            );
-        }
-
+        // Build coarse timeline of nav signatures using yearly snapshots.
         $yearlyTimeline = $this->buildSignatureTimeline($normalized, $yearlySnapshots['snapshots']);
 
+        // Identify the windows where the nav changed enough to investigate further.
         $changeWindows = $this->detectChangeWindows($yearlyTimeline);
         if (empty($changeWindows)) {
             return WebsiteRedesignDetectionResult::noMajorEvents(
@@ -51,6 +62,7 @@ class WebsiteRedesignDetector
 
         $events = [];
         foreach ($changeWindows as $window) {
+            // Drill into monthly snapshots to pinpoint the first capture of the new navigation.
             $event = $this->refineChangeWindow($normalized, $window);
 
             if ($event !== null) {
@@ -73,6 +85,8 @@ class WebsiteRedesignDetector
     }
 
     /**
+     * Builds a chronological list of snapshots enriched with their extracted navigation signature.
+     *
      * @param array<int, array{timestamp: string, captured_at: Carbon, length: ?int}> $snapshots
      * @return array<int, array{timestamp: string, captured_at: Carbon, signature: ?array}>
      */
@@ -94,6 +108,8 @@ class WebsiteRedesignDetector
     }
 
     /**
+     * Compares neighbouring signatures and records the ones that differ enough to inspect further.
+     *
      * @param array<int, array{timestamp: string, captured_at: Carbon, signature: ?array}> $timeline
      * @return array<int, array{
      *     previous: array{timestamp: string, captured_at: Carbon, signature: ?array},
@@ -129,6 +145,8 @@ class WebsiteRedesignDetector
     }
 
     /**
+     * Zooms into the coarse window and finds the first monthly snapshot that matches the new navigation.
+     *
      * @param array{
      *     previous: array{timestamp: string, captured_at: Carbon, signature: ?array},
      *     current: array{timestamp: string, captured_at: Carbon, signature: ?array},
@@ -185,6 +203,8 @@ class WebsiteRedesignDetector
     }
 
     /**
+     * Ensures that the coarse snapshots and required comparison points are merged into a single ordered list.
+     *
      * @param array<int, array{timestamp: string, captured_at: Carbon, signature: ?array}> $timeline
      * @param array<int, array{timestamp: string, captured_at: Carbon, signature: ?array}> $required
      * @return array<int, array{timestamp: string, captured_at: Carbon, signature: ?array}>
@@ -208,6 +228,8 @@ class WebsiteRedesignDetector
     }
 
     /**
+     * Converts the two boundary snapshots into the payload stored by the application.
+     *
      * @param array{timestamp: string, captured_at: Carbon, signature: ?array} $previous
      * @param array{timestamp: string, captured_at: Carbon, signature: ?array} $event
      * @param array $previousSignature
@@ -251,6 +273,8 @@ class WebsiteRedesignDetector
     }
 
     /**
+     * Fetches a collapsed set of yearly snapshots to get a broad view of navigation changes.
+     *
      * @return array{
      *     snapshots: array<int, array{timestamp: string, captured_at: Carbon, length: ?int}>,
      *     status: string,
@@ -266,6 +290,8 @@ class WebsiteRedesignDetector
     }
 
     /**
+     * Fetches monthly snapshots between the two coarse boundaries to narrow down the redesign month.
+     *
      * @return array{
      *     snapshots: array<int, array{timestamp: string, captured_at: Carbon, length: ?int}>,
      *     status: string,
@@ -283,6 +309,8 @@ class WebsiteRedesignDetector
     }
 
     /**
+     * Low-level helper that talks to the CDX API using the provided filters.
+     *
      * @param array{
      *     collapse?: string,
      *     from?: string,
@@ -415,6 +443,9 @@ class WebsiteRedesignDetector
         ];
     }
 
+    /**
+     * Strips schemes and validates the hostname we send to Wayback.
+     */
     private function normalizeWebsite(?string $website): ?string
     {
         if (!$website) {
@@ -438,6 +469,9 @@ class WebsiteRedesignDetector
         return $parts['host'];
     }
 
+    /**
+     * Minimum similarity score required for two nav signatures to be considered different enough.
+     */
     private function navChangeThreshold(): float
     {
         $value = (float) config('waybackmachine.nav_similarity_change_threshold', 0.6);
@@ -445,6 +479,9 @@ class WebsiteRedesignDetector
         return max(0.0, min(1.0, $value));
     }
 
+    /**
+     * Similarity threshold used when confirming the first snapshot of the new design.
+     */
     private function navMatchThreshold(): float
     {
         $value = (float) config('waybackmachine.nav_similarity_match_threshold', 0.75);
@@ -453,6 +490,8 @@ class WebsiteRedesignDetector
     }
 
     /**
+     * Retrieves (or caches) the navigation signature for the given snapshot timestamp.
+     *
      * @return array{
      *     hash: string,
      *     structure: string,
@@ -483,6 +522,9 @@ class WebsiteRedesignDetector
         return $signature;
     }
 
+    /**
+     * Downloads the archived HTML for a specific snapshot, handling timeouts and content filtering.
+     */
     private function fetchSnapshotHtml(string $host, string $timestamp): ?string
     {
         $timeoutSeconds = max(5, (int) config('waybackmachine.request_timeout_seconds', 120));
@@ -537,6 +579,8 @@ class WebsiteRedesignDetector
     }
 
     /**
+     * Converts the raw nav DOM into a lightweight signature we can compare.
+     *
      * @return array{
      *     hash: string,
      *     structure: string,
@@ -586,6 +630,9 @@ class WebsiteRedesignDetector
         ];
     }
 
+    /**
+     * Picks the most representative navigation node from the DOM.
+     */
     private function selectBestNavNode(DOMXPath $xpath): ?DOMElement
     {
         $candidates = [];
@@ -642,6 +689,9 @@ class WebsiteRedesignDetector
         return $bestNode;
     }
 
+    /**
+     * Produces a depth-annotated string describing the nav DOM hierarchy.
+     */
     private function collectStructureSignature(DOMElement $element): string
     {
         $segments = [];
@@ -654,6 +704,8 @@ class WebsiteRedesignDetector
     }
 
     /**
+     * Returns the text content of each nav link in its original and lower-cased form.
+     *
      * @return array<int, array{original: string, normalized: string}>
      */
     private function collectLinkTexts(DOMElement $element): array
@@ -676,6 +728,9 @@ class WebsiteRedesignDetector
         return $links;
     }
 
+    /**
+     * Depth-first traversal helper used when building structure signatures.
+     */
     private function walkDom(DOMNode $node, callable $callback, int $depth = 0): void
     {
         if ($node instanceof DOMElement) {
@@ -690,6 +745,8 @@ class WebsiteRedesignDetector
     }
 
     /**
+     * Combines structural and link-set similarity into a single score.
+     *
      * @param array{
      *     structure: string,
      *     normalized_links: array<int, string>
@@ -707,6 +764,9 @@ class WebsiteRedesignDetector
         return ($structureSimilarity + $linkSimilarity) / 2;
     }
 
+    /**
+     * Wrapper around `similar_text` that outputs a 0-1 score for structure strings.
+     */
     private function stringSimilarity(string $a, string $b): float
     {
         if ($a === '' && $b === '') {
@@ -723,6 +783,8 @@ class WebsiteRedesignDetector
     }
 
     /**
+     * Calculates the Jaccard similarity between two sets of navigation link labels.
+     *
      * @param array<int, string> $a
      * @param array<int, string> $b
      */
@@ -747,6 +809,26 @@ class WebsiteRedesignDetector
         }
 
         return count($intersection) / count($union);
+    }
+
+    /**
+     * Normalises snapshot fetch statuses into detector results when the request failed or returned nothing.
+     */
+    private function failureFromSnapshotFetch(array $fetchResult, string $noDataFallback, string $failureFallback): ?WebsiteRedesignDetectionResult
+    {
+        if ($fetchResult['status'] === WebsiteRedesignDetectionResult::STATUS_WAYBACK_FAILED) {
+            return WebsiteRedesignDetectionResult::waybackFailure(
+                $fetchResult['message'] ?? $failureFallback
+            );
+        }
+
+        if ($fetchResult['status'] === WebsiteRedesignDetectionResult::STATUS_NO_WAYBACK_DATA) {
+            return WebsiteRedesignDetectionResult::noWaybackData(
+                $fetchResult['message'] ?? $noDataFallback
+            );
+        }
+
+        return null;
     }
 
 }

@@ -3,6 +3,8 @@
 namespace App\Support;
 
 /**
+ * Value object describing the outcome of a Wayback redesign detection run.
+ *
  * @phpstan-type RedesignEvent array{
  *     before_timestamp: string,
  *     before_captured_at: ?\Carbon\Carbon,

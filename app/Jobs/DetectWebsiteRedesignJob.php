@@ -11,6 +11,10 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 
+/**
+ * Queued job that refreshes Wayback redesign data for a single organization.
+ * Runs the detector, replaces persisted snapshot pairs, and updates the cached status.
+ */
 class DetectWebsiteRedesignJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -35,6 +39,7 @@ class DetectWebsiteRedesignJob implements ShouldQueue
             return;
         }
 
+        // The service handles clearing old records and writing newly detected snapshot pairs.
         $redesignService->refreshOrganizationRedesigns($organization);
     }
 }
