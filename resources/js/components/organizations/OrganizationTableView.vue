@@ -125,6 +125,38 @@ const formatPagesCount = (organization) => {
     return numericCount === 0 ? '—' : count
 }
 
+const REDESIGN_STATUS_META = {
+    wayback_failed: {
+        label: 'Request failed',
+        classes: 'border-red-200 bg-red-50 text-red-700'
+    },
+    no_wayback_data: {
+        label: 'No snapshots',
+        classes: 'border-amber-200 bg-amber-50 text-amber-800'
+    },
+    no_major_events: {
+        label: "Can't predict",
+        classes: 'border-blue-200 bg-blue-50 text-blue-700'
+    }
+}
+
+const shouldShowRedesignStatus = (organization) => {
+    const status = organization?.website_redesign_status
+    if (!status) return false
+    return status !== 'success'
+}
+
+const redesignStatusLabel = (organization) => {
+    if (!organization) return ''
+    const status = organization.website_redesign_status
+    if (!status) return ''
+    return REDESIGN_STATUS_META[status]?.label || 'Wayback issue'
+}
+
+const redesignStatusTooltip = (organization) => organization?.website_redesign_status_message || ''
+
+const redesignStatusClasses = (status) => REDESIGN_STATUS_META[status]?.classes ?? 'border-neutral-200 bg-neutral-50 text-neutral-600'
+
 const WEBSITE_STATUS_META = {
     up: { label: 'Up', classes: 'border-green-100 bg-green-50 text-green-700' },
     down: { label: 'Down', classes: 'border-red-100 bg-red-50 text-red-700' },
@@ -188,11 +220,13 @@ const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteSta
                                 type="checkbox"
                                 class="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-500"
                                 :checked="rowIsSelected(organization.id)"
-                                @click.stop="emit('toggle-row-selection', {
-                                    organization,
-                                    checked: $event.target.checked,
-                                    shiftKey: $event.shiftKey
-                                })"
+                                @click.stop="
+                                    emit('toggle-row-selection', {
+                                        organization,
+                                        checked: $event.target.checked,
+                                        shiftKey: $event.shiftKey
+                                    })
+                                "
                             />
                         </td>
                         <td class="px-4 py-3 align-top">
@@ -245,7 +279,16 @@ const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteSta
                             <span v-else>-</span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
-                            <span v-if="organization.last_major_redesign_at">
+                            <div v-if="shouldShowRedesignStatus(organization)">
+                                <span
+                                    class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold"
+                                    :title="redesignStatusTooltip(organization) || null"
+                                    :class="redesignStatusClasses(organization.website_redesign_status)"
+                                >
+                                    {{ redesignStatusLabel(organization) }}
+                                </span>
+                            </div>
+                            <span v-else-if="organization.last_major_redesign_at">
                                 {{ formatDisplayDate(organization.last_major_redesign_at) }}
                             </span>
                             <span v-else class="text-neutral-400">—</span>
@@ -279,7 +322,8 @@ const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteSta
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             <span
                                 class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold"
-                                :class="websiteStatusClasses(organization.website_status)">
+                                :class="websiteStatusClasses(organization.website_status)"
+                            >
                                 {{ formatWebsiteStatus(organization.website_status) }}
                             </span>
                         </td>

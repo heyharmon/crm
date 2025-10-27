@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Imports;
 
+use App\Models\ApifyRun;
 use App\Models\Organization;
 use App\Models\OrganizationCategory;
-use App\Models\ApifyRun;
-use Illuminate\Support\Facades\Log;
 use App\Support\WebsiteUrl;
+use Illuminate\Support\Facades\Log;
 
 class GoogleMapsOrganizationImportService
 {

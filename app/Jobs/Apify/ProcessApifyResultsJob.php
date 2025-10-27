@@ -3,8 +3,8 @@
 namespace App\Jobs\Apify;
 
 use App\Models\ApifyRun;
-use App\Services\BaseApifyService;
-use App\Services\Processors\Contracts\ApifyResultsProcessor;
+use App\Services\Apify\BaseApifyService;
+use App\Services\Apify\Processors\Contracts\ApifyResultsProcessor;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

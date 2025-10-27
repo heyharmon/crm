@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Apify;
 
 use App\Models\ApifyRun;
 use Illuminate\Support\Facades\Log;

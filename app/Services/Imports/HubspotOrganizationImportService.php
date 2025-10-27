@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Imports;
 
 use App\Models\Organization;
 use App\Support\WebsiteUrl;

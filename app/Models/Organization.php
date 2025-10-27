@@ -32,6 +32,8 @@ class Organization extends Model
         'country_code',
         'website',
         'website_status',
+        'website_redesign_status',
+        'website_redesign_status_message',
         'phone',
         'organization_category_id',
         'map_url',

@@ -16,6 +16,9 @@ return [
     // Optional delay (milliseconds) inserted before calling Wayback to avoid hammering their API.
     'request_delay_ms' => (int) env('WAYBACK_REQUEST_DELAY_MS', 1000),
 
+    // Timeout (seconds) for each Wayback API request; bumps default beyond 20s to avoid cURL 28 timeouts.
+    'request_timeout_seconds' => (int) env('WAYBACK_REQUEST_TIMEOUT_SECONDS', 60),
+
     // Only snapshots with these HTTP status codes are considered; others are discarded as noise.
     'allowed_status_codes' => array_values(array_filter(array_map(
         static function ($value) {
@@ -35,4 +38,23 @@ return [
         },
         explode(',', env('WAYBACK_ALLOWED_MIMETYPES', 'text/html'))
     ))),
+
+    // Relaxed filters to retry when strict rules filter out every capture.
+    'fallback_allowed_status_codes' => array_values(array_filter(array_map(
+        static function ($value) {
+            $code = (int) trim((string) $value);
+
+            return $code > 0 ? $code : null;
+        },
+        explode(',', env('WAYBACK_FALLBACK_ALLOWED_STATUS_CODES', '200,301,302'))
+    ))),
+    'fallback_allowed_mimetypes' => array_values(array_filter(array_map(
+        static function ($value) {
+            $type = strtolower(trim((string) $value));
+
+            return $type !== '' ? $type : null;
+        },
+        explode(',', env('WAYBACK_FALLBACK_ALLOWED_MIMETYPES', 'text/html,text/plain'))
+    ))),
+    'fallback_min_payload_bytes' => (int) env('WAYBACK_FALLBACK_MIN_PAYLOAD_BYTES', 8192),
 ];

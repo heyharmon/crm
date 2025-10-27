@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\Sitemap;
 
 use App\Models\Organization;
 use App\Models\Page;

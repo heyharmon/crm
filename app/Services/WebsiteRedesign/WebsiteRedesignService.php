@@ -1,10 +1,9 @@
 <?php
 
-namespace App\Services;
+namespace App\Services\WebsiteRedesign;
 
 use App\Models\Organization;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 
 class WebsiteRedesignService
 {
@@ -14,20 +13,22 @@ class WebsiteRedesignService
     {
         $this->throttleWaybackRequests();
 
-        if ($organization->last_major_redesign_at) {
+        if ($organization->last_major_redesign_at || $organization->website_redesign_status) {
             DB::transaction(function () use ($organization) {
                 $organization->websiteRedesigns()->delete();
                 $organization->last_major_redesign_at = null;
+                $organization->website_redesign_status = null;
+                $organization->website_redesign_status_message = null;
                 $organization->save();
             });
         }
 
-        $events = $this->detector->detect($organization->website);
+        $result = $this->detector->detect($organization->website);
 
-        DB::transaction(function () use ($organization, $events) {
+        DB::transaction(function () use ($organization, $result) {
             $organization->websiteRedesigns()->delete();
 
-            foreach ($events as $event) {
+            foreach ($result->events as $event) {
                 $organization->websiteRedesigns()->create([
                     'digest' => $event['digest'],
                     'wayback_timestamp' => $event['timestamp'],
@@ -37,8 +38,10 @@ class WebsiteRedesignService
                 ]);
             }
 
-            $lastEvent = empty($events) ? null : $events[count($events) - 1];
+            $lastEvent = empty($result->events) ? null : $result->events[count($result->events) - 1];
             $organization->last_major_redesign_at = $lastEvent['captured_at'] ?? null;
+            $organization->website_redesign_status = $result->status;
+            $organization->website_redesign_status_message = $result->message;
             $organization->save();
         });
     }

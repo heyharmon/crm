@@ -2,7 +2,7 @@
 
 namespace App\Jobs\Apify;
 
-use App\Services\BaseApifyService;
+use App\Services\Apify\BaseApifyService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

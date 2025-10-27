@@ -14,6 +14,7 @@ Wayback crawls often alternate between full HTML pages and tiny responses genera
 
 -   **organization_website_redesigns**: stores one row per major digest change (Wayback timestamp, digest hash, and persistence window in days). Rows are refreshed each time the detection job runs.
 -   **organizations.last_major_redesign_at**: cached date of the most recent major redesign to support lightweight list views and filters.
+-   **organizations.website_redesign_status / website_redesign_status_message**: capture the outcome of the last Wayback request (`success`, `no_wayback_data`, `no_major_events`, or `wayback_failed`) plus a short, user-facing explanation so the UI can surface failures without digging through logs.
 
 ## Backend Flow
 
@@ -25,14 +26,26 @@ Wayback crawls often alternate between full HTML pages and tiny responses genera
     - Normalizes the organization’s hostname, fetches collapsed digest rows via the CDX API, and parses timestamps.
     - Filters out noisy captures (non-200 responses, non-HTML mimetypes, and payloads smaller than the configured byte threshold) so that WAF challenges and placeholder pages do not look like real redesigns.
     - Flags “major” redesigns when the digest remains unchanged for the configured minimum number of days (default 120). Only the most recent N events (default 5) are kept.
+    - Returns a `WebsiteRedesignDetectionResult` that includes both the events and the Wayback request status so downstream services know whether Wayback failed, Wayback had no data, or the snapshots never met the persistence threshold (`no_major_events`).
 3. **OrganizationController@show** eagerly loads the redesign rows (newest first) so the frontend can render the timeline alongside the organization profile.
+4. **WebsiteRedesignService** persists the status/message from each run to the organization record, ensuring the UI can display “Wayback failed” or “No data” states instead of silently showing an empty redesign history.
 
 ## Frontend Updates
 
--   **OrganizationDetail panel** now shows the last redesign date plus a list of detected events, including how long each digest version stayed stable.
--   **Grid/Table views** both show the cached “Last redesign” date when present, giving users quick insight while browsing.
+-   **OrganizationDetail panel** now shows the last redesign date plus a list of detected events, including how long each digest version stayed stable. When Wayback fails, has no data, or cannot find a stable redesign window, a banner explains the issue so users know why the history is empty.
+-   **Grid/Table views** both show the cached “Last redesign” date when present and fall back to the status banner
 
 ## Operations
 
--   Tune detection thresholds via `config/waybackmachine.php` (endpoint, minimum persistence days, event cap, CDX filtering rules, and payload threshold).
+-   Tune detection thresholds via `config/waybackmachine.php` (endpoint, minimum persistence days, event cap, CDX filtering rules, payload thresholds, and fallback filters).
+-   Increase `request_timeout_seconds` (default 45 s) via config/env if Wayback frequently needs longer than the current value, and pair with `request_delay_ms` to avoid overwhelming the Archive.
 -   Schedule or manually dispatch `DetectWebsiteRedesignJob` whenever organization websites change or on a periodic cadence to refresh redesign insights.
+
+### Status Reference
+
+| Status            | Meaning                                                                                                                                                                                                | Typical Message                                                                   | Next Steps                                                                                                                     |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `success`         | Wayback returned data and at least one stable digest met the persistence threshold.                                                                                                                    | `null` (no banner)                                                                | Nothing to do; redesign data is current.                                                                                       |
+| `no_wayback_data` | The CDX API returned no usable snapshots. This happens when Wayback has never crawled the site or every capture was discarded (even after fallback filters) due to status, mimetype, or payload rules. | “Wayback Machine did not return any snapshots.”                                   | Verify the site exists in Wayback; consider loosening filters or reducing the fallback thresholds if captures look legitimate. |
+| `no_major_events` | Wayback responded and snapshots survived filtering, but none stayed stable long enough to count as a “major” redesign (site changes too frequently or persistence threshold too high).                 | “Wayback responded, but no stable redesign window met the persistence threshold.” | Lower `WAYBACK_MIN_PERSISTENCE_DAYS` or inspect the snapshot history to confirm the site is in constant flux.                  |
+| `wayback_failed`  | The CDX request itself failed (timeout, network issue, non-200 response).                                                                                                                              | “Wayback request failed…” (includes HTTP status or cURL error)                    | Retry later; increase timeout or check network connectivity if persistent.                                                     |
