@@ -240,10 +240,10 @@ class WebsiteRedesignDetector
      *     after_timestamp: string,
      *     after_captured_at: Carbon,
      *     nav_similarity: ?float,
-     *     before_nav_link_count: ?int,
-     *     after_nav_link_count: ?int,
-     *     before_nav_links: array<int, string>,
-     *     after_nav_links: array<int, string>,
+     *     before_nav_class_count: ?int,
+     *     after_nav_class_count: ?int,
+     *     before_nav_classes: array<int, string>,
+     *     after_nav_classes: array<int, string>,
      *     before_nav_html: ?string,
      *     after_nav_html: ?string
      * }
@@ -263,10 +263,10 @@ class WebsiteRedesignDetector
             'after_timestamp' => $event['timestamp'],
             'after_captured_at' => $event['captured_at'],
             'nav_similarity' => $navSimilarity,
-            'before_nav_link_count' => $previousSignature['link_count'] ?? null,
-            'after_nav_link_count' => $afterSignature['link_count'] ?? null,
-            'before_nav_links' => $previousSignature['links'] ?? [],
-            'after_nav_links' => $afterSignature['links'] ?? [],
+            'before_nav_class_count' => $previousSignature['class_count'] ?? null,
+            'after_nav_class_count' => $afterSignature['class_count'] ?? null,
+            'before_nav_classes' => $previousSignature['classes'] ?? [],
+            'after_nav_classes' => $afterSignature['classes'] ?? [],
             'before_nav_html' => $previousSignature['html'] ?? null,
             'after_nav_html' => $afterSignature['html'] ?? null,
         ];
@@ -495,9 +495,9 @@ class WebsiteRedesignDetector
      * @return array{
      *     hash: string,
      *     structure: string,
-     *     links: array<int, string>,
-     *     normalized_links: array<int, string>,
-     *     link_count: int,
+     *     class_tokens: array<int, string>,
+     *     classes: array<int, string>,
+     *     class_count: int,
      *     html: string
      * }|null
      */
@@ -584,9 +584,9 @@ class WebsiteRedesignDetector
      * @return array{
      *     hash: string,
      *     structure: string,
-     *     links: array<int, string>,
-     *     normalized_links: array<int, string>,
-     *     link_count: int,
+     *     class_tokens: array<int, string>,
+     *     classes: array<int, string>,
+     *     class_count: int,
      *     html: string
      * }|null
      */
@@ -612,20 +612,16 @@ class WebsiteRedesignDetector
         }
 
         $structure = $this->collectStructureSignature($navNode);
-        $linkData = $this->collectLinkTexts($navNode);
+        $classData = $this->collectCssClassSignature($navNode);
 
-        $links = array_column($linkData, 'original');
-        $normalized = array_column($linkData, 'normalized');
-        $linkCount = count($links);
-
-        $signatureBasis = $structure . '|' . implode('|', $normalized);
+        $signatureBasis = $structure . '|' . implode('|', $classData['tokens']);
 
         return [
             'hash' => sha1($signatureBasis),
             'structure' => $structure,
-            'links' => $links,
-            'normalized_links' => $normalized,
-            'link_count' => $linkCount,
+            'class_tokens' => $classData['tokens'],
+            'classes' => $classData['classes'],
+            'class_count' => $classData['count'],
             'html' => trim($dom->saveHTML($navNode) ?: ''),
         ];
     }
@@ -704,28 +700,57 @@ class WebsiteRedesignDetector
     }
 
     /**
-     * Returns the text content of each nav link in its original and lower-cased form.
-     *
-     * @return array<int, array{original: string, normalized: string}>
+     * Collects normalized CSS class fingerprints for every element inside the navigation node.
      */
-    private function collectLinkTexts(DOMElement $element): array
+    private function collectCssClassSignature(DOMElement $element): array
     {
-        $links = [];
+        $tokens = [];
+        $fallbackTokens = [];
+        $classes = [];
 
-        foreach ($element->getElementsByTagName('a') as $anchor) {
-            $text = trim(preg_replace('/\s+/u', ' ', $anchor->textContent ?? '') ?? '');
+        $this->walkDom($element, function (DOMElement $node, int $depth) use (&$tokens, &$fallbackTokens, &$classes) {
+            $classAttribute = trim((string) $node->getAttribute('class'));
+            $normalizedTag = Str::lower($node->tagName);
+            $normalizedClasses = [];
 
-            if ($text === '') {
-                continue;
+            if ($classAttribute !== '') {
+                foreach (preg_split('/\s+/', $classAttribute) as $rawClass) {
+                    $cleaned = trim($rawClass);
+                    if ($cleaned === '') {
+                        continue;
+                    }
+
+                    $normalized = Str::lower($cleaned);
+                    $classes[] = $normalized;
+                    $normalizedClasses[] = $normalized;
+                }
             }
 
-            $links[] = [
-                'original' => $text,
-                'normalized' => Str::lower($text),
-            ];
+            sort($normalizedClasses);
+
+            if (!empty($normalizedClasses)) {
+                $tokenParts = [sprintf('%02d', max(0, $depth)), $normalizedTag, implode('.', $normalizedClasses)];
+                $tokens[] = implode('|', $tokenParts);
+            } else {
+                $fallbackTokens[] = implode('|', [sprintf('%02d', max(0, $depth)), $normalizedTag]);
+            }
+        });
+
+        if (empty($tokens)) {
+            $tokens = $fallbackTokens;
         }
 
-        return $links;
+        $uniqueTokens = array_values(array_unique($tokens));
+        sort($uniqueTokens);
+
+        $uniqueClasses = array_values(array_unique($classes));
+        sort($uniqueClasses);
+
+        return [
+            'tokens' => $uniqueTokens,
+            'classes' => $uniqueClasses,
+            'count' => count($uniqueClasses),
+        ];
     }
 
     /**
@@ -745,23 +770,26 @@ class WebsiteRedesignDetector
     }
 
     /**
-     * Combines structural and link-set similarity into a single score.
+     * Combines structural and CSS class similarity into a single score.
      *
      * @param array{
      *     structure: string,
-     *     normalized_links: array<int, string>
+     *     class_tokens: array<int, string>,
+     *     classes: array<int, string>
      * } $a
      * @param array{
      *     structure: string,
-     *     normalized_links: array<int, string>
+     *     class_tokens: array<int, string>,
+     *     classes: array<int, string>
      * } $b
      */
     private function calculateSimilarity(array $a, array $b): float
     {
         $structureSimilarity = $this->stringSimilarity($a['structure'] ?? '', $b['structure'] ?? '');
-        $linkSimilarity = $this->jaccardSimilarity($a['normalized_links'] ?? [], $b['normalized_links'] ?? []);
+        $classTokenSimilarity = $this->jaccardSimilarity($a['class_tokens'] ?? [], $b['class_tokens'] ?? []);
+        $classSimilarity = $this->jaccardSimilarity($a['classes'] ?? [], $b['classes'] ?? []);
 
-        return ($structureSimilarity + $linkSimilarity) / 2;
+        return ($classTokenSimilarity * 0.5) + ($classSimilarity * 0.3) + ($structureSimilarity * 0.2);
     }
 
     /**
@@ -783,7 +811,7 @@ class WebsiteRedesignDetector
     }
 
     /**
-     * Calculates the Jaccard similarity between two sets of navigation link labels.
+     * Calculates the Jaccard similarity between two sets of navigation class tokens.
      *
      * @param array<int, string> $a
      * @param array<int, string> $b

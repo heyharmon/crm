@@ -16,10 +16,10 @@ return new class extends Migration
             $table->string('after_wayback_timestamp', 14);
             $table->timestamp('after_captured_at')->nullable();
             $table->decimal('nav_similarity', 5, 4)->nullable();
-            $table->unsignedSmallInteger('before_nav_link_count')->nullable();
-            $table->unsignedSmallInteger('after_nav_link_count')->nullable();
-            $table->json('before_nav_links')->nullable();
-            $table->json('after_nav_links')->nullable();
+            $table->unsignedSmallInteger('before_nav_class_count')->nullable();
+            $table->unsignedSmallInteger('after_nav_class_count')->nullable();
+            $table->json('before_nav_classes')->nullable();
+            $table->json('after_nav_classes')->nullable();
             $table->text('before_nav_html')->nullable();
             $table->text('after_nav_html')->nullable();
             $table->timestamps();

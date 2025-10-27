@@ -10,7 +10,7 @@
 |
 | - `nav_similarity_change_threshold` (0-1) governs how different the yearly
 |   signatures must be before we consider a redesign window. Lowering it will
-|   surface more candidate windows; raising it filters out subtle menu tweaks.
+|   surface more candidate windows; raising it filters out subtle class/markup tweaks.
 | - `nav_similarity_match_threshold` (0-1) is used during the monthly pass to
 |   confirm the first “after” snapshot. Increase it if noisy captures are being
 |   misclassified, or reduce it when the new nav is similar but not identical.

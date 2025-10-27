@@ -186,18 +186,19 @@ const describeNavChange = (event) => {
     return `Navigation changed ≈ ${Math.round(difference * 100)}%`
 }
 
-const navLinkCountLabel = (event, view = 'after') => {
+const navClassCountLabel = (event, view = 'after') => {
     if (!event) return null
-    const count = view === 'before' ? event.before_nav_link_count : event.after_nav_link_count
-    if (typeof count !== 'number') return null
-    return `${count} links`
+    const count = view === 'before' ? event.before_nav_class_count : event.after_nav_class_count
+    if (typeof count !== 'number' || count <= 0) return null
+    return `${count} CSS class${count === 1 ? '' : 'es'}`
 }
 
-const summarizeNavLinks = (event, view = 'after') => {
+const summarizeNavClasses = (event, view = 'after') => {
     if (!event) return null
-    const links = view === 'before' ? event.before_nav_links : event.after_nav_links
-    if (!Array.isArray(links)) return null
-    const cleaned = links
+    const classList = view === 'before' ? event.before_nav_classes : event.after_nav_classes
+    if (!Array.isArray(classList)) return null
+
+    const cleaned = classList
         .map((value) => (typeof value === 'string' ? value.trim() : ''))
         .filter(Boolean)
 
@@ -471,11 +472,11 @@ watch(
                                         <span v-if="describeNavChange(event)" class="block text-xs font-medium text-emerald-600">
                                             {{ describeNavChange(event) }}
                                         </span>
-                                        <span v-if="navLinkCountLabel(event, 'after')" class="block text-xs text-neutral-500">
-                                            After nav: {{ navLinkCountLabel(event, 'after') }}
+                                        <span v-if="navClassCountLabel(event, 'after')" class="block text-xs text-neutral-500">
+                                            After nav: {{ navClassCountLabel(event, 'after') }}
                                         </span>
-                                        <span v-if="navLinkCountLabel(event, 'before')" class="block text-xs text-neutral-400">
-                                            Before nav: {{ navLinkCountLabel(event, 'before') }}
+                                        <span v-if="navClassCountLabel(event, 'before')" class="block text-xs text-neutral-400">
+                                            Before nav: {{ navClassCountLabel(event, 'before') }}
                                         </span>
                                     </div>
                                 </div>
@@ -524,8 +525,8 @@ watch(
                                         >
                                             View after snapshot →
                                         </a>
-                                        <p v-if="summarizeNavLinks(event, 'after')" class="text-[11px] text-neutral-500">
-                                            {{ summarizeNavLinks(event, 'after') }}
+                                        <p v-if="summarizeNavClasses(event, 'after')" class="text-[11px] text-neutral-500">
+                                            {{ summarizeNavClasses(event, 'after') }}
                                         </p>
                                     </div>
                                     <div class="space-y-2">
@@ -572,8 +573,8 @@ watch(
                                         >
                                             View before snapshot →
                                         </a>
-                                        <p v-if="summarizeNavLinks(event, 'before')" class="text-[11px] text-neutral-500">
-                                            {{ summarizeNavLinks(event, 'before') }}
+                                        <p v-if="summarizeNavClasses(event, 'before')" class="text-[11px] text-neutral-500">
+                                            {{ summarizeNavClasses(event, 'before') }}
                                         </p>
                                     </div>
                                 </div>

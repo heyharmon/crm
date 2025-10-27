@@ -1,13 +1,13 @@
 # Website Redesign Detection
 
-The redesign detector pinpoints the most recent “real” rebuild of an organization’s site by comparing navigation structure across Wayback Machine snapshots. Instead of relying on payload size or digest churn, we extract the archived `<nav>` markup, measure how its structure changes over time, and store the pivots that represent true redesigns.
+The redesign detector pinpoints the most recent “real” rebuild of an organization’s site by comparing navigation structure across Wayback Machine snapshots. Instead of relying on payload size or digest churn, we extract the archived `<nav>` markup, fingerprint the DOM hierarchy and CSS class usage, and store the pivots that represent true redesigns.
 
 ## How It Works
 
-1. **Yearly sweep** – We pull one homepage snapshot per year (using the CDX API with `collapse=timestamp:4`) and build a navigation signature for each capture. A signature records the DOM tag hierarchy plus the ordered menu text.
-2. **Navigation diffing** – We score the similarity between consecutive yearly signatures. When the similarity falls below the configured change threshold, we treat that span as a potential redesign window.
+1. **Yearly sweep** – We pull one homepage snapshot per year (using the CDX API with `collapse=timestamp:4`) and build a navigation signature for each capture. A signature records the DOM tag hierarchy plus normalized CSS class tokens discovered inside the nav.
+2. **Navigation diffing** – We score the similarity between consecutive yearly signatures. When the class-heavy similarity falls below the configured change threshold, we treat that span as a potential redesign window.
 3. **Monthly refinement** – For every flagged window we fetch monthly snapshots between the “old” and “new” years, recompute nav signatures, and locate the first month whose nav matches the new layout. That snapshot becomes the recorded redesign event.
-4. **Event persistence** – Each redesign event stores the last snapshot before the change plus the first snapshot after the change, alongside similarity metrics, link counts, and trimmed nav HTML so the UI can summarise the jump.
+4. **Event persistence** – Each redesign event stores the last snapshot before the change plus the first snapshot after the change, alongside similarity metrics, class counts, the unique class list, and trimmed nav HTML so the UI can summarise the jump.
 
 Snapshots that lack a usable navigation element (no `<nav>`, no `role="navigation"`, or empty menus) are skipped. Tiny payloads (default < 8 KB) are filtered out up front to avoid WAF challenges and placeholder pages.
 
@@ -17,8 +17,8 @@ Snapshots that lack a usable navigation element (no `<nav>`, no `role="navigatio
     - `before_wayback_timestamp` / `before_captured_at`
     - `after_wayback_timestamp` / `after_captured_at`
     - `nav_similarity` (0–1 similarity score comparing before vs. after nav)
-    - `before_nav_link_count` / `after_nav_link_count`
-    - `before_nav_links` / `after_nav_links` (stored JSON arrays)
+    - `before_nav_class_count` / `after_nav_class_count`
+    - `before_nav_classes` / `after_nav_classes` (stored JSON arrays)
     - `before_nav_html` / `after_nav_html` (trimmed markup for reference/debugging)
 - **organizations.last_major_redesign_at** – cached date of the newest redesign event.
 - **organizations.website_redesign_status` / `website_redesign_status_message`** – status from the most recent job run so the UI can surface “Wayback failed” or “No snapshots” states.
@@ -39,12 +39,12 @@ Snapshots that lack a usable navigation element (no `<nav>`, no `role="navigatio
 
 ## Frontend Notes
 
-- The organization detail panel now lists each redesign with its capture date, how dramatically the navigation changed, quick menu summaries, plus paired “before” and “after” screenshots (linking directly to the Wayback snapshots). When the redesign job fails or produces no results, the status banner continues to explain why.
+- The organization detail panel now lists each redesign with its capture date, how dramatically the navigation changed, a glimpse of the CSS class shifts, plus paired “before” and “after” screenshots (linking directly to the Wayback snapshots). When the redesign job fails or produces no results, the status banner continues to explain why.
 
 ## Operations & Tuning
 
 - Adjust the detector via `config/waybackmachine.php`:
-    - `nav_similarity_change_threshold` – lower it to treat smaller menu changes as redesigns; raise it to focus on dramatic shifts.
+    - `nav_similarity_change_threshold` – lower it to treat subtler class/structure adjustments as redesigns; raise it to focus on dramatic shifts.
     - `nav_similarity_match_threshold` – tighten it if noisy snapshots masquerade as the new design.
     - `min_snapshot_length_bytes` – drop when legitimate navigation lives in very small payloads.
     - `max_snapshot_results` – increase for long-lived domains so the yearly/monthly sweeps have enough data.

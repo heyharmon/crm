@@ -17,10 +17,10 @@ class OrganizationWebsiteRedesign extends Model
         'after_wayback_timestamp',
         'after_captured_at',
         'nav_similarity',
-        'before_nav_link_count',
-        'after_nav_link_count',
-        'before_nav_links',
-        'after_nav_links',
+        'before_nav_class_count',
+        'after_nav_class_count',
+        'before_nav_classes',
+        'after_nav_classes',
         'before_nav_html',
         'after_nav_html',
     ];
@@ -29,8 +29,8 @@ class OrganizationWebsiteRedesign extends Model
         'before_captured_at' => 'datetime',
         'after_captured_at' => 'datetime',
         'nav_similarity' => 'float',
-        'before_nav_links' => 'array',
-        'after_nav_links' => 'array',
+        'before_nav_classes' => 'array',
+        'after_nav_classes' => 'array',
     ];
 
     public function organization(): BelongsTo
