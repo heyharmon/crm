@@ -8,20 +8,24 @@
 | navigation structure, and drills into monthly captures to locate the month
 | a major rebuild shipped. Tune these knobs to balance accuracy vs. runtime:
 |
-| - Lower `nav_similarity_change_threshold` to make the detector less strict
-|   about what counts as a redesign; raise it if we flag too many minor tweaks.
-| - Raise `nav_similarity_match_threshold` when back-to-back navigation
-|   snapshots look noisy and you need a stronger signal before declaring the
-|   “new” design stable.
+| - `nav_similarity_change_threshold` (0-1) governs how different the yearly
+|   signatures must be before we consider a redesign window. Lowering it will
+|   surface more candidate windows; raising it filters out subtle menu tweaks.
+| - `nav_similarity_match_threshold` (0-1) is used during the monthly pass to
+|   confirm the first “after” snapshot. Increase it if noisy captures are being
+|   misclassified, or reduce it when the new nav is similar but not identical.
 | - `min_snapshot_length_bytes` filters out tiny HTML payloads (e.g. WAF
 |   challenges). Drop it when legitimate sites ship very lean markup.
 | - `max_snapshot_results` caps how many snapshot rows we request from
-|   Wayback during year/month passes. Increase it for long-running sites.
+|   Wayback during both the yearly and monthly passes. Increase it for
+|   long-running sites with deep archives.
 | - `max_events` controls how many redesign rows we store per organization
 |   (newest entries win). Each row keeps the last snapshot before and first
 |   snapshot after the detected redesign.
 | - `request_delay_ms` inserts a small pause before each HTML fetch so we
 |   stay polite with the archive. Keep it non-zero in production jobs.
+| - `request_timeout_seconds` is shared by both the CDX metadata request and the
+|   HTML fetch; raise it if you see frequent timeouts on the queue worker.
 */
 
 return [

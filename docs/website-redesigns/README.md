@@ -52,6 +52,19 @@ Snapshots that lack a usable navigation element (no `<nav>`, no `role="navigatio
     - `request_delay_ms` / `request_timeout_seconds` – tune when Wayback rate limits or slow responses appear.
 - Re-run `DetectWebsiteRedesignJob` for a handful of organizations after touching thresholds to confirm the detected months line up with real-world rebuilds.
 
+## Triggering Detection Locally
+
+- Start a queue worker so the detector can run asynchronously:
+  ```bash
+  php artisan queue:work
+  ```
+- In another terminal, dispatch the job for the organization you want to refresh:
+  ```bash
+  php artisan tinker
+  >>> App\Jobs\DetectWebsiteRedesignJob::dispatch($organizationId);
+  ```
+- When changing schema or detector behaviour, run `php artisan migrate:fresh` (or the relevant migrations) before dispatching jobs so the new before/after fields exist in the database.
+
 ### Status Reference
 
 | Status            | Meaning                                                                                                                                         | Typical Message                                                                   | Next Steps                                                                                                        |
