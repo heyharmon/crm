@@ -39,4 +39,9 @@ return [
         'token' => env('APIFY_TOKEN'),
     ],
 
+    'apiflash' => [
+        'base_url' => env('APIFLASH_BASE_URL', 'https://api.apiflash.com/v1/urltoimage'),
+        'key' => env('APIFLASH_ACCESS_KEY'),
+    ],
+
 ];

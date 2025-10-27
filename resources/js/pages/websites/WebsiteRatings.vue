@@ -118,7 +118,8 @@ const fetchNextBatch = async () => {
         try {
             const params = {
                 website: 'present',
-                my_website_rating: 'none'
+                my_website_rating: 'none',
+                website_status: 'up'
             }
 
             if (RANDOMIZE_UNRATED_WEBSITES) {
