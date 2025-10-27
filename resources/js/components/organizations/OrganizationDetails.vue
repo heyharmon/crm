@@ -146,6 +146,43 @@ const getRedesignPreviewState = (event) => {
 const isRedesignPreviewLoading = (event) => getRedesignPreviewState(event) === 'loading'
 const hasRedesignPreviewError = (event) => getRedesignPreviewState(event) === 'error'
 
+const REDESIGN_STATUS_META = {
+    wayback_failed: {
+        label: 'Wayback request failed. Please try again later.',
+        banner: 'border-red-200 bg-red-50 text-red-700'
+    },
+    no_wayback_data: {
+        label: 'Wayback Machine does not have snapshots for this website yet.',
+        banner: 'border-amber-200 bg-amber-50 text-amber-800'
+    },
+    no_major_events: {
+        label: 'Wayback did not find a stable redesign window. The site may change too frequently.',
+        banner: 'border-blue-200 bg-blue-50 text-blue-700'
+    }
+}
+
+const shouldShowRedesignStatus = (organization) => {
+    const status = organization?.website_redesign_status
+    if (!status) return false
+    return status !== 'success'
+}
+
+const redesignStatusMessage = (organization) => {
+    if (!organization) return ''
+    const status = organization.website_redesign_status
+    const meta = REDESIGN_STATUS_META[status]
+    return organization.website_redesign_status_message || meta?.label || 'Unable to retrieve Wayback data.'
+}
+
+const redesignStatusBannerClasses = (status) => REDESIGN_STATUS_META[status]?.banner ?? 'border-neutral-200 bg-neutral-50 text-neutral-700'
+
+const redesignFallbackDescription = (organization) => {
+    if (shouldShowRedesignStatus(organization)) {
+        return 'Try running detection again once the Wayback issue above is resolved.'
+    }
+    return "We haven't confirmed any major redesigns yet."
+}
+
 const syncRedesignPreviewStates = (organization) => {
     if (!organization?.website_redesigns?.length) {
         redesignPreviewStates.value = {}
@@ -326,6 +363,13 @@ watch(
                         </span>
                     </button>
                 </div>
+                <p
+                    v-if="shouldShowRedesignStatus(org())"
+                    class="mb-3 rounded-lg border px-3 py-2 text-xs font-medium"
+                    :class="redesignStatusBannerClasses(org().website_redesign_status)"
+                >
+                    {{ redesignStatusMessage(org()) }}
+                </p>
                 <p v-if="redesignActionError" class="mb-3 rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
                     {{ redesignActionError }}
                 </p>
@@ -399,7 +443,9 @@ watch(
                         </div>
                         <p class="text-xs text-neutral-400">Data from the Internet Archive Wayback Machine</p>
                     </div>
-                    <div v-else class="text-sm text-neutral-500">We haven't confirmed any major redesigns yet.</div>
+                    <div v-else class="text-sm text-neutral-500">
+                        {{ redesignFallbackDescription(org()) }}
+                    </div>
                 </div>
             </div>
 

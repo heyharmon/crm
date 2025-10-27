@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\WebsiteRedesignDetectionResult;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
@@ -10,29 +11,55 @@ use Illuminate\Support\Str;
 
 class WebsiteRedesignDetector
 {
-    public function detect(string $website): array
+    public function detect(?string $website): WebsiteRedesignDetectionResult
     {
-        $snapshots = $this->fetchDistinctSnapshots($website);
+        $snapshotResult = $this->fetchDistinctSnapshots($website);
 
-        if (empty($snapshots)) {
-            return [];
+        if ($snapshotResult['status'] === WebsiteRedesignDetectionResult::STATUS_WAYBACK_FAILED) {
+            return WebsiteRedesignDetectionResult::waybackFailure(
+                $snapshotResult['message'] ?? 'Wayback Machine request failed.'
+            );
         }
 
-        return $this->identifyMajorRedesigns($snapshots);
+        if ($snapshotResult['status'] === WebsiteRedesignDetectionResult::STATUS_NO_WAYBACK_DATA) {
+            return WebsiteRedesignDetectionResult::noWaybackData(
+                $snapshotResult['message'] ?? 'Wayback Machine did not return any snapshots for this website.'
+            );
+        }
+
+        $events = $this->identifyMajorRedesigns($snapshotResult['snapshots']);
+
+        if (empty($events)) {
+            return WebsiteRedesignDetectionResult::noMajorEvents(
+                'Wayback responded, but no stable redesign window met the persistence threshold.'
+            );
+        }
+
+        return WebsiteRedesignDetectionResult::success($events);
     }
 
     /**
-     * @return array<int, array{timestamp: string, digest: string|null, captured_at: Carbon}>
+     * @return array{
+     *     snapshots: array<int, array{timestamp: string, digest: string|null, captured_at: Carbon}>,
+     *     status: string,
+     *     message: ?string
+     * }
      */
-    public function fetchDistinctSnapshots(string $website): array
+    public function fetchDistinctSnapshots(?string $website): array
     {
         $normalized = $this->normalizeWebsite($website);
         if (!$normalized) {
-            return [];
+            return [
+                'snapshots' => [],
+                'status' => WebsiteRedesignDetectionResult::STATUS_NO_WAYBACK_DATA,
+                'message' => 'Website URL is missing or invalid.',
+            ];
         }
 
+        $timeoutSeconds = max(5, (int) config('waybackmachine.request_timeout_seconds', 45));
+
         try {
-            $response = Http::timeout(20)
+            $response = Http::timeout($timeoutSeconds)
                 ->acceptJson()
                 ->get(config('waybackmachine.cdx_endpoint'), [
                     'url' => $normalized,
@@ -45,7 +72,11 @@ class WebsiteRedesignDetector
                 'website' => $normalized,
                 'error' => $exception->getMessage(),
             ]);
-            return [];
+            return [
+                'snapshots' => [],
+                'status' => WebsiteRedesignDetectionResult::STATUS_WAYBACK_FAILED,
+                'message' => $exception->getMessage(),
+            ];
         }
 
         if (!$response->successful()) {
@@ -53,64 +84,63 @@ class WebsiteRedesignDetector
                 'website' => $normalized,
                 'status' => $response->status(),
             ]);
-            return [];
+            return [
+                'snapshots' => [],
+                'status' => WebsiteRedesignDetectionResult::STATUS_WAYBACK_FAILED,
+                'message' => sprintf('Wayback Machine responded with HTTP %s.', $response->status()),
+            ];
         }
 
         $payload = $response->json();
         if (!is_array($payload) || count($payload) <= 1) {
-            return [];
-        }
-
-        $rows = array_slice($payload, 1);
-        $allowedStatusCodes = $this->allowedStatusCodes();
-        $allowedMimeTypes = $this->allowedMimeTypes();
-        $minPayloadBytes = $this->minPayloadBytes();
-        $snapshots = [];
-
-        foreach ($rows as $row) {
-            $timestamp = Arr::get($row, 0);
-            $digest = Arr::get($row, 1);
-            $statusCodeRaw = Arr::get($row, 2);
-            $statusCode = is_numeric($statusCodeRaw) ? (int) $statusCodeRaw : null;
-            $mimeType = Arr::get($row, 3);
-            $payloadBytesRaw = Arr::get($row, 4);
-            $payloadBytes = is_numeric($payloadBytesRaw) ? (int) $payloadBytesRaw : null;
-
-            if (!$this->snapshotPassesFilters(
-                $statusCode,
-                is_string($mimeType) ? $mimeType : null,
-                $payloadBytes,
-                $allowedStatusCodes,
-                $allowedMimeTypes,
-                $minPayloadBytes
-            )) {
-                continue;
-            }
-
-            if (!is_string($timestamp) || $timestamp === '') {
-                continue;
-            }
-
-            try {
-                $capturedAt = Carbon::createFromFormat('YmdHis', $timestamp, 'UTC');
-            } catch (\Throwable $exception) {
-                Log::debug('Skipping invalid Wayback timestamp', [
-                    'timestamp' => $timestamp,
-                    'error' => $exception->getMessage(),
-                ]);
-                continue;
-            }
-
-            $snapshots[] = [
-                'timestamp' => $timestamp,
-                'digest' => is_string($digest) ? $digest : null,
-                'captured_at' => $capturedAt,
+            return [
+                'snapshots' => [],
+                'status' => WebsiteRedesignDetectionResult::STATUS_NO_WAYBACK_DATA,
+                'message' => 'Wayback Machine did not return any snapshots.',
             ];
         }
 
-        usort($snapshots, fn($a, $b) => $a['captured_at'] <=> $b['captured_at']);
+        $rows = array_slice($payload, 1);
+        $snapshots = $this->filterSnapshots(
+            $rows,
+            $this->allowedStatusCodes(),
+            $this->allowedMimeTypes(),
+            $this->minPayloadBytes()
+        );
+        $usedFallbackFilters = false;
 
-        return $snapshots;
+        if (empty($snapshots)) {
+            $snapshots = $this->filterSnapshots(
+                $rows,
+                $this->allowedStatusCodes(true),
+                $this->allowedMimeTypes(true),
+                $this->minPayloadBytes(true)
+            );
+
+            if (!empty($snapshots)) {
+                $usedFallbackFilters = true;
+                Log::info('Wayback snapshots derived via fallback filters', [
+                    'website' => $normalized,
+                    'fallback_status_codes' => $this->allowedStatusCodes(true),
+                    'fallback_mimetypes' => $this->allowedMimeTypes(true),
+                    'fallback_min_payload_bytes' => $this->minPayloadBytes(true),
+                ]);
+            }
+        }
+
+        if (empty($snapshots)) {
+            return [
+                'snapshots' => [],
+                'status' => WebsiteRedesignDetectionResult::STATUS_NO_WAYBACK_DATA,
+                'message' => 'Wayback snapshots were filtered out even after applying fallback rules.',
+            ];
+        }
+
+        return [
+            'snapshots' => $snapshots,
+            'status' => WebsiteRedesignDetectionResult::STATUS_SUCCESS,
+            'message' => $usedFallbackFilters ? 'Snapshots derived via fallback Wayback filters.' : null,
+        ];
     }
 
     /**
@@ -177,9 +207,10 @@ class WebsiteRedesignDetector
     /**
      * @return array<int>
      */
-    private function allowedStatusCodes(): array
+    private function allowedStatusCodes(bool $useFallback = false): array
     {
-        $codes = config('waybackmachine.allowed_status_codes');
+        $key = $useFallback ? 'waybackmachine.fallback_allowed_status_codes' : 'waybackmachine.allowed_status_codes';
+        $codes = config($key);
 
         if (!is_array($codes) || empty($codes)) {
             return [200];
@@ -195,9 +226,10 @@ class WebsiteRedesignDetector
     /**
      * @return array<int, string>
      */
-    private function allowedMimeTypes(): array
+    private function allowedMimeTypes(bool $useFallback = false): array
     {
-        $types = config('waybackmachine.allowed_mimetypes');
+        $key = $useFallback ? 'waybackmachine.fallback_allowed_mimetypes' : 'waybackmachine.allowed_mimetypes';
+        $types = config($key);
 
         if (!is_array($types) || empty($types)) {
             return ['text/html'];
@@ -210,9 +242,65 @@ class WebsiteRedesignDetector
         }, $types)));
     }
 
-    private function minPayloadBytes(): int
+    private function minPayloadBytes(bool $useFallback = false): int
     {
-        return max(0, (int) config('waybackmachine.min_payload_bytes', 10240));
+        $key = $useFallback ? 'waybackmachine.fallback_min_payload_bytes' : 'waybackmachine.min_payload_bytes';
+
+        return max(0, (int) config($key, 10240));
+    }
+
+    /**
+     * @param array<int, array{0:mixed,1:mixed,2:mixed,3:mixed,4:mixed}> $rows
+     * @return array<int, array{timestamp: string, digest: string|null, captured_at: Carbon}>
+     */
+    private function filterSnapshots(array $rows, array $allowedStatusCodes, array $allowedMimeTypes, int $minPayloadBytes): array
+    {
+        $snapshots = [];
+
+        foreach ($rows as $row) {
+            $timestamp = Arr::get($row, 0);
+            $digest = Arr::get($row, 1);
+            $statusCodeRaw = Arr::get($row, 2);
+            $statusCode = is_numeric($statusCodeRaw) ? (int) $statusCodeRaw : null;
+            $mimeType = Arr::get($row, 3);
+            $payloadBytesRaw = Arr::get($row, 4);
+            $payloadBytes = is_numeric($payloadBytesRaw) ? (int) $payloadBytesRaw : null;
+
+            if (!$this->snapshotPassesFilters(
+                $statusCode,
+                is_string($mimeType) ? $mimeType : null,
+                $payloadBytes,
+                $allowedStatusCodes,
+                $allowedMimeTypes,
+                $minPayloadBytes
+            )) {
+                continue;
+            }
+
+            if (!is_string($timestamp) || $timestamp === '') {
+                continue;
+            }
+
+            try {
+                $capturedAt = Carbon::createFromFormat('YmdHis', $timestamp, 'UTC');
+            } catch (\Throwable $exception) {
+                Log::debug('Skipping invalid Wayback timestamp', [
+                    'timestamp' => $timestamp,
+                    'error' => $exception->getMessage(),
+                ]);
+                continue;
+            }
+
+            $snapshots[] = [
+                'timestamp' => $timestamp,
+                'digest' => is_string($digest) ? $digest : null,
+                'captured_at' => $capturedAt,
+            ];
+        }
+
+        usort($snapshots, fn($a, $b) => $a['captured_at'] <=> $b['captured_at']);
+
+        return $snapshots;
     }
 
     private function snapshotPassesFilters(

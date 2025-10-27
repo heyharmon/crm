@@ -235,6 +235,8 @@ export const useOrganizationStore = defineStore('organization', {
                 if (!org || org.id !== organizationId) return
                 org.last_major_redesign_at = null
                 org.website_redesigns = []
+                org.website_redesign_status = null
+                org.website_redesign_status_message = null
             }
 
             this.organizations.forEach((organization) => {

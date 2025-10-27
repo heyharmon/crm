@@ -15,6 +15,9 @@ class DetectWebsiteRedesignJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public int $tries = 1;
+    public int $timeout = 30;
+
     public function __construct(private int $organizationId) {}
 
     public function handle(WebsiteRedesignService $redesignService): void
