@@ -123,6 +123,7 @@ const handleSearch = async () => {
     }
     clearSelection()
     await organizationStore.fetchOrganizations(1)
+    mobileFiltersOpen.value = false
 }
 
 const handlePageChange = async (page) => {
@@ -170,6 +171,8 @@ const formatWebsite = (url) => {
 
 // Unified view toggle (table/grid) synced with ?view=grid
 const view = ref(route.query.view === 'grid' ? 'grid' : 'table')
+const mobileFiltersOpen = ref(false)
+const mobileActionsOpen = ref(false)
 watch(
     () => route.query.view,
     (v) => {
@@ -177,12 +180,25 @@ watch(
     }
 )
 watch(view, async (v) => {
+    mobileActionsOpen.value = false
     const q = { ...route.query }
     if (v === 'grid') q.view = 'grid'
     else delete q.view
     await router.replace({ query: q })
     if (v !== 'table') {
         clearSelection()
+    }
+})
+
+watch(mobileActionsOpen, (open) => {
+    if (open) {
+        mobileFiltersOpen.value = false
+    }
+})
+
+watch(mobileFiltersOpen, (open) => {
+    if (open) {
+        mobileActionsOpen.value = false
     }
 })
 
@@ -346,51 +362,127 @@ const editFormRef = ref(null)
 
         <div class="flex h-full flex-col min-h-0">
             <div class="border-b border-neutral-200 bg-white px-4 py-3 lg:px-6">
-                <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <h1 class="text-xl font-semibold text-neutral-900">
-                        Organizations
-                        <span v-if="filteredTotalLabel !== null" class="text-sm font-normal text-neutral-500">({{ filteredTotalLabel }})</span>
-                    </h1>
+                <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                            <h1 class="text-lg font-semibold text-neutral-900 sm:text-xl">
+                                Organizations
+                                <span v-if="filteredTotalLabel !== null" class="text-xs font-medium text-neutral-500 sm:text-sm">
+                                    ({{ filteredTotalLabel }})
+                                </span>
+                            </h1>
+                        </div>
+                        <div class="flex items-center gap-2 sm:hidden">
+                            <button
+                                type="button"
+                                class="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400"
+                                :aria-expanded="mobileFiltersOpen"
+                                @click="mobileFiltersOpen = !mobileFiltersOpen"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18M6 4l4 6v6l4 2v-8l4-6" />
+                                </svg>
+                                Filters
+                            </button>
+                            <div class="relative">
+                                <button
+                                    type="button"
+                                    class="inline-flex items-center gap-2 rounded-full border border-neutral-900 bg-neutral-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-500"
+                                    :aria-expanded="mobileActionsOpen"
+                                    @click="mobileActionsOpen = !mobileActionsOpen"
+                                >
+                                    Actions
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor">
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M5.23 7.21a.75.75 0 011.06.02L10 11.084l3.71-3.854a.75.75 0 011.08 1.04l-4.25 4.417a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                </button>
+                                <transition name="scale-fade">
+                                    <div
+                                        v-if="mobileActionsOpen"
+                                        class="absolute right-0 top-11 z-20 min-w-[180px] rounded-xl border border-neutral-200 bg-white p-2 text-sm shadow-xl"
+                                    >
+                                        <router-link
+                                            to="/organizations/import"
+                                            class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-neutral-700 transition hover:bg-neutral-50"
+                                            @click="mobileActionsOpen = false"
+                                        >
+                                            Import
+                                            <span class="text-[10px] font-semibold uppercase tracking-wider text-neutral-400">CSV</span>
+                                        </router-link>
+                                        <router-link
+                                            to="/organizations/create"
+                                            class="mt-1 flex w-full items-center justify-between rounded-lg bg-neutral-900 px-3 py-2 text-white transition hover:bg-neutral-800"
+                                            @click="mobileActionsOpen = false"
+                                        >
+                                            Add Organization
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path
+                                                    fill-rule="evenodd"
+                                                    d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+                                                    clip-rule="evenodd"
+                                                />
+                                            </svg>
+                                        </router-link>
+                                    </div>
+                                </transition>
+                            </div>
+                        </div>
+                    </div>
                     <div class="flex flex-wrap items-center gap-3">
                         <div class="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-white p-1">
                             <button
-                                class="rounded-full px-3 py-1 text-sm font-medium text-neutral-600 transition-colors focus-visible:outline-neutral-400"
+                                class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400 sm:text-sm"
                                 :class="view === 'table' ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
                                 @click="view = 'table'"
                             >
                                 Table
                             </button>
                             <button
-                                class="rounded-full px-3 py-1 text-sm font-medium text-neutral-600 transition-colors focus-visible:outline-neutral-400"
+                                class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400 sm:text-sm"
                                 :class="view === 'grid' ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
                                 @click="view = 'grid'"
                             >
                                 Grid
                             </button>
                         </div>
-                        <router-link to="/organizations/import">
-                            <Button
-                                variant="outline"
-                                class="rounded-full border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-100"
-                            >
-                                Import
-                            </Button>
-                        </router-link>
-                        <router-link to="/organizations/create">
-                            <Button class="rounded-full px-4 py-2 text-sm font-medium">Add Organization</Button>
-                        </router-link>
+                        <div class="hidden sm:flex sm:items-center sm:gap-3">
+                            <router-link to="/organizations/import">
+                                <Button
+                                    variant="outline"
+                                    class="rounded-full border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-100"
+                                >
+                                    Import
+                                </Button>
+                            </router-link>
+                            <router-link to="/organizations/create">
+                                <Button class="rounded-full px-4 py-2 text-sm font-medium">Add Organization</Button>
+                            </router-link>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="border-b border-neutral-200 bg-white px-4 py-4 lg:hidden">
-                <OrganizationFilters
-                    :filters="organizationStore.filters"
-                    :rating-options="ratingOptions"
-                    @update:filters="organizationStore.setFilters"
-                    @reset-filters="organizationStore.resetFilters"
-                    @search="handleSearch"
-                />
+            <div class="border-b border-neutral-200 bg-white px-4 lg:hidden">
+                <transition name="collapse">
+                    <div v-if="mobileFiltersOpen" class="py-4">
+                        <OrganizationFilters
+                            :filters="organizationStore.filters"
+                            :rating-options="ratingOptions"
+                            @update:filters="organizationStore.setFilters"
+                            @reset-filters="
+                                () => {
+                                    organizationStore.resetFilters()
+                                    mobileFiltersOpen = false
+                                }
+                            "
+                            @search="handleSearch"
+                        />
+                    </div>
+                </transition>
             </div>
 
             <div class="flex flex-1 flex-col bg-white min-h-0">
@@ -514,3 +606,30 @@ const editFormRef = ref(null)
         </RightDrawer>
     </TwoColumnLayout>
 </template>
+
+<style scoped>
+.collapse-enter-active,
+.collapse-leave-active {
+    transition: max-height 0.25s ease, opacity 0.2s ease;
+}
+.collapse-enter-from,
+.collapse-leave-to {
+    max-height: 0;
+    opacity: 0;
+}
+.collapse-enter-to,
+.collapse-leave-from {
+    max-height: 2000px;
+    opacity: 1;
+}
+.scale-fade-enter-active,
+.scale-fade-leave-active {
+    transition: opacity 0.15s ease, transform 0.2s ease;
+    transform-origin: top right;
+}
+.scale-fade-enter-from,
+.scale-fade-leave-to {
+    opacity: 0;
+    transform: scale(0.95);
+}
+</style>

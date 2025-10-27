@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import auth from '@/services/auth'
 
@@ -9,9 +9,11 @@ const isAuthenticated = computed(() => auth.isAuthenticated())
 const user = computed(() => auth.getUser())
 const navLinkClasses = 'rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900'
 const activeNavClasses = 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white'
+const mobileMenuOpen = ref(false)
 
 const logout = async () => {
     await auth.logout()
+    mobileMenuOpen.value = false
     router.push('/login')
 }
 
@@ -40,13 +42,30 @@ const isRouteActive = (target) => {
 
     return false
 }
+
+watch(
+    () => route.fullPath,
+    () => {
+        mobileMenuOpen.value = false
+    }
+)
+
+const toggleMobileMenu = () => {
+    mobileMenuOpen.value = !mobileMenuOpen.value
+}
+
+const closeMobileMenu = () => {
+    mobileMenuOpen.value = false
+}
 </script>
 
 <template>
-    <nav class="border-b border-neutral-200 bg-white/90 backdrop-blur">
-        <div class="mx-auto flex items-center justify-between px-4 py-4 lg:px-8">
-            <div class="flex items-center gap-6">
-                <router-link to="/" class="text-base font-bold text-neutral-900"> CRM </router-link>
+    <nav class="sticky top-0 z-40 border-b border-neutral-200 bg-white/90 backdrop-blur">
+        <div class="mx-auto flex h-16 w-full max-w-[1563px] items-center justify-between px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-1 items-center gap-6">
+                <router-link to="/" class="text-lg font-semibold text-neutral-900">
+                    CRM
+                </router-link>
 
                 <div v-if="isAuthenticated" class="hidden items-center gap-1 text-sm font-medium text-neutral-500 md:flex">
                     <router-link :to="{ name: 'dashboard' }" :class="[navLinkClasses, { [activeNavClasses]: isRouteActive('dashboard') }]">
@@ -65,9 +84,40 @@ const isRouteActive = (target) => {
                         Rate Websites
                     </router-link>
                 </div>
+                <button
+                    v-if="isAuthenticated"
+                    type="button"
+                    class="inline-flex items-center justify-center rounded-full border border-transparent p-2 text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 md:hidden"
+                    :aria-expanded="mobileMenuOpen"
+                    aria-controls="app-nav-mobile"
+                    @click="toggleMobileMenu"
+                >
+                    <span class="sr-only">Toggle navigation</span>
+                    <svg v-if="!mobileMenuOpen" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-width="1.8" d="M4 7h16M4 12h16M4 17h16" />
+                    </svg>
+                    <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-width="1.8" d="M6 6l12 12M6 18L18 6" />
+                    </svg>
+                </button>
             </div>
 
-            <div class="flex items-center gap-3">
+            <div v-if="!isAuthenticated" class="flex items-center gap-2 md:hidden">
+                <router-link
+                    to="/login"
+                    class="inline-flex items-center rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-100"
+                >
+                    Login
+                </router-link>
+                <router-link
+                    to="/register"
+                    class="inline-flex items-center rounded-full border border-neutral-900 bg-neutral-900 px-3 py-1.5 text-sm font-semibold text-white shadow-sm transition hover:bg-neutral-800"
+                >
+                    Register
+                </router-link>
+            </div>
+
+            <div class="hidden items-center gap-3 md:flex">
                 <template v-if="isAuthenticated">
                     <span class="text-sm font-medium text-neutral-600">{{ user?.name }}</span>
                     <button
@@ -93,5 +143,93 @@ const isRouteActive = (target) => {
                 </template>
             </div>
         </div>
+
+        <transition name="fade">
+            <div
+                v-if="mobileMenuOpen && isAuthenticated"
+                id="app-nav-mobile"
+                class="md:hidden"
+            >
+                <div class="border-t border-neutral-200 bg-white/95 pb-6 pt-4 shadow-sm">
+                    <div class="mx-auto flex w-full max-w-[1563px] flex-col gap-4 px-4 sm:px-6 lg:px-8">
+                        <div class="space-y-2 text-sm font-medium text-neutral-600">
+                            <router-link
+                                :to="{ name: 'dashboard' }"
+                                :class="[
+                                    'block rounded-xl px-3 py-2 transition hover:bg-neutral-100 hover:text-neutral-900',
+                                    { 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white': isRouteActive('dashboard') }
+                                ]"
+                                @click="closeMobileMenu"
+                            >
+                                Dashboard
+                            </router-link>
+                            <router-link
+                                :to="{ name: 'organizations.index' }"
+                                :class="[
+                                    'block rounded-xl px-3 py-2 transition hover:bg-neutral-100 hover:text-neutral-900',
+                                    { 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white': isRouteActive('organizations.index') }
+                                ]"
+                                @click="closeMobileMenu"
+                            >
+                                Organizations
+                            </router-link>
+                            <router-link
+                                to="/organization-categories"
+                                :class="[
+                                    'block rounded-xl px-3 py-2 transition hover:bg-neutral-100 hover:text-neutral-900',
+                                    { 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white': isRouteActive('/organization-categories') }
+                                ]"
+                                @click="closeMobileMenu"
+                            >
+                                Categories
+                            </router-link>
+                            <router-link
+                                :to="{ name: 'websites.options' }"
+                                :class="[
+                                    'block rounded-xl px-3 py-2 transition hover:bg-neutral-100 hover:text-neutral-900',
+                                    { 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white': isRouteActive('websites.options') }
+                                ]"
+                                @click="closeMobileMenu"
+                            >
+                                Rating Options
+                            </router-link>
+                            <router-link
+                                :to="{ name: 'websites.ratings' }"
+                                :class="[
+                                    'block rounded-xl px-3 py-2 transition hover:bg-neutral-100 hover:text-neutral-900',
+                                    { 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white': isRouteActive('websites.ratings') }
+                                ]"
+                                @click="closeMobileMenu"
+                            >
+                                Rate Websites
+                            </router-link>
+                        </div>
+
+                        <div class="rounded-2xl border border-neutral-200 bg-neutral-50/80 p-4">
+                            <div class="mb-3 text-xs font-semibold uppercase tracking-wide text-neutral-400">Signed in as</div>
+                            <div class="text-sm font-medium text-neutral-800">{{ user?.name }}</div>
+                            <button
+                                type="button"
+                                class="mt-4 inline-flex w-full items-center justify-center rounded-full border border-neutral-900 bg-neutral-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-neutral-800"
+                                @click="logout"
+                            >
+                                Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </transition>
     </nav>
 </template>
+
+<style scoped>
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.15s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
+}
+</style>

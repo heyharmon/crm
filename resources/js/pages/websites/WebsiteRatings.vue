@@ -286,12 +286,14 @@ onMounted(() => {
 
 <template>
     <DefaultLayout>
-        <div class="py-10">
+        <div class="py-6 sm:py-10">
             <div class="flex flex-col gap-6">
-                <div class="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+                <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
-                        <h1 class="text-3xl font-semibold text-neutral-900">Website Ratings</h1>
-                        <p class="text-sm text-neutral-500">Review each organization's website and choose a rating. Skip any you want to revisit later.</p>
+                        <h1 class="text-2xl font-semibold text-neutral-900 sm:text-3xl">Website Ratings</h1>
+                        <p class="text-sm text-neutral-500 sm:max-w-[560px]">
+                            Review each organization's website and choose a rating. Skip any you want to revisit later.
+                        </p>
                     </div>
                 </div>
 
@@ -305,9 +307,9 @@ onMounted(() => {
 
                 <div v-if="currentOrg" class="flex flex-col gap-6">
                     <div class="flex flex-col gap-2">
-                        <div class="flex flex-wrap items-start justify-between gap-4">
-                            <div>
-                                <h2 class="text-2xl font-semibold text-neutral-900">
+                        <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                            <div class="space-y-2">
+                                <h2 class="text-xl font-semibold text-neutral-900 sm:text-2xl">
                                     {{ currentOrg.name }}
                                 </h2>
                                 <a
@@ -315,15 +317,15 @@ onMounted(() => {
                                     :href="formatWebsite(currentOrg.website)"
                                     target="_blank"
                                     rel="noopener"
-                                    class="text-sm text-neutral-600 underline underline-offset-4 hover:text-neutral-900"
+                                    class="inline-flex items-center gap-2 text-sm font-medium text-neutral-600 underline underline-offset-4 hover:text-neutral-900"
                                 >
                                     {{ formatWebsite(currentOrg.website) }}
                                 </a>
                             </div>
-                            <div class="flex flex-col items-end gap-3">
-                                <div class="text-right text-xs text-neutral-500">
+                            <div class="flex w-full flex-col gap-4 sm:w-auto sm:items-end">
+                                <div class="text-left text-xs text-neutral-500 sm:text-right">
                                     <template v-if="currentOrg.website_rating_summary">
-                                        <span class="font-semibold text-neutral-700">
+                                        <span class="font-semibold text-neutral-700 sm:block">
                                             Average: {{ optionBySlug[currentOrg.website_rating_summary]?.name || currentOrg.website_rating_summary }}
                                         </span>
                                         <span v-if="currentOrg.website_rating_average !== null">
@@ -333,13 +335,13 @@ onMounted(() => {
                                     </template>
                                     <span v-else class="text-neutral-400">No ratings yet</span>
                                 </div>
-                                <div class="flex flex-wrap justify-end gap-3">
+                                <div class="flex flex-wrap gap-2 sm:justify-end sm:gap-3">
                                     <Button
                                         v-for="option in ratingOptions"
                                         :key="option.id"
                                         size="lg"
                                         variant="ghost"
-                                        class="rounded-full px-6 py-2 text-sm font-semibold transition focus-visible:outline-offset-2"
+                                        class="flex-1 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-wide transition focus-visible:outline-offset-2 sm:flex-none sm:px-6 sm:text-sm"
                                         :class="ratingButtonClasses(option)"
                                         :disabled="isRating"
                                         @click="rateWebsite(option.id)"
@@ -347,9 +349,17 @@ onMounted(() => {
                                         {{ option.name }}
                                     </Button>
                                 </div>
-                                <div class="flex flex-wrap items-center justify-end gap-3">
+                                <div class="flex flex-wrap items-center gap-2 sm:justify-end sm:gap-3">
                                     <span v-if="isRating" class="text-xs text-neutral-400">Saving rating…</span>
-                                    <Button variant="outline" size="sm" :disabled="isRating" @click="skipWebsite"> Skip </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        class="flex-1 sm:flex-none"
+                                        :disabled="isRating"
+                                        @click="skipWebsite"
+                                    >
+                                        Skip
+                                    </Button>
                                 </div>
                             </div>
                         </div>
@@ -357,19 +367,29 @@ onMounted(() => {
 
                     <div
                         v-if="currentOrg.website"
-                        class="relative w-full overflow-hidden rounded-3xl border border-neutral-200 bg-neutral-900"
-                        style="min-height: 60vh"
+                        class="relative w-full overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-900 shadow-lg shadow-neutral-900/20 sm:rounded-3xl min-h-[360px] sm:min-h-[480px] lg:min-h-[60vh]"
                     >
+                        <div class="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                            <span class="rounded-full border border-neutral-700 bg-neutral-900/70 px-3 py-1 text-neutral-200 shadow-sm shadow-neutral-900/40">
+                                Live Preview
+                            </span>
+                            <span
+                                v-if="currentOrg.website"
+                                class="hidden rounded-full border border-neutral-700 bg-neutral-900/60 px-3 py-1 text-neutral-300 shadow-sm shadow-neutral-900/40 sm:inline-flex"
+                            >
+                                {{ currentOrg.website }}
+                            </span>
+                        </div>
                         <div
                             v-if="!screenshotReady && !screenshotError"
-                            class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-neutral-900 text-neutral-300"
+                            class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-neutral-900 text-neutral-300"
                         >
                             <span class="text-sm font-medium uppercase tracking-wide">Loading screenshot…</span>
                             <span class="text-xs text-neutral-500">Fetching a fresh view of the site.</span>
                         </div>
                         <div
                             v-else-if="screenshotError"
-                            class="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-neutral-900 text-neutral-200"
+                            class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-neutral-900 text-neutral-200"
                         >
                             <span class="text-sm font-semibold">Screenshot unavailable</span>
                             <span class="text-xs text-neutral-500">Open the site directly to complete the review.</span>
@@ -379,7 +399,7 @@ onMounted(() => {
                             :key="currentOrg.id"
                             :src="getScreenshotUrl(currentOrg.website)"
                             :alt="`Screenshot of ${currentOrg.name} website`"
-                            class="h-full w-full object-contain bg-black"
+                            class="h-full w-full min-h-[320px] max-h-[70vh] object-contain bg-black sm:min-h-[480px] lg:max-h-none"
                             @load="handleScreenshotLoad"
                             @error="handleScreenshotError"
                         />

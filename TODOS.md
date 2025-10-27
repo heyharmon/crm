@@ -8,3 +8,5 @@
 2. Clean up some database table naming
 
 3. Import NCUA data about credit union assets into this app.
+
+4. On the organizations index page we list organizations in a table or a grid. There is also a pagination component. I want to increase the per page to 100 so that 100 organizations are loaded per page by default. Then I also want to add a dropdown to the pagination component that allows me to select the per page amount and increase it or decrease it. You choose reasonable selections for this dropdown.
