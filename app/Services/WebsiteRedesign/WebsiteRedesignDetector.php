@@ -40,7 +40,7 @@ class WebsiteRedesignDetector
 
     /**
      * @return array{
-     *     snapshots: array<int, array{timestamp: string, digest: string|null, captured_at: Carbon}>,
+     *     snapshots: array<int, array{timestamp: string, digest: string|null, captured_at: Carbon, payload_bytes: ?int}>,
      *     status: string,
      *     message: ?string
      * }
@@ -107,45 +107,32 @@ class WebsiteRedesignDetector
             $this->allowedMimeTypes(),
             $this->minPayloadBytes()
         );
-        $usedFallbackFilters = false;
-
-        if (empty($snapshots)) {
-            $snapshots = $this->filterSnapshots(
-                $rows,
-                $this->allowedStatusCodes(true),
-                $this->allowedMimeTypes(true),
-                $this->minPayloadBytes(true)
-            );
-
-            if (!empty($snapshots)) {
-                $usedFallbackFilters = true;
-                Log::info('Wayback snapshots derived via fallback filters', [
-                    'website' => $normalized,
-                    'fallback_status_codes' => $this->allowedStatusCodes(true),
-                    'fallback_mimetypes' => $this->allowedMimeTypes(true),
-                    'fallback_min_payload_bytes' => $this->minPayloadBytes(true),
-                ]);
-            }
-        }
 
         if (empty($snapshots)) {
             return [
                 'snapshots' => [],
                 'status' => WebsiteRedesignDetectionResult::STATUS_NO_WAYBACK_DATA,
-                'message' => 'Wayback snapshots were filtered out even after applying fallback rules.',
+                'message' => 'Wayback snapshots were filtered out by the current filters.',
             ];
         }
 
         return [
             'snapshots' => $snapshots,
             'status' => WebsiteRedesignDetectionResult::STATUS_SUCCESS,
-            'message' => $usedFallbackFilters ? 'Snapshots derived via fallback Wayback filters.' : null,
+            'message' => null,
         ];
     }
 
     /**
-     * @param array<int, array{timestamp: string, digest: string|null, captured_at: Carbon}> $snapshots
-     * @return array<int, array{timestamp: string, digest: string|null, captured_at: Carbon, persistence_days: int}>
+     * @param array<int, array{timestamp: string, digest: string|null, captured_at: Carbon, payload_bytes: ?int}> $snapshots
+     * @return array<int, array{
+     *     timestamp: string,
+     *     digest: string|null,
+     *     captured_at: Carbon,
+     *     persistence_days: int,
+     *     median_payload_bytes: ?int,
+     *     payload_change_ratio: ?float
+     * }>
      */
     public function identifyMajorRedesigns(array $snapshots): array
     {
@@ -155,22 +142,49 @@ class WebsiteRedesignDetector
 
         $minPersistenceDays = max(1, (int) config('waybackmachine.min_persistence_days', 120));
         $maxEvents = max(1, (int) config('waybackmachine.max_events', 5));
+        $minPayloadChangeRatio = max(0.0, (float) config('waybackmachine.min_payload_change_ratio', 0.3));
         $now = Carbon::now('UTC');
         $candidates = [];
+        $previousMedianPayload = null;
 
         foreach ($snapshots as $index => $snapshot) {
             $current = $snapshot['captured_at'];
             $next = $snapshots[$index + 1]['captured_at'] ?? null;
             $stableUntil = $next ?? $now;
             $persistenceDays = $current->diffInDays($stableUntil);
+            $medianPayload = $this->medianPayloadForWindow($snapshot);
+            $changeRatio = null;
+
+            if ($previousMedianPayload !== null && $medianPayload !== null) {
+                $denominator = max($previousMedianPayload, 1);
+                $changeRatio = abs($medianPayload - $previousMedianPayload) / $denominator;
+            }
 
             if ($persistenceDays >= $minPersistenceDays) {
+                $payloadShiftPasses = $previousMedianPayload === null
+                    || $medianPayload === null
+                    || $changeRatio === null
+                    || $changeRatio >= $minPayloadChangeRatio;
+
+                if (!$payloadShiftPasses) {
+                    if ($medianPayload !== null) {
+                        $previousMedianPayload = $medianPayload;
+                    }
+                    continue;
+                }
+
                 $candidates[] = [
                     'timestamp' => $snapshot['timestamp'],
                     'digest' => $snapshot['digest'],
                     'captured_at' => $current->copy(),
                     'persistence_days' => $persistenceDays,
+                    'median_payload_bytes' => $medianPayload,
+                    'payload_change_ratio' => $changeRatio,
                 ];
+            }
+
+            if ($medianPayload !== null) {
+                $previousMedianPayload = $medianPayload;
             }
         }
 
@@ -207,10 +221,9 @@ class WebsiteRedesignDetector
     /**
      * @return array<int>
      */
-    private function allowedStatusCodes(bool $useFallback = false): array
+    private function allowedStatusCodes(): array
     {
-        $key = $useFallback ? 'waybackmachine.fallback_allowed_status_codes' : 'waybackmachine.allowed_status_codes';
-        $codes = config($key);
+        $codes = config('waybackmachine.allowed_status_codes');
 
         if (!is_array($codes) || empty($codes)) {
             return [200];
@@ -226,10 +239,9 @@ class WebsiteRedesignDetector
     /**
      * @return array<int, string>
      */
-    private function allowedMimeTypes(bool $useFallback = false): array
+    private function allowedMimeTypes(): array
     {
-        $key = $useFallback ? 'waybackmachine.fallback_allowed_mimetypes' : 'waybackmachine.allowed_mimetypes';
-        $types = config($key);
+        $types = config('waybackmachine.allowed_mimetypes');
 
         if (!is_array($types) || empty($types)) {
             return ['text/html'];
@@ -242,16 +254,14 @@ class WebsiteRedesignDetector
         }, $types)));
     }
 
-    private function minPayloadBytes(bool $useFallback = false): int
+    private function minPayloadBytes(): int
     {
-        $key = $useFallback ? 'waybackmachine.fallback_min_payload_bytes' : 'waybackmachine.min_payload_bytes';
-
-        return max(0, (int) config($key, 10240));
+        return max(0, (int) config('waybackmachine.min_payload_bytes', 10240));
     }
 
     /**
      * @param array<int, array{0:mixed,1:mixed,2:mixed,3:mixed,4:mixed}> $rows
-     * @return array<int, array{timestamp: string, digest: string|null, captured_at: Carbon}>
+     * @return array<int, array{timestamp: string, digest: string|null, captured_at: Carbon, payload_bytes: ?int}>
      */
     private function filterSnapshots(array $rows, array $allowedStatusCodes, array $allowedMimeTypes, int $minPayloadBytes): array
     {
@@ -295,6 +305,7 @@ class WebsiteRedesignDetector
                 'timestamp' => $timestamp,
                 'digest' => is_string($digest) ? $digest : null,
                 'captured_at' => $capturedAt,
+                'payload_bytes' => $payloadBytes,
             ];
         }
 
@@ -332,5 +343,19 @@ class WebsiteRedesignDetector
         }
 
         return true;
+    }
+
+    /**
+     * @param array{payload_bytes: ?int} $snapshot
+     */
+    private function medianPayloadForWindow(array $snapshot): ?int
+    {
+        $payloadBytes = $snapshot['payload_bytes'] ?? null;
+
+        if ($payloadBytes === null) {
+            return null;
+        }
+
+        return $payloadBytes;
     }
 }

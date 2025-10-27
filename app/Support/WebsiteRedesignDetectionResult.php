@@ -7,7 +7,9 @@ namespace App\Support;
  *     timestamp: string,
  *     digest: string|null,
  *     captured_at: \Carbon\Carbon,
- *     persistence_days: int
+ *     persistence_days: int,
+ *     median_payload_bytes: ?int,
+ *     payload_change_ratio: ?float
  * }
  */
 class WebsiteRedesignDetectionResult
