@@ -11,11 +11,17 @@ return new class extends Migration
         Schema::create('organization_website_redesigns', function (Blueprint $table) {
             $table->id();
             $table->foreignId('organization_id')->constrained()->cascadeOnDelete();
-            $table->string('digest', 64)->nullable();
-            $table->string('wayback_timestamp', 14);
-            $table->timestamp('captured_at')->nullable();
-            $table->unsignedInteger('persistence_days')->default(0);
-            $table->boolean('is_major')->default(true);
+            $table->string('before_wayback_timestamp', 14);
+            $table->timestamp('before_captured_at')->nullable();
+            $table->string('after_wayback_timestamp', 14);
+            $table->timestamp('after_captured_at')->nullable();
+            $table->decimal('nav_similarity', 5, 4)->nullable();
+            $table->unsignedSmallInteger('before_nav_link_count')->nullable();
+            $table->unsignedSmallInteger('after_nav_link_count')->nullable();
+            $table->json('before_nav_links')->nullable();
+            $table->json('after_nav_links')->nullable();
+            $table->text('before_nav_html')->nullable();
+            $table->text('after_nav_html')->nullable();
             $table->timestamps();
         });
 

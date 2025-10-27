@@ -4,70 +4,39 @@
 |--------------------------------------------------------------------------
 | Wayback Redesign Tuning
 |--------------------------------------------------------------------------
-| Wayback returns “collapsed digest windows” – each window represents a
-| stretch of time where the archived HTML digest stays unchanged. We treat
-| a window as a major redesign only when it lives long enough
-| (`min_persistence_days`) and differs enough from the previous window
-| (`min_payload_change_ratio`).
+| The redesign detector samples one snapshot per year, compares the site’s
+| navigation structure, and drills into monthly captures to locate the month
+| a major rebuild shipped. Tune these knobs to balance accuracy vs. runtime:
 |
-| Tuning tips:
-| - Lower `min_persistence_days` when Wayback captures are sparse; this lets
-|   shorter-lived windows qualify so the latest redesign does not get skipped.
-|   Raising it does the opposite: only very stable windows survive.
-| - Lower `min_payload_change_ratio` (e.g. from 0.30 → 0.15) if genuine
-|   redesigns reuse large portions of markup. Increase it when minor content
-|   tweaks still slip through.
-| - Adjust `min_payload_bytes` to admit or exclude lightweight responses;
-|   dropping it pulls more captures into each window and can improve the
-|   median payload signal at the expense of more noise.
-| - Raise `max_events` to keep a deeper history of redesign windows; lowering
-|   it keeps storage small but prunes older windows sooner.
-|
-| When you tweak these values, re-run the redesign job for a few
-| organizations to confirm the detected windows align with real-world
-| redesigns before promoting the change more broadly.
+| - Lower `nav_similarity_change_threshold` to make the detector less strict
+|   about what counts as a redesign; raise it if we flag too many minor tweaks.
+| - Raise `nav_similarity_match_threshold` when back-to-back navigation
+|   snapshots look noisy and you need a stronger signal before declaring the
+|   “new” design stable.
+| - `min_snapshot_length_bytes` filters out tiny HTML payloads (e.g. WAF
+|   challenges). Drop it when legitimate sites ship very lean markup.
+| - `max_snapshot_results` caps how many snapshot rows we request from
+|   Wayback during year/month passes. Increase it for long-running sites.
+| - `max_events` controls how many redesign rows we store per organization
+|   (newest entries win). Each row keeps the last snapshot before and first
+|   snapshot after the detected redesign.
+| - `request_delay_ms` inserts a small pause before each HTML fetch so we
+|   stay polite with the archive. Keep it non-zero in production jobs.
 */
 
 return [
-    // Base CDX endpoint used to pull collapsed snapshot metadata from Wayback.
     'cdx_endpoint' => env('WAYBACK_CDX_ENDPOINT', 'https://web.archive.org/cdx/search/cdx'),
 
-    // Minimum number of days a digest must remain stable before we treat it as a major redesign.
-    'min_persistence_days' => (int) env('WAYBACK_MIN_PERSISTENCE_DAYS', 20),
+    // Similarity thresholds used to decide when navigation changes represent a redesign.
+    'nav_similarity_change_threshold' => (float) env('WAYBACK_NAV_SIMILARITY_CHANGE_THRESHOLD', 0.6),
+    'nav_similarity_match_threshold' => (float) env('WAYBACK_NAV_SIMILARITY_MATCH_THRESHOLD', 0.78),
 
-    // Minimum payload size in bytes; smaller captures (often WAF challenges) are ignored.
-    'min_payload_bytes' => (int) env('WAYBACK_MIN_PAYLOAD_BYTES', 8192),
+    // Snapshot hygiene + volume controls.
+    'min_snapshot_length_bytes' => (int) env('WAYBACK_MIN_SNAPSHOT_LENGTH_BYTES', 8192),
+    'max_snapshot_results' => (int) env('WAYBACK_MAX_SNAPSHOT_RESULTS', 2000),
+    'max_events' => (int) env('WAYBACK_MAX_REDESIGN_EVENTS', 10),
 
-    // Cap on how many redesign events we keep per organization (newest events win).
-    'max_events' => (int) env('WAYBACK_MAX_REDESIGN_EVENTS', 20),
-
-    // Minimum relative change (e.g. 0.3 = 30%) between consecutive stable payload medians to count as a major redesign.
-    'min_payload_change_ratio' => (float) env('WAYBACK_MIN_PAYLOAD_CHANGE_RATIO', 0.15),
-
-    // Optional delay (milliseconds) inserted before calling Wayback to avoid hammering their API.
-    'request_delay_ms' => (int) env('WAYBACK_REQUEST_DELAY_MS', 1000),
-
-    // Timeout (seconds) for each Wayback API request; bumps default beyond 20s to avoid cURL 28 timeouts.
-    'request_timeout_seconds' => (int) env('WAYBACK_REQUEST_TIMEOUT_SECONDS', 60),
-
-    // Only snapshots with these HTTP status codes are considered; others are discarded as noise.
-    'allowed_status_codes' => array_values(array_filter(array_map(
-        static function ($value) {
-            $code = (int) trim((string) $value);
-
-            return $code > 0 ? $code : null;
-        },
-        explode(',', env('WAYBACK_ALLOWED_STATUS_CODES', '200'))
-    ))),
-
-    // Restrict captures to specific mimetypes (defaults to HTML) to avoid assets/JSON/etc.
-    'allowed_mimetypes' => array_values(array_filter(array_map(
-        static function ($value) {
-            $type = strtolower(trim((string) $value));
-
-            return $type !== '' ? $type : null;
-        },
-        explode(',', env('WAYBACK_ALLOWED_MIMETYPES', 'text/html'))
-    ))),
-
+    // Wayback request behaviour.
+    'request_delay_ms' => (int) env('WAYBACK_REQUEST_DELAY_MS', 750),
+    'request_timeout_seconds' => (int) env('WAYBACK_REQUEST_TIMEOUT_SECONDS', 120),
 ];

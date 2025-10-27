@@ -4,12 +4,17 @@ namespace App\Support;
 
 /**
  * @phpstan-type RedesignEvent array{
- *     timestamp: string,
- *     digest: string|null,
- *     captured_at: \Carbon\Carbon,
- *     persistence_days: int,
- *     median_payload_bytes: ?int,
- *     payload_change_ratio: ?float
+ *     before_timestamp: string,
+ *     before_captured_at: ?\Carbon\Carbon,
+ *     after_timestamp: string,
+ *     after_captured_at: ?\Carbon\Carbon,
+ *     nav_similarity: ?float,
+ *     before_nav_link_count: ?int,
+ *     after_nav_link_count: ?int,
+ *     before_nav_links: array<int, string>,
+ *     after_nav_links: array<int, string>,
+ *     before_nav_html: ?string,
+ *     after_nav_html: ?string
  * }
  */
 class WebsiteRedesignDetectionResult

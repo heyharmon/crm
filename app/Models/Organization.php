@@ -108,6 +108,6 @@ class Organization extends Model
 
     public function websiteRedesigns(): HasMany
     {
-        return $this->hasMany(OrganizationWebsiteRedesign::class)->orderByDesc('captured_at');
+        return $this->hasMany(OrganizationWebsiteRedesign::class)->orderByDesc('after_captured_at');
     }
 }
