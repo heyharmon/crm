@@ -15,9 +15,7 @@ class DetectWebsiteRedesignJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public function __construct(private int $organizationId)
-    {
-    }
+    public function __construct(private int $organizationId) {}
 
     public function handle(WebsiteRedesignService $redesignService): void
     {
@@ -31,9 +29,6 @@ class DetectWebsiteRedesignJob implements ShouldQueue
         }
 
         if (!$organization->website) {
-            Log::info('Website redesign job skipped organization without website', [
-                'organization_id' => $organization->id,
-            ]);
             return;
         }
 

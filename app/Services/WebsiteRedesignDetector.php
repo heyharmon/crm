@@ -28,9 +28,6 @@ class WebsiteRedesignDetector
     {
         $normalized = $this->normalizeWebsite($website);
         if (!$normalized) {
-            Log::info('Unable to normalize website for redesign detection', [
-                'website' => $website,
-            ]);
             return [];
         }
 
@@ -111,7 +108,7 @@ class WebsiteRedesignDetector
             ];
         }
 
-        usort($snapshots, fn ($a, $b) => $a['captured_at'] <=> $b['captured_at']);
+        usort($snapshots, fn($a, $b) => $a['captured_at'] <=> $b['captured_at']);
 
         return $snapshots;
     }

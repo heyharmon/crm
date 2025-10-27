@@ -8,9 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class WebsiteRedesignService
 {
-    public function __construct(private WebsiteRedesignDetector $detector)
-    {
-    }
+    public function __construct(private WebsiteRedesignDetector $detector) {}
 
     public function refreshOrganizationRedesigns(Organization $organization): void
     {
@@ -43,12 +41,6 @@ class WebsiteRedesignService
             $organization->last_major_redesign_at = $lastEvent['captured_at'] ?? null;
             $organization->save();
         });
-
-        Log::info('Website redesign detection finished', [
-            'organization_id' => $organization->id,
-            'events_recorded' => count($events),
-            'last_major_redesign_at' => optional($organization->last_major_redesign_at)->toDateString(),
-        ]);
     }
 
     private function throttleWaybackRequests(): void

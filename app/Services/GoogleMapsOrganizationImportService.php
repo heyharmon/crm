@@ -31,14 +31,6 @@ class GoogleMapsOrganizationImportService
             'items_skipped' => $this->skipped,
         ]);
 
-        Log::info('Completed organization import', [
-            'run_id' => $apifyRun->apify_run_id,
-            'total' => count($data),
-            'imported' => $this->imported,
-            'updated' => $this->updated,
-            'skipped' => $this->skipped,
-        ]);
-
         return [
             'total' => count($data),
             'imported' => $this->imported,

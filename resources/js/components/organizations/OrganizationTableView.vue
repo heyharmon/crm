@@ -188,7 +188,7 @@ const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteSta
                                 type="checkbox"
                                 class="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-500"
                                 :checked="rowIsSelected(organization.id)"
-                                @change.stop="emit('toggle-row-selection', {
+                                @click.stop="emit('toggle-row-selection', {
                                     organization,
                                     checked: $event.target.checked,
                                     shiftKey: $event.shiftKey

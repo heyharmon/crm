@@ -11,6 +11,9 @@ class SitemapCrawlerService
 {
     private const MAX_SITEMAP_FETCHES = 30;
     private const MAX_URLS = 5000;
+    private const MAX_CONSECUTIVE_FETCH_FAILURES = 3;
+    private const REQUEST_TIMEOUT_SECONDS = 8;
+    private const ROBOTS_TIMEOUT_SECONDS = 5;
 
     public function crawl(string $websiteUrl): array
     {
@@ -22,6 +25,7 @@ class SitemapCrawlerService
         $queue = $this->initialSitemapCandidates($normalizedBase);
         $visited = [];
         $collected = [];
+        $consecutiveFailures = 0;
 
         while (!empty($queue) && count($visited) < self::MAX_SITEMAP_FETCHES && count($collected) < self::MAX_URLS) {
             $sitemapUrl = array_shift($queue);
@@ -33,8 +37,15 @@ class SitemapCrawlerService
 
             $xml = $this->fetchXml($sitemapUrl);
             if (!$xml instanceof SimpleXMLElement) {
+                $consecutiveFailures++;
+                if ($consecutiveFailures >= self::MAX_CONSECUTIVE_FETCH_FAILURES) {
+                    break;
+                }
+
                 continue;
             }
+
+            $consecutiveFailures = 0;
 
             $rootName = strtolower($xml->getName());
 
@@ -104,7 +115,7 @@ class SitemapCrawlerService
         $robotsUrl = $baseUrl . '/robots.txt';
 
         try {
-            $response = Http::timeout(10)->accept('text/plain')->get($robotsUrl);
+            $response = Http::timeout(self::ROBOTS_TIMEOUT_SECONDS)->accept('text/plain')->get($robotsUrl);
         } catch (\Throwable $e) {
             return [];
         }
@@ -136,7 +147,7 @@ class SitemapCrawlerService
     private function fetchXml(string $url): ?SimpleXMLElement
     {
         try {
-            $response = Http::timeout(20)
+            $response = Http::timeout(self::REQUEST_TIMEOUT_SECONDS)
                 ->accept('application/xml')
                 ->accept('text/xml')
                 ->get($url);

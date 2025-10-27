@@ -21,11 +21,6 @@ class ApifyGoogleMapsScraperService extends BaseApifyService
                 'started_at' => now(),
                 'user_id' => $userId,
             ]);
-            Log::info('Started Apify Google Maps scraping', [
-                'run_id' => $runData['id'],
-                'user_id' => $userId,
-                'input' => $input,
-            ]);
             return $apifyRun;
         } catch (\Exception $e) {
             Log::error('Failed to start Apify scraping', [

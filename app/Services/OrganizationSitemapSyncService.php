@@ -9,19 +9,13 @@ use Illuminate\Support\Str;
 
 class OrganizationSitemapSyncService
 {
-    public function __construct(private SitemapCrawlerService $crawler)
-    {
-    }
+    public function __construct(private SitemapCrawlerService $crawler) {}
 
     public function sync(Organization $organization): int
     {
         $urls = $this->crawler->crawl($organization->website);
 
         if (empty($urls)) {
-            Log::info('No URLs discovered from sitemap crawl', [
-                'organization_id' => $organization->id,
-            ]);
-
             return 0;
         }
 
@@ -41,11 +35,6 @@ class OrganizationSitemapSyncService
 
             $processed++;
         }
-
-        Log::info('Sitemap crawl completed', [
-            'organization_id' => $organization->id,
-            'pages_processed' => $processed,
-        ]);
 
         return $processed;
     }

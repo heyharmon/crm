@@ -28,6 +28,7 @@ class ProcessApifyResultsJob implements ShouldQueue
 
         /** @var BaseApifyService $service */
         $service = app()->make($this->serviceClass);
+
         /** @var ApifyResultsProcessor $processor */
         $processor = app()->make($this->processorClass);
 
@@ -40,12 +41,6 @@ class ProcessApifyResultsJob implements ShouldQueue
                 return;
             }
             $results = $processor->process($apifyRun, $data);
-            Log::info('Successfully processed Apify results', [
-                'run_id' => $apifyRun->apify_run_id,
-                'service' => $this->serviceClass,
-                'processor' => $this->processorClass,
-                'results' => $results,
-            ]);
         } catch (\Exception $e) {
             Log::error('Failed to process Apify results', [
                 'apify_run_id' => $apifyRun->id,
