@@ -16,12 +16,20 @@ return new class extends Migration
             $table->string('after_wayback_timestamp', 14);
             $table->timestamp('after_captured_at')->nullable();
             $table->decimal('nav_similarity', 5, 4)->nullable();
-            $table->unsignedSmallInteger('before_nav_class_count')->nullable();
-            $table->unsignedSmallInteger('after_nav_class_count')->nullable();
-            $table->json('before_nav_classes')->nullable();
-            $table->json('after_nav_classes')->nullable();
-            $table->text('before_nav_html')->nullable();
-            $table->text('after_nav_html')->nullable();
+            $table->unsignedSmallInteger('before_html_class_count')->nullable();
+            $table->unsignedSmallInteger('after_html_class_count')->nullable();
+            $table->unsignedSmallInteger('before_body_class_count')->nullable();
+            $table->unsignedSmallInteger('after_body_class_count')->nullable();
+            $table->unsignedSmallInteger('before_head_asset_count')->nullable();
+            $table->unsignedSmallInteger('after_head_asset_count')->nullable();
+            $table->json('before_html_classes')->nullable();
+            $table->json('after_html_classes')->nullable();
+            $table->json('before_body_classes')->nullable();
+            $table->json('after_body_classes')->nullable();
+            $table->json('before_head_assets')->nullable();
+            $table->json('after_head_assets')->nullable();
+            $table->text('before_head_html')->nullable();
+            $table->text('after_head_html')->nullable();
             $table->timestamps();
         });
 
