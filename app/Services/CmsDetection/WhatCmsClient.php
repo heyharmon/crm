@@ -2,6 +2,7 @@
 
 namespace App\Services\CmsDetection;
 
+use App\Services\CmsDetection\Exceptions\RateLimitedException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -10,7 +11,7 @@ use Throwable;
 class WhatCmsClient
 {
     private const ENDPOINT = 'https://whatcms.org/API/Tech';
-    private const TIMEOUT_SECONDS = 20;
+    private const TIMEOUT_SECONDS = 30;
 
     public function detectCms(string $url): ?string
     {
@@ -51,6 +52,17 @@ class WhatCmsClient
         }
 
         $resultCode = Arr::get($payload, 'result.code');
+
+        if ((int) $resultCode === 120) {
+            Log::info('WhatCMS request was rate limited', [
+                'url' => $url,
+                'code' => $resultCode,
+                'message' => Arr::get($payload, 'result.msg'),
+            ]);
+
+            throw new RateLimitedException('WhatCMS rate limit reached.');
+        }
+
         if ($resultCode !== 200) {
             Log::info('WhatCMS request did not succeed', [
                 'url' => $url,
