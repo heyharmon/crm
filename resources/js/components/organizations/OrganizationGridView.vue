@@ -143,9 +143,9 @@ const getScreenshotUrl = (website) => {
                         </div>
                     </div>
 
-                    <div v-if="organization.phone" class="text-sm text-neutral-600">
+                    <!-- <div v-if="organization.phone" class="text-sm text-neutral-600">
                         {{ organization.phone }}
-                    </div>
+                    </div> -->
 
                     <div v-if="organization.website" class="space-y-2">
                         <label class="block text-xs font-medium uppercase tracking-wide text-neutral-500">Website Ratings</label>
