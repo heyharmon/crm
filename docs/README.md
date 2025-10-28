@@ -7,6 +7,7 @@ This directory contains high-level overviews of the main domains in the CRM appl
 - **teams** – team management and membership
 - **invitations** – invitation tokens and flows
 - **organizations** – organization records and browsing
+- **importing** – HubSpot and NCUA organization import pipelines
 - **scrapers** – importing and scraping data via external services
 - **website-redesigns** – Wayback-powered redesign detection and historical context
 
