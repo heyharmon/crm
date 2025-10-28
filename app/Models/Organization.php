@@ -39,6 +39,20 @@ class Organization extends Model
         'organization_category_id',
         'map_url',
         'notes',
+        'charter_number',
+        'is_low_income',
+        'members',
+        'assets',
+        'loans',
+        'deposits',
+        'roaa',
+        'net_worth_ratio',
+        'loan_to_share_ratio',
+        'deposit_growth',
+        'loan_growth',
+        'asset_growth',
+        'member_growth',
+        'net_worth_growth',
     ];
 
     protected $casts = [
@@ -48,6 +62,20 @@ class Organization extends Model
         'website_rating_count' => 'integer',
         'website_rating_weighted' => 'float',
         'last_major_redesign_at' => 'date',
+        'charter_number' => 'integer',
+        'is_low_income' => 'boolean',
+        'members' => 'integer',
+        'assets' => 'integer',
+        'loans' => 'integer',
+        'deposits' => 'integer',
+        'roaa' => 'decimal:2',
+        'net_worth_ratio' => 'decimal:2',
+        'loan_to_share_ratio' => 'decimal:2',
+        'deposit_growth' => 'decimal:2',
+        'loan_growth' => 'decimal:2',
+        'asset_growth' => 'decimal:2',
+        'member_growth' => 'decimal:2',
+        'net_worth_growth' => 'decimal:2',
     ];
 
     protected $attributes = [

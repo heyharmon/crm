@@ -35,6 +35,11 @@ const isUploadingHubspot = ref(false)
 const hubspotUploadError = ref(null)
 const hubspotImportResult = ref(null)
 
+const ncuaFileInput = ref(null)
+const isUploadingNcua = ref(false)
+const ncuaUploadError = ref(null)
+const ncuaImportResult = ref(null)
+
 onMounted(async () => {
     await apifyImportStore.fetchImports()
 })
@@ -124,6 +129,48 @@ const uploadHubspotCsv = async (file) => {
         isUploadingHubspot.value = false
     }
 }
+
+const triggerNcuaPicker = () => {
+    ncuaFileInput.value?.click()
+}
+
+const handleNcuaFileChange = async (event) => {
+    const file = event.target.files?.[0]
+    if (!file) {
+        return
+    }
+    await uploadNcuaCsv(file)
+    event.target.value = ''
+}
+
+const uploadNcuaCsv = async (file) => {
+    const formData = new FormData()
+    formData.append('file', file)
+
+    ncuaUploadError.value = null
+    ncuaImportResult.value = null
+    isUploadingNcua.value = true
+
+    try {
+        const response = await api.post('/organizations/import/ncua', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        })
+
+        ncuaImportResult.value = {
+            filename: file.name,
+            ...response
+        }
+    } catch (error) {
+        if (error?.errors) {
+            const messages = Object.values(error.errors).flat()
+            ncuaUploadError.value = messages.join(' ')
+        } else {
+            ncuaUploadError.value = error?.message || 'Failed to import NCUA CSV.'
+        }
+    } finally {
+        isUploadingNcua.value = false
+    }
+}
 </script>
 
 <template>
@@ -200,6 +247,74 @@ const uploadHubspotCsv = async (file) => {
                         <div class="font-semibold mb-2">Rows skipped</div>
                         <ul class="space-y-1 max-h-40 overflow-y-auto">
                             <li v-for="error in hubspotImportResult.errors" :key="`${error.row}-${error.reason}`" class="text-xs text-neutral-600">
+                                Row {{ error.row }} — {{ error.reason }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-8">
+                <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-semibold">Update Organizations with NCUA Data</h2>
+                        <p class="text-neutral-600 text-sm mt-1">
+                            Upload the quarterly NCUA CSV to refresh financial metrics for existing organizations. We match by website domain and only
+                            update the NCUA-specific data points listed below.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <input ref="ncuaFileInput" type="file" accept=".csv,text/csv" class="hidden" @change="handleNcuaFileChange" />
+                        <Button
+                            type="button"
+                            class="bg-neutral-900 text-white hover:bg-neutral-800"
+                            :disabled="isUploadingNcua"
+                            @click="triggerNcuaPicker"
+                        >
+                            {{ isUploadingNcua ? 'Uploading...' : 'Upload NCUA CSV' }}
+                        </Button>
+                    </div>
+                </div>
+
+                <ul class="text-sm text-neutral-600 list-disc pl-5 mt-4 space-y-1">
+                    <li>Required heading: <span class="font-medium">Website</span> (used for domain matching).</li>
+                    <li>Updates: charter number, low-income designation, members, assets, loans, deposits, ROAA, net worth ratio, loan-to-share ratio, and growth metrics.</li>
+                    <li>Existing CRM data outside these fields remains unchanged.</li>
+                </ul>
+
+                <div v-if="ncuaUploadError" class="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                    {{ ncuaUploadError }}
+                </div>
+
+                <div v-if="ncuaImportResult" class="mt-4 rounded-md border border-blue-200 bg-blue-50 p-4">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                        <div>
+                            <div class="text-xs uppercase tracking-wide text-blue-700 font-semibold">Import summary</div>
+                            <div class="text-sm text-blue-900">
+                                {{ ncuaImportResult.filename }} processed with {{ ncuaImportResult.rows_processed ?? 0 }} rows.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4 mt-4 text-sm">
+                        <div>
+                            <div class="text-xs uppercase text-neutral-600">Processed</div>
+                            <div class="text-xl font-semibold text-neutral-900">{{ ncuaImportResult.rows_processed ?? 0 }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs uppercase text-neutral-600">Updated</div>
+                            <div class="text-xl font-semibold text-neutral-900">{{ ncuaImportResult.updated ?? 0 }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs uppercase text-neutral-600">Skipped</div>
+                            <div class="text-xl font-semibold text-neutral-900">{{ ncuaImportResult.skipped ?? 0 }}</div>
+                        </div>
+                    </div>
+
+                    <div v-if="ncuaImportResult.errors?.length" class="mt-4 text-sm text-neutral-700">
+                        <div class="font-semibold mb-2">Rows skipped</div>
+                        <ul class="space-y-1 max-h-40 overflow-y-auto">
+                            <li v-for="error in ncuaImportResult.errors" :key="`ncua-${error.row}-${error.reason}`" class="text-xs text-neutral-600">
                                 Row {{ error.row }} — {{ error.reason }}
                             </li>
                         </ul>
