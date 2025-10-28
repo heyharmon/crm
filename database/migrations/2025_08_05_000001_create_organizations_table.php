@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('street')->nullable();
             $table->string('city')->nullable();
             $table->string('state')->nullable();
-            $table->string('country_code', 2)->nullable();
+            $table->string('country')->nullable();
             $table->string('website')->nullable();
             $table->string('phone')->nullable();
             $table->foreignId('organization_category_id')->nullable()->constrained('organization_categories');

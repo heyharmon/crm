@@ -80,7 +80,7 @@ class GoogleMapsOrganizationImportService
             'street' => $item['street'] ?? null,
             'city' => $item['city'] ?? null,
             'state' => $item['state'] ?? null,
-            'country_code' => $item['countryCode'] ?? null,
+            'country' => $item['country'] ?? $item['countryCode'] ?? null,
             'website' => WebsiteUrl::normalize($item['website'] ?? null),
             'phone' => $item['phone'] ?? null,
             'organization_category_id' => $this->resolveCategoryId($item['categoryName'] ?? null),

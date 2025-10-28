@@ -135,6 +135,11 @@ const getSortIcon = (column) => {
                 </div>
 
                 <div>
+                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Country</label>
+                    <Input :model-value="filters.country" @update:model-value="updateFilter('country', $event)" placeholder="Filter by country" />
+                </div>
+
+                <div>
                     <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Category</label>
                     <Input :model-value="filters.category" @update:model-value="updateFilter('category', $event)" placeholder="Filter by category" />
                 </div>

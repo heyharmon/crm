@@ -33,6 +33,7 @@ const parseFiltersFromQuery = (q) => {
             search: toStr(q.search),
             city: toStr(q.city),
             state: toStr(q.state),
+            country: toStr(q.country),
             category: toStr(q.category),
             cms: toStr(q.cms),
             website: toStr(q.website),
@@ -50,6 +51,7 @@ const buildQueryFromFilters = (filters, page, base = {}) => {
     delete q.search
     delete q.city
     delete q.state
+    delete q.country
     delete q.category
     delete q.cms
     delete q.website
@@ -61,6 +63,7 @@ const buildQueryFromFilters = (filters, page, base = {}) => {
     if (filters.search) q.search = filters.search
     if (filters.city) q.city = filters.city
     if (filters.state) q.state = filters.state
+    if (filters.country) q.country = filters.country
     if (filters.category) q.category = filters.category
     if (filters.cms) q.cms = filters.cms
     if (filters.website) q.website = filters.website

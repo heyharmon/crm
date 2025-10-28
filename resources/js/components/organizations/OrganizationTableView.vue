@@ -269,7 +269,7 @@ const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteSta
                         </td> -->
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             <div class="font-medium text-neutral-700">{{ organization.state || '-' }}</div>
-                            <div class="text-xs text-neutral-500">{{ organization.city || '-' }}</div>
+                            <div class="text-xs text-neutral-500">{{ organization.country || '-' }}</div>
                         </td>
                         <!-- <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             <div v-if="organization.score" class="flex items-center gap-1 text-xs font-medium text-neutral-700">

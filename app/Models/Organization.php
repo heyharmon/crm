@@ -29,7 +29,7 @@ class Organization extends Model
         'street',
         'city',
         'state',
-        'country_code',
+        'country',
         'website',
         'cms',
         'website_status',

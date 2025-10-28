@@ -20,6 +20,8 @@ class HubspotOrganizationImportService
         'state' => 'state',
         'street address' => 'street',
         'address' => 'street',
+        'country/region' => 'country',
+        'country' => 'country',
     ];
 
     private array $stats = [
@@ -89,7 +91,7 @@ class HubspotOrganizationImportService
     private function seedDomainIndex(): void
     {
         Organization::query()
-            ->select(['id', 'name', 'website', 'phone', 'street', 'city', 'state'])
+            ->select(['id', 'name', 'website', 'phone', 'street', 'city', 'state', 'country'])
             ->whereNotNull('website')
             ->whereRaw('TRIM(website) <> ?', [''])
             ->orderBy('id')
@@ -229,6 +231,7 @@ class HubspotOrganizationImportService
                 'street' => $payload['street'] ?? null,
                 'city' => $payload['city'] ?? null,
                 'state' => $payload['state'] ?? null,
+                'country' => $payload['country'] ?? null,
             ]);
         } catch (\Throwable $exception) {
             Log::warning('Failed to create organization during HubSpot import', [
@@ -255,7 +258,7 @@ class HubspotOrganizationImportService
 
     private function fillMissingFields(Organization $organization, array $payload): bool
     {
-        $fields = ['name', 'street', 'city', 'state', 'phone'];
+        $fields = ['name', 'street', 'city', 'state', 'country', 'phone'];
         $dirty = false;
 
         foreach ($fields as $field) {

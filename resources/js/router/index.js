@@ -9,7 +9,6 @@ import TeamShow from '@/pages/teams/TeamShow.vue'
 // Organization pages
 import OrganizationIndex from '@/pages/organizations/OrganizationIndex.vue'
 import OrganizationCreate from '@/pages/organizations/OrganizationCreate.vue'
-import OrganizationEdit from '@/pages/organizations/OrganizationEdit.vue'
 import OrganizationImport from '@/pages/organizations/OrganizationImport.vue'
 import OrganizationCategoriesIndex from '@/pages/organization-categories/OrganizationCategoriesIndex.vue'
 import WebsiteRatingOptions from '@/pages/websites/WebsiteRatingOptions.vue'
@@ -67,12 +66,6 @@ const routes = [
         path: '/organizations/import',
         name: 'organizations.import',
         component: OrganizationImport,
-        meta: { requiresAuth: true }
-    },
-    {
-        path: '/organizations/:id/edit',
-        name: 'organizations.edit',
-        component: OrganizationEdit,
         meta: { requiresAuth: true }
     },
     {

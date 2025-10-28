@@ -29,7 +29,7 @@ const form = ref({
   street: '',
   city: '',
   state: '',
-  country_code: '',
+  country: '',
   website: '',
   phone: '',
   organization_category_id: '',
@@ -148,8 +148,8 @@ defineExpose({ submitForm })
         </div>
         
         <div>
-          <label class="block text-sm font-medium text-neutral-700 mb-1">Country Code</label>
-          <Input v-model="form.country_code" maxlength="2" placeholder="US" />
+          <label class="block text-sm font-medium text-neutral-700 mb-1">Country</label>
+          <Input v-model="form.country" placeholder="United States" />
         </div>
       </div>
     </div>

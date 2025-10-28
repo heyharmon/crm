@@ -45,6 +45,10 @@ class OrganizationController extends Controller
         if ($request->filled('state')) {
             $query->byLocation(null, $request->get('state'));
         }
+        if ($request->filled('country')) {
+            $country = $request->get('country');
+            $query->where('organizations.country', 'LIKE', "%{$country}%");
+        }
 
         if ($userId && $request->filled('my_website_rating')) {
             $myRatingFilter = $request->get('my_website_rating');
@@ -102,7 +106,7 @@ class OrganizationController extends Controller
         }
 
         $randomize = $request->boolean('random');
-        $allowedSorts = ['name', 'city', 'state', 'category', 'cms', 'score', 'reviews', 'website_rating', 'website_rating_average', 'website_rating_weighted', 'created_at'];
+        $allowedSorts = ['name', 'city', 'state', 'country', 'category', 'cms', 'score', 'reviews', 'website_rating', 'website_rating_average', 'website_rating_weighted', 'created_at'];
 
         if ($randomize) {
             $query->inRandomOrder();
@@ -191,7 +195,7 @@ class OrganizationController extends Controller
             'street' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:100',
-            'country_code' => 'nullable|string|size:2',
+            'country' => 'nullable|string|max:100',
             'website' => 'nullable|url|max:500',
             'cms' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:50',
@@ -213,7 +217,7 @@ class OrganizationController extends Controller
             'street' => 'nullable|string|max:255',
             'city' => 'nullable|string|max:100',
             'state' => 'nullable|string|max:100',
-            'country_code' => 'nullable|string|size:2',
+            'country' => 'nullable|string|max:100',
             'website' => 'nullable|url|max:500',
             'cms' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:50',
