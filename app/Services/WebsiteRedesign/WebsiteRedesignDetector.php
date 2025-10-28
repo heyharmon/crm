@@ -14,7 +14,7 @@ use Illuminate\Support\Str;
  * Detects website redesigns by comparing site-shell fingerprints across Wayback snapshots.
  *
  * Workflow:
- *  - collect coarse yearly snapshots and build shell signatures (html/body classes + head assets)
+ *  - collect coarse yearly snapshots and build shell signatures from html/body classes
  *  - flag large signature changes to highlight candidate redesign windows
  *  - drill into monthly snapshots to find the first capture that reflects the new shell
  */
@@ -242,16 +242,10 @@ class WebsiteRedesignDetector
      *     after_html_class_count: ?int,
      *     before_body_class_count: ?int,
      *     after_body_class_count: ?int,
-     *     before_head_asset_count: ?int,
-     *     after_head_asset_count: ?int,
      *     before_html_classes: array<int, string>,
      *     after_html_classes: array<int, string>,
      *     before_body_classes: array<int, string>,
-     *     after_body_classes: array<int, string>,
-     *     before_head_assets: array<int, string>,
-     *     after_head_assets: array<int, string>,
-     *     before_head_html: ?string,
-     *     after_head_html: ?string
+     *     after_body_classes: array<int, string>
      * }
      */
     private function buildEventFromSnapshot(array $previous, array $event, array $previousSignature, array $eventSignature): array
@@ -273,16 +267,10 @@ class WebsiteRedesignDetector
             'after_html_class_count' => $afterSignature['html_class_count'] ?? null,
             'before_body_class_count' => $previousSignature['body_class_count'] ?? null,
             'after_body_class_count' => $afterSignature['body_class_count'] ?? null,
-            'before_head_asset_count' => $previousSignature['head_asset_count'] ?? null,
-            'after_head_asset_count' => $afterSignature['head_asset_count'] ?? null,
             'before_html_classes' => $previousSignature['html_classes'] ?? [],
             'after_html_classes' => $afterSignature['html_classes'] ?? [],
             'before_body_classes' => $previousSignature['body_classes'] ?? [],
             'after_body_classes' => $afterSignature['body_classes'] ?? [],
-            'before_head_assets' => $previousSignature['head_assets'] ?? [],
-            'after_head_assets' => $afterSignature['head_assets'] ?? [],
-            'before_head_html' => $previousSignature['head_html'] ?? null,
-            'after_head_html' => $afterSignature['head_html'] ?? null,
         ];
     }
 
@@ -511,10 +499,7 @@ class WebsiteRedesignDetector
      *     html_classes: array<int, string>,
      *     html_class_count: int,
      *     body_classes: array<int, string>,
-     *     body_class_count: int,
-     *     head_assets: array<int, string>,
-     *     head_asset_count: int,
-     *     head_html: ?string
+     *     body_class_count: int
      * }|null
      */
     private function getSnapshotSignatureForTimestamp(string $host, string $timestamp): ?array
@@ -602,10 +587,7 @@ class WebsiteRedesignDetector
      *     html_classes: array<int, string>,
      *     html_class_count: int,
      *     body_classes: array<int, string>,
-     *     body_class_count: int,
-     *     head_assets: array<int, string>,
-     *     head_asset_count: int,
-     *     head_html: ?string
+     *     body_class_count: int
      * }|null
      */
     private function extractSnapshotSignature(string $html): ?array
@@ -624,20 +606,17 @@ class WebsiteRedesignDetector
 
         $htmlElement = $dom->getElementsByTagName('html')->item(0);
         $bodyElement = $dom->getElementsByTagName('body')->item(0);
-        $headElement = $dom->getElementsByTagName('head')->item(0);
 
-        if (!$htmlElement && !$bodyElement && !$headElement) {
+        if (!$htmlElement && !$bodyElement) {
             return null;
         }
 
         $htmlClasses = $this->extractClassList($htmlElement);
         $bodyClasses = $this->extractClassList($bodyElement);
-        $headData = $this->collectHeadAssetTokens($dom, $headElement);
 
         $signatureBasisParts = [
             implode('|', $htmlClasses),
             implode('|', $bodyClasses),
-            implode('|', $headData['tokens']),
         ];
 
         $signatureBasis = implode('||', array_filter($signatureBasisParts, static fn($value) => $value !== ''));
@@ -652,9 +631,6 @@ class WebsiteRedesignDetector
             'html_class_count' => count($htmlClasses),
             'body_classes' => $bodyClasses,
             'body_class_count' => count($bodyClasses),
-            'head_assets' => $headData['tokens'],
-            'head_asset_count' => $headData['count'],
-            'head_html' => $headData['html'],
         ];
     }
 
@@ -690,145 +666,25 @@ class WebsiteRedesignDetector
         return $classes;
     }
 
-    /**
-     * Collects representative tokens for the contents of the <head> element.
-     */
-    private function collectHeadAssetTokens(DOMDocument $dom, ?DOMElement $head): array
-    {
-        if (!$head) {
-            return [
-                'tokens' => [],
-                'count' => 0,
-                'html' => null,
-            ];
-        }
-
-        $tokens = [];
-
-        foreach ($head->childNodes as $child) {
-            if (!$child instanceof DOMElement) {
-                continue;
-            }
-
-            $tag = Str::lower($child->tagName);
-            $token = null;
-
-            switch ($tag) {
-                case 'link':
-                    $rel = Str::lower(trim($child->getAttribute('rel')));
-                    $href = $this->normalizeAssetReference($child->getAttribute('href'));
-                    if ($href !== '') {
-                        $descriptor = $rel !== '' ? $rel : 'link';
-                        $token = sprintf('link:%s:%s', $descriptor, $href);
-                    }
-                    break;
-                case 'script':
-                    $src = $this->normalizeAssetReference($child->getAttribute('src'));
-                    if ($src !== '') {
-                        $token = sprintf('script:src:%s', $src);
-                        break;
-                    }
-
-                    $content = trim($child->textContent ?? '');
-                    if ($content !== '') {
-                        $token = sprintf('script:inline:%s', substr(sha1($content), 0, 16));
-                    }
-                    break;
-                case 'style':
-                    $styleContent = trim($child->textContent ?? '');
-                    if ($styleContent !== '') {
-                        $token = sprintf('style:inline:%s', substr(sha1($styleContent), 0, 16));
-                    }
-                    break;
-                case 'meta':
-                    $name = Str::lower(trim($child->getAttribute('name') ?: $child->getAttribute('property')));
-                    $content = trim($child->getAttribute('content'));
-                    if ($name !== '') {
-                        $token = sprintf('meta:%s:%s', $name, substr(sha1(Str::lower($content)), 0, 16));
-                    }
-                    break;
-                case 'title':
-                    $title = trim($child->textContent ?? '');
-                    if ($title !== '') {
-                        $token = sprintf('title:%s', substr(sha1(Str::lower($title)), 0, 16));
-                    }
-                    break;
-                default:
-                    $snippet = trim($dom->saveHTML($child) ?: '');
-                    if ($snippet !== '') {
-                        $token = sprintf('%s:%s', $tag, substr(sha1($snippet), 0, 16));
-                    }
-                    break;
-            }
-
-            if ($token !== null) {
-                $tokens[] = $token;
-            }
-        }
-
-        $tokens = array_values(array_unique($tokens));
-        sort($tokens);
-
-        $headHtml = trim($dom->saveHTML($head) ?: '');
-
-        if (empty($tokens) && $headHtml !== '') {
-            $tokens[] = 'head-html:' . substr(sha1($headHtml), 0, 16);
-        }
-
-        return [
-            'tokens' => $tokens,
-            'count' => count($tokens),
-            'html' => $headHtml !== '' ? $headHtml : null,
-        ];
-    }
 
     /**
-     * Normalizes asset references so CDN/version noise compares consistently.
-     */
-    private function normalizeAssetReference(?string $value): string
-    {
-        $value = trim((string) $value);
-
-        if ($value === '') {
-            return '';
-        }
-
-        if (Str::startsWith($value, ['http://', 'https://'])) {
-            $parts = parse_url($value);
-
-            if (is_array($parts)) {
-                $host = Str::lower($parts['host'] ?? '');
-                $path = $parts['path'] ?? '';
-                $query = isset($parts['query']) ? '?' . $parts['query'] : '';
-
-                return trim($host . $path . $query);
-            }
-        }
-
-        return Str::lower($value);
-    }
-
-    /**
-     * Combines HTML/body class and head asset similarity into a single score.
+     * Combines html and body class similarity into a single score.
      *
      * @param array{
      *     html_classes: array<int, string>,
-     *     body_classes: array<int, string>,
-     *     head_assets: array<int, string>
+     *     body_classes: array<int, string>
      * } $a
      * @param array{
      *     html_classes: array<int, string>,
-     *     body_classes: array<int, string>,
-     *     head_assets: array<int, string>
+     *     body_classes: array<int, string>
      * } $b
      */
     private function calculateSimilarity(array $a, array $b): float
     {
         $htmlClassSimilarity = $this->jaccardSimilarity($a['html_classes'] ?? [], $b['html_classes'] ?? []);
         $bodyClassSimilarity = $this->jaccardSimilarity($a['body_classes'] ?? [], $b['body_classes'] ?? []);
-        $headAssetSimilarity = $this->jaccardSimilarity($a['head_assets'] ?? [], $b['head_assets'] ?? []);
 
-        return ($headAssetSimilarity * 0.4) + ($htmlClassSimilarity * 0.3) + ($bodyClassSimilarity * 0.3);
+        return ($htmlClassSimilarity + $bodyClassSimilarity) / 2;
     }
 
     /**

@@ -158,6 +158,20 @@ function buildApiflashUrl(targetUrl) {
     return `${baseUrl}?${params.toString()}`
 }
 
+function buildWaybackApiflashUrl(targetUrl) {
+    if (!targetUrl) return null
+    const baseUrl = 'https://api.apiflash.com/v1/urltoimage'
+    const params = new URLSearchParams({
+        access_key: APIFLASH_ACCESS_KEY,
+        wait_until: 'network_idle',
+        no_cookie_banners: 'true',
+        timeout: '60',
+        delay: '5',
+        url: targetUrl
+    })
+    return `${baseUrl}?${params.toString()}`
+}
+
 function getScreenshotUrl(website) {
     if (!website) return null
     return buildApiflashUrl(normalizeWebsite(website))
@@ -249,7 +263,7 @@ const buildRedesignArchivedUrl = (event, view = 'after') => {
 const getRedesignScreenshotUrl = (event, view = 'after') => {
     const archivedUrl = buildRedesignArchivedUrl(event, view)
     if (!archivedUrl) return null
-    return buildApiflashUrl(archivedUrl)
+    return buildWaybackApiflashUrl(archivedUrl)
 }
 
 const redesignEventKey = (event) => {
@@ -306,31 +320,6 @@ const bodyClassCountLabel = (event, view = 'after') => {
     return `${count} body class${count === 1 ? '' : 'es'}`
 }
 
-const headAssetCountLabel = (event, view = 'after') => {
-    if (!event) return null
-    const count = view === 'before' ? event.before_head_asset_count : event.after_head_asset_count
-    if (typeof count !== 'number' || count <= 0) return null
-    return `${count} head asset${count === 1 ? '' : 's'}`
-}
-
-const formatHeadAssetToken = (token) => {
-    if (typeof token !== 'string' || token.trim() === '') return null
-    const segments = token
-        .split(':')
-        .map((segment) => segment.trim())
-        .filter(Boolean)
-    if (!segments.length) return null
-
-    if (segments.length >= 3) {
-        return `${segments[0]} ${segments[1]} ${segments.slice(2).join(':')}`
-    }
-
-    if (segments.length === 2) {
-        return `${segments[0]} ${segments[1]}`
-    }
-
-    return segments[0]
-}
 
 const openRedesignDetails = (event) => {
     const key = redesignEventKey(event)
@@ -359,13 +348,6 @@ const getBodyClasses = (event, view = 'after') => {
     return Array.isArray(classes) ? classes.map((value) => (typeof value === 'string' ? value.trim() : '')).filter(Boolean) : []
 }
 
-const getHeadAssets = (event, view = 'after') => {
-    if (!event) return []
-    const assets = view === 'before' ? event.before_head_assets : event.after_head_assets
-    if (!Array.isArray(assets)) return []
-
-    return assets.map(formatHeadAssetToken).filter((token) => typeof token === 'string' && token.trim() !== '')
-}
 
 const REDESIGN_STATUS_META = {
     wayback_failed: {
@@ -556,11 +538,11 @@ watch(selectedRedesignEvent, (value) => {
                     <div class="flex flex-col gap-3 md:flex-row md:items-end md:gap-8">
                         <div>
                             <div class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Assets</div>
-                            <div class="text-2xl font-semibold text-neutral-900">{{ formatCurrency(org().assets) }}</div>
+                            <div class="text-xl font-semibold text-neutral-900">{{ formatCurrency(org().assets) }}</div>
                         </div>
                         <div>
                             <div class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Asset Growth (4Q)</div>
-                            <div :class="['text-2xl font-semibold', growthValueClasses(org().asset_growth)]">
+                            <div :class="['text-xl font-semibold', growthValueClasses(org().asset_growth)]">
                                 {{ formatPercent(org().asset_growth, { showSign: true }) }}
                             </div>
                         </div>
@@ -568,7 +550,7 @@ watch(selectedRedesignEvent, (value) => {
                     <div>
                         <button
                             type="button"
-                            class="inline-flex items-center gap-1 text-sm font-medium text-blue-600 transition hover:text-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+                            class="inline-flex items-center gap-1 text-sm font-medium text-blue-600 transition hover:text-blue-700 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
                             :aria-expanded="isFinancialDetailsOpen"
                             aria-controls="financial-details-panel"
                             @click="isFinancialDetailsOpen = !isFinancialDetailsOpen"
@@ -946,10 +928,8 @@ watch(selectedRedesignEvent, (value) => {
         :format-shell-change="formatShellChange"
         :html-class-count-label="htmlClassCountLabel"
         :body-class-count-label="bodyClassCountLabel"
-        :head-asset-count-label="headAssetCountLabel"
         :get-html-classes="getHtmlClasses"
         :get-body-classes="getBodyClasses"
-        :get-head-assets="getHeadAssets"
         :redesign-view-captured-at="redesignViewCapturedAt"
         :get-redesign-screenshot-url="getRedesignScreenshotUrl"
         :is-redesign-preview-loading="isRedesignPreviewLoading"

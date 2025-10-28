@@ -33,16 +33,10 @@ class WebsiteRedesignService
                     'after_html_class_count' => $event['after_html_class_count'] ?? null,
                     'before_body_class_count' => $event['before_body_class_count'] ?? null,
                     'after_body_class_count' => $event['after_body_class_count'] ?? null,
-                    'before_head_asset_count' => $event['before_head_asset_count'] ?? null,
-                    'after_head_asset_count' => $event['after_head_asset_count'] ?? null,
                     'before_html_classes' => $event['before_html_classes'] ?? [],
                     'after_html_classes' => $event['after_html_classes'] ?? [],
                     'before_body_classes' => $event['before_body_classes'] ?? [],
                     'after_body_classes' => $event['after_body_classes'] ?? [],
-                    'before_head_assets' => $event['before_head_assets'] ?? [],
-                    'after_head_assets' => $event['after_head_assets'] ?? [],
-                    'before_head_html' => $event['before_head_html'] ?? null,
-                    'after_head_html' => $event['after_head_html'] ?? null,
                 ]);
             }
 

@@ -61,11 +61,9 @@ const closeMobileMenu = () => {
 
 <template>
     <nav class="sticky top-0 z-40 border-b border-neutral-200 bg-white/90 backdrop-blur">
-        <div class="mx-auto flex h-16 w-full max-w-[1563px] items-center justify-between px-4 sm:px-6 lg:px-8">
+        <div class="mx-auto flex h-16 w-full items-center justify-between px-4 sm:px-6 lg:px-8">
             <div class="flex flex-1 items-center gap-6">
-                <router-link to="/" class="text-lg font-semibold text-neutral-900">
-                    CRM
-                </router-link>
+                <router-link to="/" class="text-lg font-semibold text-neutral-900"> CRM </router-link>
 
                 <div v-if="isAuthenticated" class="hidden items-center gap-1 text-sm font-medium text-neutral-500 md:flex">
                     <router-link :to="{ name: 'dashboard' }" :class="[navLinkClasses, { [activeNavClasses]: isRouteActive('dashboard') }]">
@@ -87,7 +85,7 @@ const closeMobileMenu = () => {
                 <button
                     v-if="isAuthenticated"
                     type="button"
-                    class="inline-flex items-center justify-center rounded-full border border-transparent p-2 text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 md:hidden"
+                    class="ml-auto inline-flex items-center justify-center rounded-full border border-transparent p-2 text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900 focus-visible:outline-offset-2 focus-visible:outline-neutral-400 md:hidden"
                     :aria-expanded="mobileMenuOpen"
                     aria-controls="app-nav-mobile"
                     @click="toggleMobileMenu"
@@ -119,7 +117,6 @@ const closeMobileMenu = () => {
 
             <div class="hidden items-center gap-3 md:flex">
                 <template v-if="isAuthenticated">
-                    <span class="text-sm font-medium text-neutral-600">{{ user?.name }}</span>
                     <button
                         @click="logout"
                         class="inline-flex items-center rounded-full border border-neutral-200 bg-white px-4 py-1.5 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-100"
@@ -145,11 +142,7 @@ const closeMobileMenu = () => {
         </div>
 
         <transition name="fade">
-            <div
-                v-if="mobileMenuOpen && isAuthenticated"
-                id="app-nav-mobile"
-                class="md:hidden"
-            >
+            <div v-if="mobileMenuOpen && isAuthenticated" id="app-nav-mobile" class="md:hidden">
                 <div class="border-t border-neutral-200 bg-white/95 pb-6 pt-4 shadow-sm">
                     <div class="mx-auto flex w-full max-w-[1563px] flex-col gap-4 px-4 sm:px-6 lg:px-8">
                         <div class="space-y-2 text-sm font-medium text-neutral-600">

@@ -21,16 +21,10 @@ class OrganizationWebsiteRedesign extends Model
         'after_html_class_count',
         'before_body_class_count',
         'after_body_class_count',
-        'before_head_asset_count',
-        'after_head_asset_count',
         'before_html_classes',
         'after_html_classes',
         'before_body_classes',
         'after_body_classes',
-        'before_head_assets',
-        'after_head_assets',
-        'before_head_html',
-        'after_head_html',
     ];
 
     protected $casts = [
@@ -41,8 +35,6 @@ class OrganizationWebsiteRedesign extends Model
         'after_html_classes' => 'array',
         'before_body_classes' => 'array',
         'after_body_classes' => 'array',
-        'before_head_assets' => 'array',
-        'after_head_assets' => 'array',
     ];
 
     public function organization(): BelongsTo

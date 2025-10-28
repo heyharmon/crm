@@ -8,10 +8,8 @@ const props = defineProps({
     formatShellChange: { type: Function, required: true },
     htmlClassCountLabel: { type: Function, required: true },
     bodyClassCountLabel: { type: Function, required: true },
-    headAssetCountLabel: { type: Function, required: true },
     getHtmlClasses: { type: Function, required: true },
     getBodyClasses: { type: Function, required: true },
-    getHeadAssets: { type: Function, required: true },
     redesignViewCapturedAt: { type: Function, required: true },
     getRedesignScreenshotUrl: { type: Function, required: true },
     isRedesignPreviewLoading: { type: Function, required: true },
@@ -38,8 +36,6 @@ const afterHtmlClasses = computed(() => (props.event ? props.getHtmlClasses(prop
 const beforeBodyClasses = computed(() => (props.event ? props.getBodyClasses(props.event, 'before') : []))
 const afterBodyClasses = computed(() => (props.event ? props.getBodyClasses(props.event, 'after') : []))
 
-const beforeHeadAssets = computed(() => (props.event ? props.getHeadAssets(props.event, 'before') : []))
-const afterHeadAssets = computed(() => (props.event ? props.getHeadAssets(props.event, 'after') : []))
 
 const buildPreviewList = (values, maxItems = 6) => {
     if (!Array.isArray(values) || values.length === 0) {
@@ -61,8 +57,6 @@ const afterHtmlClassesPreview = computed(() => buildPreviewList(afterHtmlClasses
 const beforeBodyClassesPreview = computed(() => buildPreviewList(beforeBodyClasses.value))
 const afterBodyClassesPreview = computed(() => buildPreviewList(afterBodyClasses.value))
 
-const beforeHeadAssetsPreview = computed(() => buildPreviewList(beforeHeadAssets.value, 5))
-const afterHeadAssetsPreview = computed(() => buildPreviewList(afterHeadAssets.value, 5))
 
 const beforeCapturedAt = computed(() => (props.event ? props.redesignViewCapturedAt(props.event, 'before') : null))
 const afterCapturedAt = computed(() => (props.event ? props.redesignViewCapturedAt(props.event, 'after') : null))
@@ -79,8 +73,6 @@ const afterHtmlClassCount = computed(() => (props.event ? props.htmlClassCountLa
 const beforeBodyClassCount = computed(() => (props.event ? props.bodyClassCountLabel(props.event, 'before') : null))
 const afterBodyClassCount = computed(() => (props.event ? props.bodyClassCountLabel(props.event, 'after') : null))
 
-const beforeHeadAssetCount = computed(() => (props.event ? props.headAssetCountLabel(props.event, 'before') : null))
-const afterHeadAssetCount = computed(() => (props.event ? props.headAssetCountLabel(props.event, 'after') : null))
 
 const isBeforeLoading = computed(() => props.event && props.isRedesignPreviewLoading(props.event, 'before'))
 const isAfterLoading = computed(() => props.event && props.isRedesignPreviewLoading(props.event, 'after'))
@@ -175,16 +167,6 @@ const isAfterError = computed(() => props.event && props.hasRedesignPreviewError
                                         </ul>
                                         <p v-else class="text-xs text-neutral-400">No classes captured.</p>
                                     </div>
-                                    <div class="flex min-h-[150px] flex-col gap-2 rounded-lg border border-neutral-200 bg-white p-3">
-                                        <div class="text-xs font-semibold uppercase tracking-wide text-neutral-600">
-                                            Head assets
-                                            <span v-if="beforeHeadAssetCount" class="ml-2 text-neutral-500">{{ beforeHeadAssetCount }}</span>
-                                        </div>
-                                        <ul v-if="beforeHeadAssetsPreview.length" class="space-y-1 text-xs text-neutral-700">
-                                            <li v-for="(item, index) in beforeHeadAssetsPreview" :key="`before-asset-${index}-${item}`">{{ item }}</li>
-                                        </ul>
-                                        <p v-else class="text-xs text-neutral-400">No assets captured.</p>
-                                    </div>
                                 </section>
                                 <section class="space-y-4">
                                     <header class="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-neutral-600">
@@ -241,16 +223,6 @@ const isAfterError = computed(() => props.event && props.hasRedesignPreviewError
                                             <li v-for="(item, index) in afterBodyClassesPreview" :key="`after-body-${index}-${item}`">{{ item }}</li>
                                         </ul>
                                         <p v-else class="text-xs text-neutral-400">No classes captured.</p>
-                                    </div>
-                                    <div class="flex min-h-[150px] flex-col gap-2 rounded-lg border border-neutral-200 bg-white p-3">
-                                        <div class="text-xs font-semibold uppercase tracking-wide text-neutral-600">
-                                            Head assets
-                                            <span v-if="afterHeadAssetCount" class="ml-2 text-neutral-500">{{ afterHeadAssetCount }}</span>
-                                        </div>
-                                        <ul v-if="afterHeadAssetsPreview.length" class="space-y-1 text-xs text-neutral-700">
-                                            <li v-for="(item, index) in afterHeadAssetsPreview" :key="`after-asset-${index}-${item}`">{{ item }}</li>
-                                        </ul>
-                                        <p v-else class="text-xs text-neutral-400">No assets captured.</p>
                                     </div>
                                 </section>
                             </div>

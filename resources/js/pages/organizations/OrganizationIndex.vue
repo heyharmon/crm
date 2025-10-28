@@ -421,11 +421,18 @@ const editFormRef = ref(null)
                         <div class="flex items-center gap-2 sm:hidden">
                             <button
                                 type="button"
-                                class="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-400"
+                                class="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-100 focus-visible:outline-offset-2 focus-visible:outline-neutral-400"
                                 :aria-expanded="mobileFiltersOpen"
                                 @click="mobileFiltersOpen = !mobileFiltersOpen"
                             >
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-3.5 w-3.5"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke-width="1.8"
+                                    stroke="currentColor"
+                                >
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18M6 4l4 6v6l4 2v-8l4-6" />
                                 </svg>
                                 Filters
@@ -433,7 +440,7 @@ const editFormRef = ref(null)
                             <div class="relative">
                                 <button
                                     type="button"
-                                    class="inline-flex items-center gap-2 rounded-full border border-neutral-900 bg-neutral-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-neutral-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-500"
+                                    class="inline-flex items-center gap-2 rounded-full border border-neutral-900 bg-neutral-900 px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-white transition hover:bg-neutral-800 focus-visible:outline-offset-2 focus-visible:outline-neutral-500"
                                     :aria-expanded="mobileActionsOpen"
                                     @click="mobileActionsOpen = !mobileActionsOpen"
                                 >

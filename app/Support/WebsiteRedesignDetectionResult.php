@@ -15,16 +15,10 @@ namespace App\Support;
  *     after_html_class_count: ?int,
  *     before_body_class_count: ?int,
  *     after_body_class_count: ?int,
- *     before_head_asset_count: ?int,
- *     after_head_asset_count: ?int,
  *     before_html_classes: array<int, string>,
  *     after_html_classes: array<int, string>,
  *     before_body_classes: array<int, string>,
- *     after_body_classes: array<int, string>,
- *     before_head_assets: array<int, string>,
- *     after_head_assets: array<int, string>,
- *     before_head_html: ?string,
- *     after_head_html: ?string
+ *     after_body_classes: array<int, string>
  * }
  */
 class WebsiteRedesignDetectionResult
