@@ -24,7 +24,7 @@ class HubspotOrganizationImportService
         'country' => 'country',
     ];
 
-    private const ALLOWED_COUNTRIES = ['united states', 'canada'];
+    private const ALLOWED_COUNTRIES = ['united states'];
 
     private array $stats = [
         'rows_processed' => 0,
@@ -38,11 +38,11 @@ class HubspotOrganizationImportService
      * @var array<string, Organization>
      */
     private array $domainIndex = [];
-    private bool $limitToUsCanada = true;
+    private bool $limitToUnitedStates = true;
 
-    public function import(UploadedFile $file, bool $limitToUsCanada = true): array
+    public function import(UploadedFile $file, bool $limitToUnitedStates = true): array
     {
-        $this->limitToUsCanada = $limitToUsCanada;
+        $this->limitToUnitedStates = $limitToUnitedStates;
         $this->resetState();
         $this->seedDomainIndex();
 
@@ -201,7 +201,7 @@ class HubspotOrganizationImportService
 
     private function handleRow(array $payload, int $rowNumber): void
     {
-        if ($this->limitToUsCanada) {
+        if ($this->limitToUnitedStates) {
             $countryError = $this->validateCountryRestriction($payload);
             if ($countryError !== null) {
                 $this->recordSkip($rowNumber, $countryError);
@@ -326,12 +326,12 @@ class HubspotOrganizationImportService
     {
         $country = $payload['country'] ?? null;
         if ($country === null) {
-            return 'Country/Region is required when the U.S./Canada filter is enabled';
+            return 'Country/Region is required when the United States filter is enabled';
         }
 
         $normalized = strtolower(trim($country));
         if (!in_array($normalized, self::ALLOWED_COUNTRIES, true)) {
-            return 'Country must be United States or Canada when the filter is enabled';
+            return 'Country must be United States when the filter is enabled';
         }
 
         return null;

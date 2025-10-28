@@ -3,6 +3,7 @@ import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import { getRatingLabel, getRatingPillClasses } from '@/utils/ratingStyles'
 import { formatDisplayDate } from '@/utils/date'
+import { formatWebsiteStatus, getWebsiteStatusClasses } from '@/utils/websiteStatus'
 
 const props = defineProps({
     organizations: {
@@ -130,7 +131,7 @@ const formatCurrency = (value) => {
     if (value === null || value === undefined) return '—'
     const numeric = Number(value)
     if (!Number.isFinite(numeric)) return '—'
-    return new Intl.NumberFormat('en-US').format(numeric)
+    return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(numeric)
 }
 
 const formatPercent = (value) => {
@@ -181,24 +182,7 @@ const redesignStatusTooltip = (organization) => organization?.website_redesign_s
 
 const redesignStatusClasses = (status) => REDESIGN_STATUS_META[status]?.classes ?? 'border-neutral-200 bg-neutral-50 text-neutral-600'
 
-const WEBSITE_STATUS_META = {
-    up: { label: 'Up', classes: 'border-green-100 bg-green-50 text-green-700' },
-    down: { label: 'Down', classes: 'border-red-100 bg-red-50 text-red-700' },
-    redirected: { label: 'Redirected', classes: 'border-amber-100 bg-amber-50 text-amber-700' },
-    unknown: { label: 'Unknown', classes: 'border-neutral-100 bg-neutral-50 text-neutral-600' }
-}
-
-const normalizeWebsiteStatus = (status) => {
-    if (!status) return 'unknown'
-    if (['missing', 'cert-error', 'timeout'].includes(status)) {
-        return 'down'
-    }
-    return status
-}
-
-const formatWebsiteStatus = (status) => WEBSITE_STATUS_META[normalizeWebsiteStatus(status)]?.label ?? 'Unknown'
-
-const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteStatus(status)]?.classes ?? 'border-neutral-100 bg-neutral-50 text-neutral-600'
+const websiteStatusClasses = (status) => getWebsiteStatusClasses(status)
 </script>
 
 <template>

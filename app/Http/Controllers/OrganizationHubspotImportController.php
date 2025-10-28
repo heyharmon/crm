@@ -17,13 +17,13 @@ class OrganizationHubspotImportController extends Controller
     {
         $validated = $request->validate([
             'file' => 'required|file|mimes:csv,txt|max:5120',
-            'limit_to_us_ca' => 'nullable|boolean',
+            'limit_to_us' => 'nullable|boolean',
         ]);
 
-        $limitToNorthAmerica = $request->boolean('limit_to_us_ca', true);
+        $limitToUnitedStates = $request->boolean('limit_to_us', true);
 
         try {
-            $result = $this->importService->import($validated['file'], $limitToNorthAmerica);
+            $result = $this->importService->import($validated['file'], $limitToUnitedStates);
         } catch (\InvalidArgumentException $exception) {
             return response()->json([
                 'message' => $exception->getMessage(),

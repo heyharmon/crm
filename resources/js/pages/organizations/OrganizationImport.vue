@@ -34,7 +34,7 @@ const hubspotFileInput = ref(null)
 const isUploadingHubspot = ref(false)
 const hubspotUploadError = ref(null)
 const hubspotImportResult = ref(null)
-const limitHubspotToUsCanada = ref(true)
+const limitHubspotToUnitedStates = ref(true)
 
 const ncuaFileInput = ref(null)
 const isUploadingNcua = ref(false)
@@ -105,7 +105,7 @@ const handleHubspotFileChange = async (event) => {
 const uploadHubspotCsv = async (file) => {
     const formData = new FormData()
     formData.append('file', file)
-    formData.append('limit_to_us_ca', limitHubspotToUsCanada.value ? '1' : '0')
+    formData.append('limit_to_us', limitHubspotToUnitedStates.value ? '1' : '0')
 
     hubspotUploadError.value = null
     hubspotImportResult.value = null
@@ -217,14 +217,13 @@ const uploadNcuaCsv = async (file) => {
                         <input
                             type="checkbox"
                             class="mt-1 h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-500"
-                            v-model="limitHubspotToUsCanada"
+                            v-model="limitHubspotToUnitedStates"
                         />
                         <span>
-                            Only import rows where <span class="font-medium">Country/Region</span> is <span class="font-semibold">United States</span> or
-                            <span class="font-semibold">Canada</span>
+                            Only import rows where <span class="font-medium">Country/Region</span> is <span class="font-semibold">United States</span>
                             <span class="mt-1 block text-xs text-neutral-500">
-                                Rows with other countries (or missing values) are skipped. Disable this filter if you need to import organizations outside the
-                                U.S. or Canada.
+                                Rows with other countries (or missing values) are skipped. Disable this filter if you need to import organizations outside
+                                the United States.
                             </span>
                         </span>
                     </label>

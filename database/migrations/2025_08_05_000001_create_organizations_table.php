@@ -20,6 +20,9 @@ return new class extends Migration
             $table->string('state')->nullable();
             $table->string('country')->nullable();
             $table->string('website')->nullable();
+            $table->string('redirects_to')->nullable();
+            $table->string('cms')->nullable();
+            $table->string('website_status')->nullable();
             $table->string('phone')->nullable();
             $table->unsignedBigInteger('charter_number')->nullable();
             $table->boolean('is_low_income')->nullable();
@@ -38,6 +41,8 @@ return new class extends Migration
             $table->foreignId('organization_category_id')->nullable()->constrained('organization_categories');
             $table->text('map_url')->nullable();
             $table->text('notes')->nullable();
+            $table->string('website_redesign_status')->nullable();
+            $table->text('website_redesign_status_message')->nullable();
             $table->timestamps();
             $table->softDeletes();
 

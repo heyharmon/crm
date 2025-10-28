@@ -4,6 +4,7 @@ import RedesignDetailsPanel from './RedesignDetailsPanel.vue'
 import { useOrganizationStore } from '@/stores/organizationStore'
 import { getRatingLabel, getRatingPillClasses } from '@/utils/ratingStyles'
 import { formatDisplayDate } from '@/utils/date'
+import { formatWebsiteStatus, getWebsiteStatusClasses } from '@/utils/websiteStatus'
 
 const props = defineProps({
     organizationId: { type: [String, Number], required: true }
@@ -49,6 +50,96 @@ const org = () => organizationStore.currentOrganization
 
 const formatRatingLabel = (slug) => getRatingLabel(slug)
 const ratingSummaryClasses = (slug) => getRatingPillClasses(slug)
+const websiteStatusLabel = (status) => formatWebsiteStatus(status)
+const websiteStatusClasses = (status) => getWebsiteStatusClasses(status)
+
+const currencyFormatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 })
+const integerFormatter = new Intl.NumberFormat('en-US')
+
+const formatCurrency = (value) => {
+    if (value === null || value === undefined) return '—'
+    const numeric = Number(value)
+    if (!Number.isFinite(numeric)) return '—'
+    return currencyFormatter.format(numeric)
+}
+
+const formatInteger = (value) => {
+    if (value === null || value === undefined) return '—'
+    const numeric = Number(value)
+    if (!Number.isFinite(numeric)) return '—'
+    return integerFormatter.format(numeric)
+}
+
+const formatPercent = (value, { decimals = 2, showSign = false } = {}) => {
+    if (value === null || value === undefined) return '—'
+    const numeric = Number(value)
+    if (!Number.isFinite(numeric)) return '—'
+    const formatter = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+    })
+    if (showSign) {
+        if (numeric > 0) {
+            return `+${formatter.format(Math.abs(numeric))}%`
+        }
+        if (numeric < 0) {
+            return `-${formatter.format(Math.abs(numeric))}%`
+        }
+        return `${formatter.format(0)}%`
+    }
+    return `${formatter.format(numeric)}%`
+}
+
+const growthValueClasses = (value) => {
+    if (value === null || value === undefined) return 'text-neutral-400'
+    const numeric = Number(value)
+    if (!Number.isFinite(numeric)) return 'text-neutral-400'
+    if (numeric > 0) return 'text-green-600'
+    if (numeric < 0) return 'text-red-600'
+    return 'text-neutral-600'
+}
+
+const formatLowIncome = (value) => {
+    if (value === null || value === undefined) return null
+    return value ? 'Yes' : 'No'
+}
+
+const lowIncomeClasses = (value) => {
+    if (value === null || value === undefined) return 'border-neutral-200 bg-neutral-50 text-neutral-500'
+    return value ? 'border-green-200 bg-green-50 text-green-700' : 'border-neutral-200 bg-neutral-50 text-neutral-700'
+}
+
+const hasNcuaFinancialData = computed(() => {
+    const organization = org()
+    if (!organization) return false
+    const fields = [
+        'charter_number',
+        'is_low_income',
+        'members',
+        'assets',
+        'loans',
+        'deposits',
+        'roaa',
+        'net_worth_ratio',
+        'loan_to_share_ratio',
+        'deposit_growth',
+        'loan_growth',
+        'asset_growth',
+        'member_growth',
+        'net_worth_growth'
+    ]
+    return fields.some((field) => {
+        if (!(field in organization)) return false
+        const value = organization[field]
+        if (field === 'is_low_income') {
+            return value !== null && value !== undefined
+        }
+        return value !== null && value !== undefined
+    })
+})
+
+const isFinancialDetailsOpen = ref(false)
+const financialDetailsToggleLabel = computed(() => (isFinancialDetailsOpen.value ? 'Hide details' : 'Show details'))
 
 const normalizeWebsite = (url) => {
     if (!url) return ''
@@ -224,7 +315,10 @@ const headAssetCountLabel = (event, view = 'after') => {
 
 const formatHeadAssetToken = (token) => {
     if (typeof token !== 'string' || token.trim() === '') return null
-    const segments = token.split(':').map((segment) => segment.trim()).filter(Boolean)
+    const segments = token
+        .split(':')
+        .map((segment) => segment.trim())
+        .filter(Boolean)
     if (!segments.length) return null
 
     if (segments.length >= 3) {
@@ -270,9 +364,7 @@ const getHeadAssets = (event, view = 'after') => {
     const assets = view === 'before' ? event.before_head_assets : event.after_head_assets
     if (!Array.isArray(assets)) return []
 
-    return assets
-        .map(formatHeadAssetToken)
-        .filter((token) => typeof token === 'string' && token.trim() !== '')
+    return assets.map(formatHeadAssetToken).filter((token) => typeof token === 'string' && token.trim() !== '')
 }
 
 const REDESIGN_STATUS_META = {
@@ -413,11 +505,11 @@ watch(selectedRedesignEvent, (value) => {
             </div>
 
             <div class="bg-white rounded-lg border border-neutral-200 p-4">
-                <h3 class="font-semibold mb-3">Contact</h3>
+                <h3 class="font-semibold mb-3">General Info</h3>
                 <div class="grid grid-cols-1 gap-2 text-sm">
                     <div v-if="org().phone">
                         <span class="font-medium text-neutral-700">Phone:</span>
-                        <a :href="`tel:${org().phone}`" class="ml-2 text-blue-600 hover:text-blue-800">{{ org().phone }}</a>
+                        <a :href="`tel:${org().phone}`" class="ml-1 text-blue-600 hover:text-blue-800">{{ org().phone }}</a>
                     </div>
                     <div v-if="org().website">
                         <span class="font-medium text-neutral-700">Website:</span>
@@ -425,14 +517,183 @@ watch(selectedRedesignEvent, (value) => {
                             :href="org().formatted_website || org().website"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="ml-2 text-blue-600 hover:text-blue-800"
+                            class="ml-1 text-blue-600 hover:text-blue-800"
                             >{{ org().website }}</a
                         >
                     </div>
                     <div>
-                        <span class="font-medium text-neutral-700">CMS:</span>
-                        <span class="ml-2 text-neutral-600">{{ org().cms || 'Not detected yet' }}</span>
+                        <span class="font-medium text-neutral-700">Website status:</span>
+                        <a
+                            v-if="org().redirects_to"
+                            :href="normalizeWebsite(org().redirects_to)"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            class="ml-1 inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 transition hover:border-amber-300 hover:bg-amber-100"
+                        >
+                            {{ org().redirects_to }}
+                        </a>
+                        <span
+                            v-else
+                            class="ml-1 inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold"
+                            :class="websiteStatusClasses(org().website_status)"
+                        >
+                            {{ websiteStatusLabel(org().website_status) }}
+                        </span>
                     </div>
+                    <div>
+                        <span class="font-medium text-neutral-700">CMS:</span>
+                        <span v-if="org().cms" class="ml-1">
+                            {{ org().cms }}
+                        </span>
+                        <span v-else class="ml-1 text-sm text-neutral-500">CMS not detected yet.</span>
+                    </div>
+                </div>
+            </div>
+
+            <div v-if="hasNcuaFinancialData" class="bg-white rounded-lg border border-neutral-200 p-4">
+                <h3 class="font-semibold mb-4">Financial Overview</h3>
+                <div class="flex flex-col gap-3">
+                    <div class="flex flex-col gap-3 md:flex-row md:items-end md:gap-8">
+                        <div>
+                            <div class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Assets</div>
+                            <div class="text-2xl font-semibold text-neutral-900">{{ formatCurrency(org().assets) }}</div>
+                        </div>
+                        <div>
+                            <div class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Asset Growth (4Q)</div>
+                            <div :class="['text-2xl font-semibold', growthValueClasses(org().asset_growth)]">
+                                {{ formatPercent(org().asset_growth, { showSign: true }) }}
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <button
+                            type="button"
+                            class="inline-flex items-center gap-1 text-sm font-medium text-blue-600 transition hover:text-blue-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-400"
+                            :aria-expanded="isFinancialDetailsOpen"
+                            aria-controls="financial-details-panel"
+                            @click="isFinancialDetailsOpen = !isFinancialDetailsOpen"
+                        >
+                            <span>{{ financialDetailsToggleLabel }}</span>
+                            <svg
+                                class="h-4 w-4 transition-transform duration-200"
+                                :class="isFinancialDetailsOpen ? 'rotate-180' : ''"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                stroke-width="1.5"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <Transition
+                        enter-active-class="transition duration-200 ease-out"
+                        enter-from-class="opacity-0 -translate-y-2"
+                        enter-to-class="opacity-100 translate-y-0"
+                        leave-active-class="transition duration-150 ease-in"
+                        leave-from-class="opacity-100 translate-y-0"
+                        leave-to-class="opacity-0 -translate-y-2"
+                    >
+                        <div v-if="isFinancialDetailsOpen" id="financial-details-panel" class="space-y-4">
+                            <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                                <h4 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Summary</h4>
+                                <dl class="mt-2 space-y-3 text-sm">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <dt class="text-neutral-600">Charter Number</dt>
+                                        <dd class="font-medium text-neutral-900">{{ formatInteger(org().charter_number) }}</dd>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <dt class="text-neutral-600">Low Income Designation</dt>
+                                        <dd>
+                                            <span
+                                                v-if="formatLowIncome(org().is_low_income)"
+                                                class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold"
+                                                :class="lowIncomeClasses(org().is_low_income)"
+                                            >
+                                                {{ formatLowIncome(org().is_low_income) }}
+                                            </span>
+                                            <span v-else class="text-neutral-400">—</span>
+                                        </dd>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <dt class="text-neutral-600">Members</dt>
+                                        <dd class="font-medium text-neutral-900">{{ formatInteger(org().members) }}</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                            <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                                <h4 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Balances</h4>
+                                <dl class="mt-2 space-y-3 text-sm">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <dt class="text-neutral-600">Assets</dt>
+                                        <dd class="font-medium text-neutral-900">{{ formatCurrency(org().assets) }}</dd>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <dt class="text-neutral-600">Loans</dt>
+                                        <dd class="font-medium text-neutral-900">{{ formatCurrency(org().loans) }}</dd>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <dt class="text-neutral-600">Deposits</dt>
+                                        <dd class="font-medium text-neutral-900">{{ formatCurrency(org().deposits) }}</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                            <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                                <h4 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Ratios</h4>
+                                <dl class="mt-2 space-y-3 text-sm">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <dt class="text-neutral-600">ROAA</dt>
+                                        <dd class="font-medium text-neutral-900">{{ formatPercent(org().roaa) }}</dd>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <dt class="text-neutral-600">Net Worth Ratio</dt>
+                                        <dd class="font-medium text-neutral-900">{{ formatPercent(org().net_worth_ratio) }}</dd>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <dt class="text-neutral-600">Loan-to-Share Ratio</dt>
+                                        <dd class="font-medium text-neutral-900">{{ formatPercent(org().loan_to_share_ratio) }}</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                            <div class="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
+                                <h4 class="text-xs font-semibold uppercase tracking-wide text-neutral-500">4 Quarter Growth (Detailed)</h4>
+                                <dl class="mt-2 space-y-3 text-sm">
+                                    <div class="flex items-center justify-between gap-2">
+                                        <dt class="text-neutral-600">Deposits</dt>
+                                        <dd :class="growthValueClasses(org().deposit_growth)">
+                                            {{ formatPercent(org().deposit_growth, { showSign: true }) }}
+                                        </dd>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <dt class="text-neutral-600">Loans</dt>
+                                        <dd :class="growthValueClasses(org().loan_growth)">
+                                            {{ formatPercent(org().loan_growth, { showSign: true }) }}
+                                        </dd>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <dt class="text-neutral-600">Assets</dt>
+                                        <dd :class="growthValueClasses(org().asset_growth)">
+                                            {{ formatPercent(org().asset_growth, { showSign: true }) }}
+                                        </dd>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <dt class="text-neutral-600">Members</dt>
+                                        <dd :class="growthValueClasses(org().member_growth)">
+                                            {{ formatPercent(org().member_growth, { showSign: true }) }}
+                                        </dd>
+                                    </div>
+                                    <div class="flex items-center justify-between gap-2">
+                                        <dt class="text-neutral-600">Net Worth</dt>
+                                        <dd :class="growthValueClasses(org().net_worth_growth)">
+                                            {{ formatPercent(org().net_worth_growth, { showSign: true }) }}
+                                        </dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        </div>
+                    </Transition>
                 </div>
             </div>
 
@@ -449,7 +710,7 @@ watch(selectedRedesignEvent, (value) => {
             <div class="bg-white rounded-lg border border-neutral-200 p-4">
                 <h3 class="font-semibold mb-3">Website Ratings</h3>
                 <div class="space-y-2 text-sm text-neutral-700">
-                    <div class="flex flex-wrap items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-1">
                         <span class="font-medium text-neutral-900">Average:</span>
                         <template v-if="org().website_rating_summary">
                             <span
@@ -470,14 +731,14 @@ watch(selectedRedesignEvent, (value) => {
                         <span v-if="org().website_rating_weighted !== null">
                             {{ Number(org().website_rating_weighted).toFixed(2) }}
                         </span>
-                        <span v-else class="text-neutral-400">No data</span>
+                        <span v-else class="text-neutral-400"> No data</span>
                     </div>
                     <div>
                         <span class="font-medium text-neutral-900">Your rating:</span>
                         <span v-if="org().my_website_rating_option_name">
                             {{ org().my_website_rating_option_name }}
                         </span>
-                        <span v-else class="text-neutral-400">Not set</span>
+                        <span v-else class="text-neutral-400"> Not set</span>
                     </div>
                 </div>
             </div>
@@ -528,7 +789,7 @@ watch(selectedRedesignEvent, (value) => {
                         <span class="font-medium text-neutral-900">Last major redesign:</span>
                         <span class="text-neutral-400"> Not detected </span>
                     </div>
-                        <div v-if="org().website_redesigns && org().website_redesigns.length" class="space-y-3">
+                    <div v-if="org().website_redesigns && org().website_redesigns.length" class="space-y-3">
                         <div
                             v-for="event in org().website_redesigns"
                             :key="event.id || event.after_wayback_timestamp"
@@ -566,7 +827,9 @@ watch(selectedRedesignEvent, (value) => {
                                             <img
                                                 v-if="getRedesignScreenshotUrl(event, 'before')"
                                                 :src="getRedesignScreenshotUrl(event, 'before')"
-                                                :alt="`Archived screenshot before redesign (${formatDisplayDate(redesignViewCapturedAt(event, 'before')) || 'Wayback'})`"
+                                                :alt="`Archived screenshot before redesign (${
+                                                    formatDisplayDate(redesignViewCapturedAt(event, 'before')) || 'Wayback'
+                                                })`"
                                                 class="absolute inset-0 h-full w-full object-cover transition-opacity duration-200"
                                                 :class="isRedesignPreviewLoading(event, 'before') ? 'opacity-0' : 'opacity-100'"
                                                 loading="lazy"
@@ -577,7 +840,12 @@ watch(selectedRedesignEvent, (value) => {
                                                 v-if="isRedesignPreviewLoading(event, 'before')"
                                                 class="absolute inset-0 flex items-center justify-center gap-2 bg-white/75 text-xs font-medium text-neutral-600"
                                             >
-                                                <svg class="h-4 w-4 animate-spin text-neutral-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <svg
+                                                    class="h-4 w-4 animate-spin text-neutral-500"
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                >
                                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z" />
                                                 </svg>
@@ -612,7 +880,9 @@ watch(selectedRedesignEvent, (value) => {
                                             <img
                                                 v-if="getRedesignScreenshotUrl(event, 'after')"
                                                 :src="getRedesignScreenshotUrl(event, 'after')"
-                                                :alt="`Archived screenshot after redesign (${formatDisplayDate(redesignViewCapturedAt(event, 'after')) || 'Wayback'})`"
+                                                :alt="`Archived screenshot after redesign (${
+                                                    formatDisplayDate(redesignViewCapturedAt(event, 'after')) || 'Wayback'
+                                                })`"
                                                 class="absolute inset-0 h-full w-full object-cover transition-opacity duration-200"
                                                 :class="isRedesignPreviewLoading(event, 'after') ? 'opacity-0' : 'opacity-100'"
                                                 loading="lazy"
@@ -623,7 +893,12 @@ watch(selectedRedesignEvent, (value) => {
                                                 v-if="isRedesignPreviewLoading(event, 'after')"
                                                 class="absolute inset-0 flex items-center justify-center gap-2 bg-white/75 text-xs font-medium text-neutral-600"
                                             >
-                                                <svg class="h-4 w-4 animate-spin text-neutral-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <svg
+                                                    class="h-4 w-4 animate-spin text-neutral-500"
+                                                    xmlns="http://www.w3.org/2000/svg"
+                                                    fill="none"
+                                                    viewBox="0 0 24 24"
+                                                >
                                                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                                                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z" />
                                                 </svg>
