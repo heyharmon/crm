@@ -289,6 +289,22 @@ const getSortIcon = (column) => {
                         Reviews {{ getSortIcon('reviews') }}
                     </Button>
                     <Button
+                        @click="handleSort('assets')"
+                        :variant="(filters.sort || []).some((s) => s.startsWith('assets:')) ? 'default' : 'outline'"
+                        size="sm"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                    >
+                        Assets {{ getSortIcon('assets') }}
+                    </Button>
+                    <Button
+                        @click="handleSort('asset_growth')"
+                        :variant="(filters.sort || []).some((s) => s.startsWith('asset_growth:')) ? 'default' : 'outline'"
+                        size="sm"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                    >
+                        Asset Growth {{ getSortIcon('asset_growth') }}
+                    </Button>
+                    <Button
                         @click="handleSort('website_rating')"
                         :variant="(filters.sort || []).some((s) => s.startsWith('website_rating:')) ? 'default' : 'outline'"
                         size="sm"

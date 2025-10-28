@@ -63,7 +63,7 @@ const handleScrape = (organization) => {
     emit('start-web-scraping', organization)
     closeMenu()
 }
-const handleDelete = (organizationId) => {
+const handleArchive = (organizationId) => {
     emit('delete-organization', organizationId)
     closeMenu()
 }
@@ -119,6 +119,20 @@ const ratingSummaryClasses = (slug) => getRatingPillClasses(slug)
 const formatAverage = (value) => {
     if (value === null || value === undefined) return null
     return Number(value).toFixed(2)
+}
+
+const formatCurrency = (value) => {
+    if (value === null || value === undefined) return '—'
+    const numeric = Number(value)
+    if (!Number.isFinite(numeric)) return '—'
+    return new Intl.NumberFormat('en-US').format(numeric)
+}
+
+const formatPercent = (value) => {
+    if (value === null || value === undefined) return '—'
+    const numeric = Number(value)
+    if (!Number.isFinite(numeric)) return '—'
+    return `${numeric.toFixed(2)}%`
 }
 
 const formatPagesCount = (organization) => {
@@ -200,6 +214,8 @@ const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteSta
                         <th class="border-b border-neutral-200 px-4 py-3">Name</th>
                         <!-- <th class="border-b border-neutral-200 px-4 py-3">Category</th> -->
                         <th class="border-b border-neutral-200 px-4 py-3">Location</th>
+                        <th class="border-b border-neutral-200 px-4 py-3">Assets</th>
+                        <th class="border-b border-neutral-200 px-4 py-3">Asset Growth</th>
                         <!-- <th class="border-b border-neutral-200 px-4 py-3">Score</th> -->
                         <!-- <th class="border-b border-neutral-200 px-4 py-3">Reviews</th> -->
                         <th class="border-b border-neutral-200 px-4 py-3">Last Redesign</th>
@@ -270,6 +286,12 @@ const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteSta
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             <div class="font-medium text-neutral-700">{{ organization.state || '-' }}</div>
                             <div class="text-xs text-neutral-500">{{ organization.country || '-' }}</div>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
+                            {{ formatCurrency(organization.assets) }}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
+                            {{ formatPercent(organization.asset_growth) }}
                         </td>
                         <!-- <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             <div v-if="organization.score" class="flex items-center gap-1 text-xs font-medium text-neutral-700">
@@ -393,9 +415,9 @@ const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteSta
                                     <button
                                         class="flex w-full items-center px-3 py-2 text-sm text-red-600 transition hover:bg-red-50"
                                         type="button"
-                                        @click.stop="handleDelete(organization.id)"
+                                        @click.stop="handleArchive(organization.id)"
                                     >
-                                        Delete
+                                        Archive
                                     </button>
                                 </div>
                             </div>
