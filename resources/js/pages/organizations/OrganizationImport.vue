@@ -34,6 +34,7 @@ const hubspotFileInput = ref(null)
 const isUploadingHubspot = ref(false)
 const hubspotUploadError = ref(null)
 const hubspotImportResult = ref(null)
+const limitHubspotToUsCanada = ref(true)
 
 const ncuaFileInput = ref(null)
 const isUploadingNcua = ref(false)
@@ -104,6 +105,7 @@ const handleHubspotFileChange = async (event) => {
 const uploadHubspotCsv = async (file) => {
     const formData = new FormData()
     formData.append('file', file)
+    formData.append('limit_to_us_ca', limitHubspotToUsCanada.value ? '1' : '0')
 
     hubspotUploadError.value = null
     hubspotImportResult.value = null
@@ -209,6 +211,24 @@ const uploadNcuaCsv = async (file) => {
                     <li>Website comparisons ignore protocol, subdomains, paths, and trailing slashes.</li>
                     <li>Existing organization fields keep their values; only blank fields are filled.</li>
                 </ul>
+
+                <div class="mt-4 rounded-lg border border-neutral-200 bg-neutral-50/60 px-4 py-3">
+                    <label class="flex items-start gap-3 text-sm text-neutral-700">
+                        <input
+                            type="checkbox"
+                            class="mt-1 h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-500"
+                            v-model="limitHubspotToUsCanada"
+                        />
+                        <span>
+                            Only import rows where <span class="font-medium">Country/Region</span> is <span class="font-semibold">United States</span> or
+                            <span class="font-semibold">Canada</span>
+                            <span class="mt-1 block text-xs text-neutral-500">
+                                Rows with other countries (or missing values) are skipped. Disable this filter if you need to import organizations outside the
+                                U.S. or Canada.
+                            </span>
+                        </span>
+                    </label>
+                </div>
 
                 <div v-if="hubspotUploadError" class="mt-4 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
                     {{ hubspotUploadError }}

@@ -14,10 +14,17 @@
 2. Attempt up to three `HEAD` requests without auto-following redirects. Responses are classified as:
     - `up` when any attempt returns a successful response (2xx).
     - `redirected` when success follows a cross-domain redirect.
-3. If the `HEAD` loop never succeeds, make a final `GET` request that allows redirects. Success still maps to `up` or `redirected` depending on whether the host changed.
+3. If the `HEAD` loop never succeeds, make a final `GET` request that manually follows the redirect chain before classifying the result.
 4. Capture network exceptions (timeouts, SSL failures, etc.) and translate them into `down` unless a later request succeeds.
 
 All HTTP calls share a 5 second per-request timeout, send a dedicated user-agent header, and log failures at debug level for later inspection.
+
+## Redirect Handling
+
+- Successful redirects keep the organization’s `website_status` set to `redirected`.
+- The final target URL (normalized to scheme + host) is stored in the `redirects_to` column so downstream tooling and humans can see where the site points today.
+- If the resolved domain already exists as another organization’s `website`, the original record is soft-deleted under the assumption it merged or rebranded into the existing entity.
+- Redirect metadata is cleared whenever the job detects the site is up without redirects, down, or unreachable.
 
 ## Status Codes Persisted
 

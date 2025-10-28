@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\CheckOrganizationWebsiteStatus;
 use App\Jobs\CrawlSitemapJob;
 use App\Jobs\DetectWebsiteRedesignJob;
 use App\Jobs\DetectOrganizationCmsJob;
@@ -13,7 +14,7 @@ class OrganizationBatchActionController extends Controller
     public function __invoke(Request $request)
     {
         $validated = $request->validate([
-            'action' => 'required|string|in:count_pages,detect_redesign,detect_cms,archive',
+            'action' => 'required|string|in:count_pages,detect_redesign,detect_cms,check_website_status,archive',
             'organization_ids' => 'required|array|min:1',
             'organization_ids.*' => 'integer|exists:organizations,id',
         ]);
@@ -55,18 +56,25 @@ class OrganizationBatchActionController extends Controller
                 continue;
             }
 
-            if (!$organization->website) {
+            $requiresWebsite = in_array($validated['action'], [
+                'count_pages',
+                'detect_redesign',
+                'detect_cms',
+                'check_website_status',
+            ]);
+
+            if ($requiresWebsite && !$organization->website) {
                 $skipped[] = ['id' => $organization->id, 'reason' => 'missing_website'];
                 continue;
             }
 
-            if ($validated['action'] === 'count_pages') {
-                CrawlSitemapJob::dispatch($organization->id);
-            } elseif ($validated['action'] === 'detect_redesign') {
-                DetectWebsiteRedesignJob::dispatch($organization->id);
-            } else {
-                DetectOrganizationCmsJob::dispatch($organization->id);
-            }
+            match ($validated['action']) {
+                'count_pages' => CrawlSitemapJob::dispatch($organization->id),
+                'detect_redesign' => DetectWebsiteRedesignJob::dispatch($organization->id),
+                'detect_cms' => DetectOrganizationCmsJob::dispatch($organization->id),
+                'check_website_status' => CheckOrganizationWebsiteStatus::dispatch($organization->id),
+                default => null,
+            };
 
             $queued[] = $organization->id;
         }
@@ -75,6 +83,7 @@ class OrganizationBatchActionController extends Controller
             'count_pages' => 'Page counting jobs queued.',
             'detect_redesign' => 'Website redesign detection queued.',
             'detect_cms' => 'CMS detection queued.',
+            'check_website_status' => 'Website status checks queued.',
             'archive' => 'Organizations archived.',
         ];
 

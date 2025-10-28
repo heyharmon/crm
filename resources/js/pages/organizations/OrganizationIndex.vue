@@ -254,6 +254,25 @@ const detectWebsiteCms = async (organization) => {
     }
 }
 
+const checkWebsiteStatus = async (organization) => {
+    if (!organization?.id) return
+
+    if (!organization.website) {
+        alert('This organization does not have a website to check.')
+        return
+    }
+
+    try {
+        const response = await organizationStore.checkWebsiteStatus(organization.id)
+        const message = response?.message || 'Website status check queued.'
+        alert(message)
+    } catch (error) {
+        console.error('Error queuing website status check:', error)
+        const errorMessage = error?.message || 'Failed to queue website status check. Please try again.'
+        alert(errorMessage)
+    }
+}
+
 // Taller screenshot heights for 1–2 column modes
 // Sidebar state synced with route query
 const sidebarMode = ref(null) // 'view' | 'edit' | null
@@ -342,6 +361,7 @@ const runBatchAction = async (actionKey) => {
             count_pages: 'Count pages jobs queued.',
             detect_redesign: 'Website redesign detection queued.',
             detect_cms: 'CMS detection queued.',
+            check_website_status: 'Website status checks queued.',
             archive: 'Organizations archived.'
         }
         const message = response?.message || fallbackMessages[actionKey] || 'Batch action completed.'
@@ -559,6 +579,15 @@ const editFormRef = ref(null)
                                 </Button>
                                 <Button
                                     variant="outline"
+                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium"
+                                    :disabled="batchActionLoading === 'check_website_status'"
+                                    @click="runBatchAction('check_website_status')"
+                                >
+                                    <span v-if="batchActionLoading === 'check_website_status'">Queuing...</span>
+                                    <span v-else>Check website status</span>
+                                </Button>
+                                <Button
+                                    variant="outline"
                                     class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600"
                                     :disabled="batchActionLoading === 'archive'"
                                     @click="runBatchAction('archive')"
@@ -582,6 +611,7 @@ const editFormRef = ref(null)
                         @start-web-scraping="startWebScraping"
                         @detect-redesign="detectWebsiteRedesign"
                         @detect-cms="detectWebsiteCms"
+                        @check-website-status="checkWebsiteStatus"
                         @delete-organization="deleteOrganization"
                         @toggle-row-selection="handleRowSelection"
                         @toggle-select-all="handleSelectAllRows"

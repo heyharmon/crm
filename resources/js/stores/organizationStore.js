@@ -229,6 +229,18 @@ export const useOrganizationStore = defineStore('organization', {
             }
         },
 
+        async checkWebsiteStatus(organizationId) {
+            this.error = null
+
+            try {
+                return await api.post(`/organizations/${organizationId}/website-status-check`)
+            } catch (error) {
+                this.error = error.message || 'Failed to queue website status check'
+                console.error('Error queuing website status check:', error)
+                throw error
+            }
+        },
+
         async runBatchOrganizationAction(action, organizationIds) {
             this.error = null
 

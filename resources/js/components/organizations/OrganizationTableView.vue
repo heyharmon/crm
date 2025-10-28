@@ -39,6 +39,7 @@ const emit = defineEmits([
     'open-sidebar',
     'start-web-scraping',
     'delete-organization',
+    'check-website-status',
     'detect-redesign',
     'detect-cms',
     'page-change',
@@ -73,6 +74,10 @@ const handleDetectRedesign = (organization) => {
 }
 const handleDetectCms = (organization) => {
     emit('detect-cms', organization)
+    closeMenu()
+}
+const handleCheckWebsiteStatus = (organization) => {
+    emit('check-website-status', organization)
     closeMenu()
 }
 
@@ -411,6 +416,14 @@ const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteSta
                                         @click.stop="handleDetectCms(organization)"
                                     >
                                         Detect CMS
+                                    </button>
+                                    <button
+                                        v-if="organization.website"
+                                        class="flex w-full items-center px-3 py-2 text-sm text-neutral-700 transition hover:bg-neutral-50"
+                                        type="button"
+                                        @click.stop="handleCheckWebsiteStatus(organization)"
+                                    >
+                                        Check website status
                                     </button>
                                     <button
                                         class="flex w-full items-center px-3 py-2 text-sm text-red-600 transition hover:bg-red-50"

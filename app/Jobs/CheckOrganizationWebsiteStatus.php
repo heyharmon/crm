@@ -32,18 +32,44 @@ class CheckOrganizationWebsiteStatus implements ShouldQueue
             return;
         }
 
-        $normalizedUrl = $this->normalizeWebsite($organization->website);
-        if (!$normalizedUrl) {
+        $normalizedWebsite = $this->normalizeWebsite($organization->website);
+        if (!$normalizedWebsite) {
             $organization->updateQuietly([
                 'website_status' => Organization::WEBSITE_STATUS_DOWN,
+                'redirects_to' => null,
             ]);
             return;
         }
 
-        $status = $this->determineWebsiteStatus($normalizedUrl);
-        $organization->updateQuietly([
+        $result = $this->determineWebsiteStatus($normalizedWebsite);
+        $status = $result['status'] ?? Organization::WEBSITE_STATUS_UNKNOWN;
+        $finalUrl = $result['final_url'] ?? null;
+        $successful = $result['successful'] ?? false;
+
+        $updates = [
             'website_status' => $status,
-        ]);
+            'redirects_to' => null,
+        ];
+
+        if ($status === Organization::WEBSITE_STATUS_REDIRECTED && $successful && $finalUrl) {
+            $normalizedRedirect = $this->normalizeWebsite($finalUrl) ?? $finalUrl;
+
+            if ($normalizedRedirect) {
+                if ($this->urlInUseByAnotherOrganization($organization, $normalizedRedirect)) {
+                    Log::info('Archiving organization after redirect detected existing owner', [
+                        'organization_id' => $organization->id,
+                        'redirect_url' => $normalizedRedirect,
+                    ]);
+
+                    $organization->delete();
+                    return;
+                }
+
+                $updates['redirects_to'] = $normalizedRedirect;
+            }
+        }
+
+        $organization->updateQuietly($updates);
     }
 
     private function normalizeWebsite(?string $website): ?string
@@ -56,7 +82,7 @@ class CheckOrganizationWebsiteStatus implements ShouldQueue
         return $normalized;
     }
 
-    private function determineWebsiteStatus(string $url): string
+    private function determineWebsiteStatus(string $url): array
     {
         $originalHost = $this->hostFromUrl($url);
         $currentUrl = $url;
@@ -67,7 +93,11 @@ class CheckOrganizationWebsiteStatus implements ShouldQueue
         while ($attempts < 3) {
             $response = $this->sendRequest('head', $currentUrl, false, $lastErrorStatus);
             if ($response && $response->successful()) {
-                return $redirected ? Organization::WEBSITE_STATUS_REDIRECTED : Organization::WEBSITE_STATUS_UP;
+                return [
+                    'status' => $redirected ? Organization::WEBSITE_STATUS_REDIRECTED : Organization::WEBSITE_STATUS_UP,
+                    'final_url' => $currentUrl,
+                    'successful' => true,
+                ];
             }
 
             if ($response && $this->isRedirect($response)) {
@@ -81,6 +111,10 @@ class CheckOrganizationWebsiteStatus implements ShouldQueue
                     $redirected = true;
                 }
 
+                if ($nextUrl === $currentUrl) {
+                    break;
+                }
+
                 $currentUrl = $nextUrl;
                 $attempts++;
                 continue;
@@ -90,16 +124,53 @@ class CheckOrganizationWebsiteStatus implements ShouldQueue
             break;
         }
 
-        $response = $this->sendRequest('get', $currentUrl, true, $lastErrorStatus);
-        if ($response && $response->successful()) {
-            return $redirected ? Organization::WEBSITE_STATUS_REDIRECTED : Organization::WEBSITE_STATUS_UP;
+        $attempts = 0;
+        while ($attempts < 3) {
+            $response = $this->sendRequest('get', $currentUrl, false, $lastErrorStatus);
+            if ($response && $response->successful()) {
+                return [
+                    'status' => $redirected ? Organization::WEBSITE_STATUS_REDIRECTED : Organization::WEBSITE_STATUS_UP,
+                    'final_url' => $currentUrl,
+                    'successful' => true,
+                ];
+            }
+
+            if ($response && $this->isRedirect($response)) {
+                $nextUrl = $this->resolveRedirectUrl($currentUrl, $response->header('Location'));
+                if (!$nextUrl) {
+                    break;
+                }
+
+                $nextHost = $this->hostFromUrl($nextUrl);
+                if ($nextHost && $originalHost && !$this->hostsMatch($nextHost, $originalHost)) {
+                    $redirected = true;
+                }
+
+                if ($nextUrl === $currentUrl) {
+                    break;
+                }
+
+                $currentUrl = $nextUrl;
+                $attempts++;
+                continue;
+            }
+
+            break;
         }
 
         if ($lastErrorStatus) {
-            return $lastErrorStatus;
+            return [
+                'status' => $lastErrorStatus,
+                'final_url' => $currentUrl,
+                'successful' => false,
+            ];
         }
 
-        return $redirected ? Organization::WEBSITE_STATUS_REDIRECTED : Organization::WEBSITE_STATUS_DOWN;
+        return [
+            'status' => $redirected ? Organization::WEBSITE_STATUS_REDIRECTED : Organization::WEBSITE_STATUS_DOWN,
+            'final_url' => $currentUrl,
+            'successful' => false,
+        ];
     }
 
     private function sendRequest(string $method, string $url, bool $followRedirects, ?string &$lastErrorStatus): ?Response
@@ -204,5 +275,34 @@ class CheckOrganizationWebsiteStatus implements ShouldQueue
         }
 
         return null;
+    }
+
+    private function urlInUseByAnotherOrganization(Organization $organization, string $url): bool
+    {
+        $targetDomain = $this->comparableDomain($url);
+        if (!$targetDomain) {
+            return false;
+        }
+
+        foreach (
+            Organization::query()
+                ->where('id', '!=', $organization->id)
+                ->whereNull('deleted_at')
+                ->whereNotNull('website')
+                ->cursor() as $candidate
+        ) {
+            $candidateDomain = $this->comparableDomain($candidate->website);
+            if ($candidateDomain && $candidateDomain === $targetDomain) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private function comparableDomain(?string $url): ?string
+    {
+        $domain = WebsiteUrl::rootDomain($url);
+        return $domain ? strtolower($domain) : null;
     }
 }

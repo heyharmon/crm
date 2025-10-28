@@ -24,6 +24,8 @@ class HubspotOrganizationImportService
         'country' => 'country',
     ];
 
+    private const ALLOWED_COUNTRIES = ['united states', 'canada'];
+
     private array $stats = [
         'rows_processed' => 0,
         'imported' => 0,
@@ -36,9 +38,11 @@ class HubspotOrganizationImportService
      * @var array<string, Organization>
      */
     private array $domainIndex = [];
+    private bool $limitToUsCanada = true;
 
-    public function import(UploadedFile $file): array
+    public function import(UploadedFile $file, bool $limitToUsCanada = true): array
     {
+        $this->limitToUsCanada = $limitToUsCanada;
         $this->resetState();
         $this->seedDomainIndex();
 
@@ -197,6 +201,14 @@ class HubspotOrganizationImportService
 
     private function handleRow(array $payload, int $rowNumber): void
     {
+        if ($this->limitToUsCanada) {
+            $countryError = $this->validateCountryRestriction($payload);
+            if ($countryError !== null) {
+                $this->recordSkip($rowNumber, $countryError);
+                return;
+            }
+        }
+
         $website = $payload['website'] ?? null;
         $rootDomain = WebsiteUrl::rootDomain($website);
         if (!$rootDomain) {
@@ -308,5 +320,20 @@ class HubspotOrganizationImportService
             }
         }
         return true;
+    }
+
+    private function validateCountryRestriction(array $payload): ?string
+    {
+        $country = $payload['country'] ?? null;
+        if ($country === null) {
+            return 'Country/Region is required when the U.S./Canada filter is enabled';
+        }
+
+        $normalized = strtolower(trim($country));
+        if (!in_array($normalized, self::ALLOWED_COUNTRIES, true)) {
+            return 'Country must be United States or Canada when the filter is enabled';
+        }
+
+        return null;
     }
 }

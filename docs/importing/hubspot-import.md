@@ -46,6 +46,12 @@ The importer performs case-insensitive, whitespace-normalized matching. Any of t
 
 > **Note:** The first column may include a UTF-8 BOM; the service strips it automatically.
 
+## Country Filter
+
+- The UI defaults to importing only rows where HubSpot’s `Country/Region` column is `United States` or `Canada`.  
+- When the filter is enabled, rows missing a country value—or supplying any other country—are skipped and reported in the import errors list.  
+- Disable the toggle before uploading if you need to ingest organizations located outside the U.S. or Canada.
+
 ## Validation & Error Handling
 
 - Uploads must be CSV/TXT files ≤ 5 MB; validation errors return a 422 response.
@@ -61,6 +67,6 @@ The importer performs case-insensitive, whitespace-normalized matching. Any of t
 ## Usage Checklist
 
 1. Export a company list from HubSpot as CSV, keeping default headers intact.
-2. Visit **Organizations → Import** and upload using `Upload HubSpot CSV`.
+2. Visit **Organizations → Import**, confirm the “Only import United States or Canada” toggle reflects your needs, and upload using `Upload HubSpot CSV`.
 3. Review the summary to confirm imported and updated counts.
 4. Address any skipped rows by correcting source data and re-uploading if needed.
