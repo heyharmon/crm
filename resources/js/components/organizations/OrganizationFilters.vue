@@ -138,6 +138,10 @@ const getSortIcon = (column) => {
                     <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Category</label>
                     <Input :model-value="filters.category" @update:model-value="updateFilter('category', $event)" placeholder="Filter by category" />
                 </div>
+                <div>
+                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">CMS</label>
+                    <Input :model-value="filters.cms" @update:model-value="updateFilter('cms', $event)" placeholder="Filter by CMS" />
+                </div>
             </div>
 
             <div class="space-y-4">
@@ -246,6 +250,14 @@ const getSortIcon = (column) => {
                         class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                     >
                         Category {{ getSortIcon('category') }}
+                    </Button>
+                    <Button
+                        @click="handleSort('cms')"
+                        :variant="(filters.sort || []).some((s) => s.startsWith('cms:')) ? 'default' : 'outline'"
+                        size="sm"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                    >
+                        CMS {{ getSortIcon('cms') }}
                     </Button>
                     <Button
                         @click="handleSort('city')"

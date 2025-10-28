@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Jobs\CrawlSitemapJob;
 use App\Jobs\DetectWebsiteRedesignJob;
+use App\Jobs\DetectOrganizationCmsJob;
 use App\Models\Organization;
 use Illuminate\Http\Request;
 
@@ -12,7 +13,7 @@ class OrganizationBatchActionController extends Controller
     public function __invoke(Request $request)
     {
         $validated = $request->validate([
-            'action' => 'required|string|in:count_pages,detect_redesign,archive',
+            'action' => 'required|string|in:count_pages,detect_redesign,detect_cms,archive',
             'organization_ids' => 'required|array|min:1',
             'organization_ids.*' => 'integer|exists:organizations,id',
         ]);
@@ -61,8 +62,10 @@ class OrganizationBatchActionController extends Controller
 
             if ($validated['action'] === 'count_pages') {
                 CrawlSitemapJob::dispatch($organization->id);
-            } else {
+            } elseif ($validated['action'] === 'detect_redesign') {
                 DetectWebsiteRedesignJob::dispatch($organization->id);
+            } else {
+                DetectOrganizationCmsJob::dispatch($organization->id);
             }
 
             $queued[] = $organization->id;
@@ -71,6 +74,7 @@ class OrganizationBatchActionController extends Controller
         $messages = [
             'count_pages' => 'Page counting jobs queued.',
             'detect_redesign' => 'Website redesign detection queued.',
+            'detect_cms' => 'CMS detection queued.',
             'archive' => 'Organizations archived.',
         ];
 

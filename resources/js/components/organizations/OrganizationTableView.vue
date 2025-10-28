@@ -40,6 +40,7 @@ const emit = defineEmits([
     'start-web-scraping',
     'delete-organization',
     'detect-redesign',
+    'detect-cms',
     'page-change',
     'toggle-row-selection',
     'toggle-select-all'
@@ -68,6 +69,10 @@ const handleDelete = (organizationId) => {
 }
 const handleDetectRedesign = (organization) => {
     emit('detect-redesign', organization)
+    closeMenu()
+}
+const handleDetectCms = (organization) => {
+    emit('detect-cms', organization)
     closeMenu()
 }
 
@@ -193,13 +198,14 @@ const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteSta
                             />
                         </th>
                         <th class="border-b border-neutral-200 px-4 py-3">Name</th>
-                        <th class="border-b border-neutral-200 px-4 py-3">Category</th>
+                        <!-- <th class="border-b border-neutral-200 px-4 py-3">Category</th> -->
                         <th class="border-b border-neutral-200 px-4 py-3">Location</th>
-                        <th class="border-b border-neutral-200 px-4 py-3">Score</th>
-                        <th class="border-b border-neutral-200 px-4 py-3">Reviews</th>
+                        <!-- <th class="border-b border-neutral-200 px-4 py-3">Score</th> -->
+                        <!-- <th class="border-b border-neutral-200 px-4 py-3">Reviews</th> -->
                         <th class="border-b border-neutral-200 px-4 py-3">Last Redesign</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Website Rating</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Website Status</th>
+                        <th class="border-b border-neutral-200 px-4 py-3">CMS</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Pages</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Actions</th>
                     </tr>
@@ -258,26 +264,26 @@ const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteSta
                                 </div>
                             </div>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-neutral-700">
+                        <!-- <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-neutral-700">
                             {{ organization.category?.name || '-' }}
-                        </td>
+                        </td> -->
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             <div class="font-medium text-neutral-700">{{ organization.state || '-' }}</div>
                             <div class="text-xs text-neutral-500">{{ organization.city || '-' }}</div>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
+                        <!-- <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             <div v-if="organization.score" class="flex items-center gap-1 text-xs font-medium text-neutral-700">
                                 <span class="text-yellow-500">★</span>
                                 <span>{{ organization.score }}</span>
                             </div>
                             <span v-else>-</span>
-                        </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
+                        </td> -->
+                        <!-- <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             <span v-if="organization.reviews !== null && organization.reviews !== undefined">
                                 {{ organization.reviews }}
                             </span>
                             <span v-else>-</span>
-                        </td>
+                        </td> -->
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             <div v-if="shouldShowRedesignStatus(organization)">
                                 <span
@@ -328,6 +334,9 @@ const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteSta
                             </span>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
+                            {{ organization.cms || '—' }}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             {{ formatPagesCount(organization) }}
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-neutral-700">
@@ -372,6 +381,14 @@ const websiteStatusClasses = (status) => WEBSITE_STATUS_META[normalizeWebsiteSta
                                         @click.stop="handleDetectRedesign(organization)"
                                     >
                                         Detect redesign
+                                    </button>
+                                    <button
+                                        v-if="organization.website"
+                                        class="flex w-full items-center px-3 py-2 text-sm text-neutral-700 transition hover:bg-neutral-50"
+                                        type="button"
+                                        @click.stop="handleDetectCms(organization)"
+                                    >
+                                        Detect CMS
                                     </button>
                                     <button
                                         class="flex w-full items-center px-3 py-2 text-sm text-red-600 transition hover:bg-red-50"

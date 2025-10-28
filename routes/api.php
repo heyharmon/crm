@@ -13,6 +13,7 @@ use App\Http\Controllers\OrganizationHubspotImportController;
 use App\Http\Controllers\WebsitePageScraperController;
 use App\Http\Controllers\WebsiteRatingOptionController;
 use App\Http\Controllers\OrganizationWebsiteRedesignController;
+use App\Http\Controllers\OrganizationCmsDetectionController;
 use App\Http\Controllers\DashboardController;
 
 // Public routes
@@ -57,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('organizations/{organization}/website-ratings', [WebsiteRatingController::class, 'store']);
     Route::delete('organizations/{organization}/website-ratings', [WebsiteRatingController::class, 'destroy']);
     Route::post('organizations/{organization}/website-redesigns', [OrganizationWebsiteRedesignController::class, 'store']);
+    Route::post('organizations/{organization}/cms-detections', [OrganizationCmsDetectionController::class, 'store']);
 
     // Google Maps scraper routes
     Route::prefix('google-maps-scraper')->group(function () {

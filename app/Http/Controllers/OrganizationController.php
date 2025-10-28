@@ -73,6 +73,10 @@ class OrganizationController extends Controller
                 });
             }
         }
+        if ($request->filled('cms')) {
+            $cms = $request->get('cms');
+            $query->where('organizations.cms', 'LIKE', '%' . $cms . '%');
+        }
         if ($request->filled('website_rating')) {
             $rating = $request->get('website_rating');
             if ($rating === 'none') {
@@ -98,7 +102,7 @@ class OrganizationController extends Controller
         }
 
         $randomize = $request->boolean('random');
-        $allowedSorts = ['name', 'city', 'state', 'category', 'score', 'reviews', 'website_rating', 'website_rating_average', 'website_rating_weighted', 'created_at'];
+        $allowedSorts = ['name', 'city', 'state', 'category', 'cms', 'score', 'reviews', 'website_rating', 'website_rating_average', 'website_rating_weighted', 'created_at'];
 
         if ($randomize) {
             $query->inRandomOrder();
@@ -119,6 +123,8 @@ class OrganizationController extends Controller
                             $query->orderBy('organization_categories.name', $dir);
                         } elseif ($field === 'website_rating') {
                             $query->orderBy('organizations.website_rating_average', $dir);
+                        } elseif ($field === 'cms') {
+                            $query->orderBy('organizations.cms', $dir);
                         } elseif ($field === 'website_rating_weighted') {
                             $query->orderBy('organizations.website_rating_weighted', $dir);
                         } else {
@@ -135,6 +141,8 @@ class OrganizationController extends Controller
                         $query->orderBy('organization_categories.name', $sortDirection);
                     } elseif ($sortBy === 'website_rating') {
                         $query->orderBy('organizations.website_rating_average', $sortDirection);
+                    } elseif ($sortBy === 'cms') {
+                        $query->orderBy('organizations.cms', $sortDirection);
                     } elseif ($sortBy === 'website_rating_weighted') {
                         $query->orderBy('organizations.website_rating_weighted', $sortDirection);
                     } else {
@@ -185,6 +193,7 @@ class OrganizationController extends Controller
             'state' => 'nullable|string|max:100',
             'country_code' => 'nullable|string|size:2',
             'website' => 'nullable|url|max:500',
+            'cms' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:50',
             'organization_category_id' => 'nullable|exists:organization_categories,id',
             'notes' => 'nullable|string|max:2000',
@@ -206,6 +215,7 @@ class OrganizationController extends Controller
             'state' => 'nullable|string|max:100',
             'country_code' => 'nullable|string|size:2',
             'website' => 'nullable|url|max:500',
+            'cms' => 'nullable|string|max:255',
             'phone' => 'nullable|string|max:50',
             'organization_category_id' => 'nullable|exists:organization_categories,id',
             'notes' => 'nullable|string|max:2000',

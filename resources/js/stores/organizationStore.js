@@ -19,6 +19,7 @@ export const useOrganizationStore = defineStore('organization', {
             city: '',
             state: '',
             category: '',
+            cms: '',
             website: '',
             website_rating: '',
             website_status: [],
@@ -215,6 +216,18 @@ export const useOrganizationStore = defineStore('organization', {
             }
         },
 
+        async detectOrganizationCms(organizationId) {
+            this.error = null
+
+            try {
+                return await api.post(`/organizations/${organizationId}/cms-detections`)
+            } catch (error) {
+                this.error = error.message || 'Failed to queue CMS detection'
+                console.error('Error queuing CMS detection:', error)
+                throw error
+            }
+        },
+
         async runBatchOrganizationAction(action, organizationIds) {
             this.error = null
 
@@ -256,6 +269,7 @@ export const useOrganizationStore = defineStore('organization', {
                 city: '',
                 state: '',
                 category: '',
+                cms: '',
                 website: '',
                 website_rating: '',
                 website_status: [],
