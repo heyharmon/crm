@@ -12,7 +12,7 @@ Stores businesses or clients in the CRM and provides browsing, creation and edit
 - **WebsiteRatingOption & OrganizationWebsiteRating models**: manage rating metadata and individual user ratings.
 - **GoogleMapsOrganizationImportService**: maps Google Maps scraper results into organization records and syncs categories.
 - **HubspotOrganizationImportService**: parses HubSpot CSV exports, matches by website domain, and fills in missing organization data without overwriting existing values.
-- **CheckOrganizationWebsiteStatus job**: dispatched whenever an organization is created (including HubSpot CSV and Google Maps imports) to normalize the website URL, ping the host, and store the result (`up`, `down`, `redirected`, `unknown`). Unreachable websites (missing URL, timeouts, or certificate issues) are all recorded as `down`.
+- **CheckOrganizationWebsiteStatus job**: queued webhook that normalizes organization website URLs and records uptime/redirect status; see `docs/organizations/website-status-checker.md` for the full flow.
 
 ## Frontend
 - **Pages**: `resources/js/pages/organizations/Index.vue` and `Browse.vue` list organizations; `Show.vue` displays details; `Create.vue` and `Edit.vue` handle forms; `Import.vue` triggers scraper-based imports.
