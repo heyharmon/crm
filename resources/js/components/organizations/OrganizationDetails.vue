@@ -1,5 +1,6 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import RedesignDetailsPanel from './RedesignDetailsPanel.vue'
 import { useOrganizationStore } from '@/stores/organizationStore'
 import { getRatingLabel, getRatingPillClasses } from '@/utils/ratingStyles'
 import { formatDisplayDate } from '@/utils/date'
@@ -21,6 +22,15 @@ const isDetectingRedesign = ref(false)
 const redesignActionError = ref(null)
 const redesignPreviewStates = ref({})
 const REDESIGN_VIEWS = ['after', 'before']
+const selectedRedesignKey = ref(null)
+const selectedRedesignEvent = computed(() => {
+    const organization = org()
+    if (!organization?.website_redesigns?.length || !selectedRedesignKey.value) {
+        return null
+    }
+
+    return organization.website_redesigns.find((event) => redesignEventKey(event) === selectedRedesignKey.value) || null
+})
 
 const load = async () => {
     try {
@@ -180,10 +190,15 @@ const getRedesignPreviewState = (event, view = 'after') => {
 const isRedesignPreviewLoading = (event, view = 'after') => getRedesignPreviewState(event, view) === 'loading'
 const hasRedesignPreviewError = (event, view = 'after') => getRedesignPreviewState(event, view) === 'error'
 
-const describeShellChange = (event) => {
+const shellChangePercentage = (event) => {
     if (!event || typeof event.nav_similarity !== 'number') return null
-    const difference = Math.max(0, Math.min(1, 1 - event.nav_similarity))
-    return `Site shell changed ≈ ${Math.round(difference * 100)}%`
+    return Math.round(Math.max(0, Math.min(1, 1 - event.nav_similarity)) * 100)
+}
+
+const formatShellChange = (event) => {
+    const percentage = shellChangePercentage(event)
+    if (percentage === null) return null
+    return `${percentage}% change`
 }
 
 const htmlClassCountLabel = (event, view = 'after') => {
@@ -207,37 +222,6 @@ const headAssetCountLabel = (event, view = 'after') => {
     return `${count} head asset${count === 1 ? '' : 's'}`
 }
 
-const summarizeClassList = (classList) => {
-    if (!Array.isArray(classList)) return null
-
-    const cleaned = classList
-        .map((value) => (typeof value === 'string' ? value.trim() : ''))
-        .filter(Boolean)
-
-    if (!cleaned.length) return null
-
-    const unique = [...new Set(cleaned)]
-    const maxItems = 6
-    const subset = unique.slice(0, maxItems).join(', ')
-    const ellipsis = unique.length > maxItems ? '…' : ''
-
-    return `${subset}${ellipsis}`
-}
-
-const summarizeHtmlClasses = (event, view = 'after') => {
-    if (!event) return null
-    const classList = view === 'before' ? event.before_html_classes : event.after_html_classes
-    const summary = summarizeClassList(classList)
-    return summary ? `HTML classes: ${summary}` : null
-}
-
-const summarizeBodyClasses = (event, view = 'after') => {
-    if (!event) return null
-    const classList = view === 'before' ? event.before_body_classes : event.after_body_classes
-    const summary = summarizeClassList(classList)
-    return summary ? `Body classes: ${summary}` : null
-}
-
 const formatHeadAssetToken = (token) => {
     if (typeof token !== 'string' || token.trim() === '') return null
     const segments = token.split(':').map((segment) => segment.trim()).filter(Boolean)
@@ -254,47 +238,41 @@ const formatHeadAssetToken = (token) => {
     return segments[0]
 }
 
-const summarizeHeadAssets = (event, view = 'after') => {
-    if (!event) return null
+const openRedesignDetails = (event) => {
+    const key = redesignEventKey(event)
+    if (!key) return
+    selectedRedesignKey.value = key
+}
+
+const closeRedesignDetails = () => {
+    selectedRedesignKey.value = null
+}
+
+const isRedesignSelected = (event) => {
+    if (!event) return false
+    return redesignEventKey(event) === selectedRedesignKey.value
+}
+
+const getHtmlClasses = (event, view = 'after') => {
+    if (!event) return []
+    const classes = view === 'before' ? event.before_html_classes : event.after_html_classes
+    return Array.isArray(classes) ? classes.map((value) => (typeof value === 'string' ? value.trim() : '')).filter(Boolean) : []
+}
+
+const getBodyClasses = (event, view = 'after') => {
+    if (!event) return []
+    const classes = view === 'before' ? event.before_body_classes : event.after_body_classes
+    return Array.isArray(classes) ? classes.map((value) => (typeof value === 'string' ? value.trim() : '')).filter(Boolean) : []
+}
+
+const getHeadAssets = (event, view = 'after') => {
+    if (!event) return []
     const assets = view === 'before' ? event.before_head_assets : event.after_head_assets
-    if (!Array.isArray(assets)) return null
+    if (!Array.isArray(assets)) return []
 
-    const formatted = assets
+    return assets
         .map(formatHeadAssetToken)
-        .filter(Boolean)
-
-    if (!formatted.length) return null
-
-    const unique = [...new Set(formatted)]
-    const maxItems = 5
-    const subset = unique.slice(0, maxItems).join(', ')
-    const ellipsis = unique.length > maxItems ? '…' : ''
-
-    return `Head assets: ${subset}${ellipsis}`
-}
-
-const summarizeShellSnapshot = (event, view = 'after') => {
-    const parts = [
-        summarizeHtmlClasses(event, view),
-        summarizeBodyClasses(event, view),
-        summarizeHeadAssets(event, view)
-    ].filter(Boolean)
-
-    if (!parts.length) return null
-
-    return parts.join(' • ')
-}
-
-const summarizeShellCounts = (event, view = 'after') => {
-    const counts = [
-        htmlClassCountLabel(event, view),
-        bodyClassCountLabel(event, view),
-        headAssetCountLabel(event, view)
-    ].filter(Boolean)
-
-    if (!counts.length) return null
-
-    return counts.join(' • ')
+        .filter((token) => typeof token === 'string' && token.trim() !== '')
 }
 
 const REDESIGN_STATUS_META = {
@@ -401,6 +379,12 @@ watch(
     },
     { immediate: true }
 )
+
+watch(selectedRedesignEvent, (value) => {
+    if (!value && selectedRedesignKey.value) {
+        selectedRedesignKey.value = null
+    }
+})
 </script>
 
 <template>
@@ -540,81 +524,33 @@ watch(
                         <span class="font-medium text-neutral-900">Last major redesign:</span>
                         <span class="text-neutral-400"> Not detected </span>
                     </div>
-                    <div v-if="org().website_redesigns && org().website_redesigns.length" class="space-y-3">
+                        <div v-if="org().website_redesigns && org().website_redesigns.length" class="space-y-3">
                         <div
                             v-for="event in org().website_redesigns"
                             :key="event.id || event.after_wayback_timestamp"
-                            class="rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden"
+                            role="button"
+                            tabindex="0"
+                            @click="openRedesignDetails(event)"
+                            @keydown.enter.prevent="openRedesignDetails(event)"
+                            @keydown.space.prevent="openRedesignDetails(event)"
+                            :class="[
+                                'rounded-xl border bg-white shadow-sm overflow-hidden transition cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-300',
+                                isRedesignSelected(event) ? 'border-blue-500 ring-2 ring-blue-200' : 'border-neutral-200 hover:border-neutral-300'
+                            ]"
                         >
                             <div class="px-4 py-3 space-y-3 text-sm text-neutral-700">
                                 <div class="flex flex-wrap items-start justify-between gap-2 text-sm font-semibold text-neutral-900">
                                     <div class="flex flex-col">
-                                        <span>{{ formatDisplayDate(event.after_captured_at) }}</span>
-                                        <span v-if="event.before_captured_at" class="text-xs font-medium text-neutral-500">
-                                            Compared to {{ formatDisplayDate(event.before_captured_at) }}
-                                        </span>
+                                        <span>{{ formatDisplayDate(event.before_captured_at) }} → {{ formatDisplayDate(event.after_captured_at) }}</span>
+                                        <span v-if="event.after_captured_at" class="text-xs font-medium text-neutral-500">Detected via Wayback Machine</span>
                                     </div>
                                     <div class="text-right">
-                                        <span v-if="describeShellChange(event)" class="block text-xs font-medium text-emerald-600">
-                                            {{ describeShellChange(event) }}
-                                        </span>
-                                        <span v-if="summarizeShellCounts(event, 'after')" class="block text-xs text-neutral-500">
-                                            After: {{ summarizeShellCounts(event, 'after') }}
-                                        </span>
-                                        <span v-if="summarizeShellCounts(event, 'before')" class="block text-xs text-neutral-400">
-                                            Before: {{ summarizeShellCounts(event, 'before') }}
+                                        <span v-if="formatShellChange(event)" class="block text-xs font-semibold text-emerald-600">
+                                            {{ formatShellChange(event) }}
                                         </span>
                                     </div>
                                 </div>
                                 <div class="grid gap-3 sm:grid-cols-2">
-                                    <div class="space-y-2">
-                                        <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-neutral-600">
-                                            <span>After</span>
-                                            <span v-if="redesignViewCapturedAt(event, 'after')" class="text-[11px] font-medium text-neutral-500">
-                                                {{ formatDisplayDate(redesignViewCapturedAt(event, 'after')) }}
-                                            </span>
-                                        </div>
-                                        <div class="relative h-40 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100">
-                                            <img
-                                                v-if="getRedesignScreenshotUrl(event, 'after')"
-                                                :src="getRedesignScreenshotUrl(event, 'after')"
-                                                :alt="`Archived screenshot after redesign (${formatDisplayDate(redesignViewCapturedAt(event, 'after')) || 'Wayback'})`"
-                                                class="absolute inset-0 h-full w-full object-cover transition-opacity duration-200"
-                                                :class="isRedesignPreviewLoading(event, 'after') ? 'opacity-0' : 'opacity-100'"
-                                                loading="lazy"
-                                                @load="handleRedesignPreviewLoad(event, 'after')"
-                                                @error="handleRedesignPreviewError(event, 'after')"
-                                            />
-                                            <div
-                                                v-if="isRedesignPreviewLoading(event, 'after')"
-                                                class="absolute inset-0 flex items-center justify-center gap-2 bg-white/75 text-xs font-medium text-neutral-600"
-                                            >
-                                                <svg class="h-4 w-4 animate-spin text-neutral-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z" />
-                                                </svg>
-                                                Loading screenshot…
-                                            </div>
-                                            <div
-                                                v-else-if="hasRedesignPreviewError(event, 'after') || !getRedesignScreenshotUrl(event, 'after')"
-                                                class="absolute inset-0 flex items-center justify-center text-xs font-medium text-neutral-500"
-                                            >
-                                                Preview unavailable
-                                            </div>
-                                        </div>
-                                        <a
-                                            v-if="buildRedesignArchivedUrl(event, 'after')"
-                                            :href="buildRedesignArchivedUrl(event, 'after')"
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            class="inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-800"
-                                        >
-                                            View after snapshot →
-                                        </a>
-                                        <p v-if="summarizeShellSnapshot(event, 'after')" class="text-[11px] text-neutral-500">
-                                            {{ summarizeShellSnapshot(event, 'after') }}
-                                        </p>
-                                    </div>
                                     <div class="space-y-2">
                                         <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-neutral-600">
                                             <span>Before</span>
@@ -656,12 +592,56 @@ watch(
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             class="inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-800"
+                                            @click.stop
                                         >
                                             View before snapshot →
                                         </a>
-                                        <p v-if="summarizeShellSnapshot(event, 'before')" class="text-[11px] text-neutral-500">
-                                            {{ summarizeShellSnapshot(event, 'before') }}
-                                        </p>
+                                    </div>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-neutral-600">
+                                            <span>After</span>
+                                            <span v-if="redesignViewCapturedAt(event, 'after')" class="text-[11px] font-medium text-neutral-500">
+                                                {{ formatDisplayDate(redesignViewCapturedAt(event, 'after')) }}
+                                            </span>
+                                        </div>
+                                        <div class="relative h-40 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100">
+                                            <img
+                                                v-if="getRedesignScreenshotUrl(event, 'after')"
+                                                :src="getRedesignScreenshotUrl(event, 'after')"
+                                                :alt="`Archived screenshot after redesign (${formatDisplayDate(redesignViewCapturedAt(event, 'after')) || 'Wayback'})`"
+                                                class="absolute inset-0 h-full w-full object-cover transition-opacity duration-200"
+                                                :class="isRedesignPreviewLoading(event, 'after') ? 'opacity-0' : 'opacity-100'"
+                                                loading="lazy"
+                                                @load="handleRedesignPreviewLoad(event, 'after')"
+                                                @error="handleRedesignPreviewError(event, 'after')"
+                                            />
+                                            <div
+                                                v-if="isRedesignPreviewLoading(event, 'after')"
+                                                class="absolute inset-0 flex items-center justify-center gap-2 bg-white/75 text-xs font-medium text-neutral-600"
+                                            >
+                                                <svg class="h-4 w-4 animate-spin text-neutral-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z" />
+                                                </svg>
+                                                Loading screenshot…
+                                            </div>
+                                            <div
+                                                v-else-if="hasRedesignPreviewError(event, 'after') || !getRedesignScreenshotUrl(event, 'after')"
+                                                class="absolute inset-0 flex items-center justify-center text-xs font-medium text-neutral-500"
+                                            >
+                                                Preview unavailable
+                                            </div>
+                                        </div>
+                                        <a
+                                            v-if="buildRedesignArchivedUrl(event, 'after')"
+                                            :href="buildRedesignArchivedUrl(event, 'after')"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            class="inline-flex items-center text-xs font-medium text-blue-600 hover:text-blue-800"
+                                            @click.stop
+                                        >
+                                            View after snapshot →
+                                        </a>
                                     </div>
                                 </div>
                                 <span class="text-[11px] font-medium uppercase tracking-wide text-neutral-400">Wayback Machine</span>
@@ -681,4 +661,21 @@ watch(
             </div>
         </div>
     </div>
+    <RedesignDetailsPanel
+        :event="selectedRedesignEvent"
+        :open="Boolean(selectedRedesignEvent)"
+        :format-shell-change="formatShellChange"
+        :html-class-count-label="htmlClassCountLabel"
+        :body-class-count-label="bodyClassCountLabel"
+        :head-asset-count-label="headAssetCountLabel"
+        :get-html-classes="getHtmlClasses"
+        :get-body-classes="getBodyClasses"
+        :get-head-assets="getHeadAssets"
+        :redesign-view-captured-at="redesignViewCapturedAt"
+        :get-redesign-screenshot-url="getRedesignScreenshotUrl"
+        :is-redesign-preview-loading="isRedesignPreviewLoading"
+        :has-redesign-preview-error="hasRedesignPreviewError"
+        :build-redesign-archived-url="buildRedesignArchivedUrl"
+        @close="closeRedesignDetails"
+    />
 </template>
