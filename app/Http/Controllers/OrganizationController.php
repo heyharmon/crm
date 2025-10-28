@@ -77,6 +77,18 @@ class OrganizationController extends Controller
                 });
             }
         }
+        if ($request->filled('last_redesign')) {
+            $redesignFilter = $request->get('last_redesign');
+            if ($redesignFilter === 'has_date') {
+                $query->whereNotNull('organizations.last_major_redesign_at');
+            } elseif ($redesignFilter === 'cant_predict') {
+                $query->where('organizations.website_redesign_status', 'no_major_events');
+            } elseif ($redesignFilter === 'no_snapshots') {
+                $query->where('organizations.website_redesign_status', 'no_wayback_data');
+            } elseif ($redesignFilter === 'request_failed') {
+                $query->where('organizations.website_redesign_status', 'wayback_failed');
+            }
+        }
         if ($request->filled('cms')) {
             $cms = $request->get('cms');
             $query->where('organizations.cms', 'LIKE', '%' . $cms . '%');

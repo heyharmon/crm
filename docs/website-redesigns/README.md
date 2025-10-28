@@ -5,7 +5,7 @@ The redesign detector pinpoints the most recent “real” rebuild of an organiz
 ## How It Works
 
 1. **Yearly sweep** – We pull one homepage snapshot per year (using the CDX API with `collapse=timestamp:4`) and build a site-shell signature for each capture. A signature records the normalized `<html>` / `<body>` class lists.
-2. **Shell diffing** – We score the similarity between consecutive yearly signatures. When the class similarity falls below the configured change threshold, we treat that span as a potential redesign window.
+2. **Shell diffing** – We score the similarity between consecutive yearly signatures. When the class similarity falls below the configured change threshold **and** the change magnitude clears the configured class-delta gates, we treat that span as a potential redesign window.
 3. **Monthly refinement** – For every flagged window we fetch monthly snapshots between the “old” and “new” years, recompute shell signatures, and locate the first month whose shell matches the new layout. That snapshot becomes the recorded redesign event.
 4. **Event persistence** – Each redesign event stores the last snapshot before the change plus the first snapshot after the change, alongside similarity metrics and class counts so the UI can summarise the jump.
 
@@ -47,6 +47,9 @@ Snapshots that cannot be parsed into standard `<html>` and `<body>` elements are
 - Adjust the detector via `config/waybackmachine.php`:
     - `nav_similarity_change_threshold` – lower it to treat subtler shell adjustments as redesigns; raise it to focus on dramatic shifts.
     - `nav_similarity_match_threshold` – tighten it if noisy snapshots masquerade as the new design.
+    - `min_total_class_delta` / `min_total_class_change_ratio` – ensure the combined html/body class churn is large enough to count as a rebuild.
+    - `min_body_class_delta` / `min_body_class_change_ratio` – block small body-class swaps (e.g. version bumps) from being marked as redesigns; set to zero to disable.
+    - `min_html_class_delta` / `min_html_class_change_ratio` – optional guard when the `<html>` element carries meaningful classes.
     - `min_snapshot_length_bytes` – drop when legitimate pages live in very small payloads.
     - `max_snapshot_results` – increase for long-lived domains so the yearly/monthly sweeps have enough data.
     - `max_events` – controls how many redesign rows we retain per organization (newest events win).

@@ -130,7 +130,9 @@ class WebsiteRedesignDetector
 
             $similarity = $this->calculateSimilarity($previous['signature'], $current['signature']);
 
-            if ($similarity <= $threshold) {
+            if ($similarity <= $threshold
+                && $this->exceedsClassChangeThresholds($previous['signature'], $current['signature'])
+            ) {
                 $windows[] = [
                     'previous' => $previous,
                     'current' => $current,
@@ -685,6 +687,116 @@ class WebsiteRedesignDetector
         $bodyClassSimilarity = $this->jaccardSimilarity($a['body_classes'] ?? [], $b['body_classes'] ?? []);
 
         return ($htmlClassSimilarity + $bodyClassSimilarity) / 2;
+    }
+
+    /**
+     * Ensures the class change between two signatures clears the configured magnitude thresholds.
+     *
+     * @param array{html_classes: array<int, string>, body_classes: array<int, string>} $previousSignature
+     * @param array{html_classes: array<int, string>, body_classes: array<int, string>} $currentSignature
+     */
+    private function exceedsClassChangeThresholds(array $previousSignature, array $currentSignature): bool
+    {
+        $stats = $this->calculateClassChangeStats($previousSignature, $currentSignature);
+
+        $minTotalDelta = max(0, (int) config('waybackmachine.min_total_class_delta', 0));
+        if ($minTotalDelta > 0 && $stats['total_delta'] < $minTotalDelta) {
+            return false;
+        }
+
+        $minTotalRatio = max(0.0, min(1.0, (float) config('waybackmachine.min_total_class_change_ratio', 0.0)));
+        if ($minTotalRatio > 0 && $stats['total_ratio'] < $minTotalRatio) {
+            return false;
+        }
+
+        $minHtmlDelta = max(0, (int) config('waybackmachine.min_html_class_delta', 0));
+        if ($stats['html_union'] > 0 && $minHtmlDelta > 0 && $stats['html_delta'] < $minHtmlDelta) {
+            return false;
+        }
+
+        $minBodyDelta = max(0, (int) config('waybackmachine.min_body_class_delta', 0));
+        if ($stats['body_union'] > 0 && $minBodyDelta > 0 && $stats['body_delta'] < $minBodyDelta) {
+            return false;
+        }
+
+        $minHtmlRatio = max(0.0, min(1.0, (float) config('waybackmachine.min_html_class_change_ratio', 0.0)));
+        if ($stats['html_union'] > 0 && $minHtmlRatio > 0 && $stats['html_ratio'] < $minHtmlRatio) {
+            return false;
+        }
+
+        $minBodyRatio = max(0.0, min(1.0, (float) config('waybackmachine.min_body_class_change_ratio', 0.0)));
+        if ($stats['body_union'] > 0 && $minBodyRatio > 0 && $stats['body_ratio'] < $minBodyRatio) {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Calculates how many classes were added/removed between two signatures.
+     *
+     * @param array{html_classes: array<int, string>, body_classes: array<int, string>} $previousSignature
+     * @param array{html_classes: array<int, string>, body_classes: array<int, string>} $currentSignature
+     * @return array{
+     *     html_delta: int,
+     *     html_union: int,
+     *     html_ratio: float,
+     *     body_delta: int,
+     *     body_union: int,
+     *     body_ratio: float,
+     *     total_delta: int,
+     *     total_union: int,
+     *     total_ratio: float
+     * }
+     */
+    private function calculateClassChangeStats(array $previousSignature, array $currentSignature): array
+    {
+        $htmlBefore = $previousSignature['html_classes'] ?? [];
+        $htmlAfter = $currentSignature['html_classes'] ?? [];
+        $bodyBefore = $previousSignature['body_classes'] ?? [];
+        $bodyAfter = $currentSignature['body_classes'] ?? [];
+
+        $htmlMetrics = $this->classChangeMetrics($htmlBefore, $htmlAfter);
+        $bodyMetrics = $this->classChangeMetrics($bodyBefore, $bodyAfter);
+
+        $totalUnion = count(array_unique(array_merge($htmlBefore, $htmlAfter, $bodyBefore, $bodyAfter)));
+        $totalDelta = $htmlMetrics['delta'] + $bodyMetrics['delta'];
+        $totalRatio = $totalUnion > 0 ? $totalDelta / $totalUnion : 0.0;
+
+        return [
+            'html_delta' => $htmlMetrics['delta'],
+            'html_union' => $htmlMetrics['union'],
+            'html_ratio' => $htmlMetrics['ratio'],
+            'body_delta' => $bodyMetrics['delta'],
+            'body_union' => $bodyMetrics['union'],
+            'body_ratio' => $bodyMetrics['ratio'],
+            'total_delta' => $totalDelta,
+            'total_union' => $totalUnion,
+            'total_ratio' => $totalRatio,
+        ];
+    }
+
+    /**
+     * @param array<int, string> $before
+     * @param array<int, string> $after
+     * @return array{delta: int, union: int, ratio: float}
+     */
+    private function classChangeMetrics(array $before, array $after): array
+    {
+        $beforeUnique = array_values(array_unique($before));
+        $afterUnique = array_values(array_unique($after));
+
+        $added = array_diff($afterUnique, $beforeUnique);
+        $removed = array_diff($beforeUnique, $afterUnique);
+        $delta = count($added) + count($removed);
+        $union = count(array_unique(array_merge($beforeUnique, $afterUnique)));
+        $ratio = $union > 0 ? $delta / $union : 0.0;
+
+        return [
+            'delta' => $delta,
+            'union' => $union,
+            'ratio' => $ratio,
+        ];
     }
 
     /**
