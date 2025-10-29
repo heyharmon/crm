@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import api from '@/services/api'
+import { getRatingPillClasses } from '@/utils/ratingStyles'
 
 const loading = ref(true)
 const error = ref(null)
@@ -44,6 +45,8 @@ const redesignCounts = computed(() => {
         count: counts[`within_${years}_years`] ?? 0
     }))
 })
+
+const ratingBadgeClasses = (option) => getRatingPillClasses(option?.slug)
 </script>
 
 <template>
@@ -84,6 +87,12 @@ const redesignCounts = computed(() => {
                             {{ formatInteger(totals.organizations) }}
                         </p>
                         <p class="mt-1 text-sm text-neutral-500">Active records in the CRM</p>
+                        <router-link
+                            to="/organizations"
+                            class="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-neutral-600 underline underline-offset-4 transition hover:text-neutral-900"
+                        >
+                            View Organizations
+                        </router-link>
                     </article>
 
                     <article class="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
@@ -92,6 +101,12 @@ const redesignCounts = computed(() => {
                             {{ formatInteger(totals.organizations_without_ratings) }}
                         </p>
                         <p class="mt-1 text-sm text-neutral-500">Organizations still waiting for a score</p>
+                        <router-link
+                            :to="{ name: 'websites.ratings' }"
+                            class="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-neutral-600 underline underline-offset-4 transition hover:text-neutral-900"
+                        >
+                            Rate These Websites
+                        </router-link>
                     </article>
 
                     <article class="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
@@ -131,10 +146,15 @@ const redesignCounts = computed(() => {
                                 :key="option.id"
                                 class="space-y-2 rounded-xl border border-neutral-100 p-4"
                             >
-                                <div class="flex items-baseline justify-between text-sm">
-                                    <div class="font-medium text-neutral-900">
-                                        {{ option.name }}
-                                        <span class="ml-2 text-xs text-neutral-500">Score {{ option.score }}</span>
+                                <div class="flex items-baseline justify-between gap-4 text-sm">
+                                    <div class="flex items-center gap-3">
+                                        <span
+                                            class="inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold"
+                                            :class="ratingBadgeClasses(option)"
+                                        >
+                                            {{ option.name }}
+                                        </span>
+                                        <span class="text-xs text-neutral-500">Score {{ option.score }}</span>
                                     </div>
                                     <div class="text-sm font-semibold text-neutral-700">
                                         {{ formatInteger(option.count) }}

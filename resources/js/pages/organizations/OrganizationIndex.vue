@@ -551,63 +551,6 @@ const editFormRef = ref(null)
                 </div>
 
                 <div v-else class="flex flex-1 flex-col min-h-0">
-                    <div v-if="view === 'table' && selectedCount" class="border-b border-neutral-200 bg-neutral-50/60 px-4 py-3 lg:px-6">
-                        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                            <div>
-                                <p class="text-sm font-semibold text-neutral-900">{{ selectedCount }} selected</p>
-                                <button type="button" class="text-xs font-medium text-neutral-500 transition hover:text-neutral-900" @click="clearSelection">
-                                    Clear selection
-                                </button>
-                            </div>
-                            <div class="flex flex-wrap items-center gap-2">
-                                <Button
-                                    variant="outline"
-                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium"
-                                    :disabled="batchActionLoading === 'count_pages'"
-                                    @click="runBatchAction('count_pages')"
-                                >
-                                    <span v-if="batchActionLoading === 'count_pages'">Counting...</span>
-                                    <span v-else>Count pages</span>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium"
-                                    :disabled="batchActionLoading === 'detect_redesign'"
-                                    @click="runBatchAction('detect_redesign')"
-                                >
-                                    <span v-if="batchActionLoading === 'detect_redesign'">Queuing...</span>
-                                    <span v-else>Detect redesign</span>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium"
-                                    :disabled="batchActionLoading === 'detect_cms'"
-                                    @click="runBatchAction('detect_cms')"
-                                >
-                                    <span v-if="batchActionLoading === 'detect_cms'">Queuing...</span>
-                                    <span v-else>Detect CMS</span>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium"
-                                    :disabled="batchActionLoading === 'check_website_status'"
-                                    @click="runBatchAction('check_website_status')"
-                                >
-                                    <span v-if="batchActionLoading === 'check_website_status'">Queuing...</span>
-                                    <span v-else>Check website status</span>
-                                </Button>
-                                <Button
-                                    variant="outline"
-                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600"
-                                    :disabled="batchActionLoading === 'archive'"
-                                    @click="runBatchAction('archive')"
-                                >
-                                    <span v-if="batchActionLoading === 'archive'">Archiving...</span>
-                                    <span v-else>Archive</span>
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
                     <OrganizationTableView
                         v-if="view === 'table'"
                         :organizations="organizationStore.organizations"
@@ -644,6 +587,74 @@ const editFormRef = ref(null)
                 </div>
             </div>
         </div>
+
+        <Teleport to="body">
+            <transition name="selection-actions">
+                <div v-if="view === 'table' && selectedCount" class="fixed bottom-6 left-4 right-4 z-40 sm:left-auto sm:right-6 sm:w-auto">
+                    <div class="rounded-2xl border border-neutral-200 bg-white px-4 py-4 shadow-xl sm:px-5">
+                        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div class="space-y-1 text-neutral-900">
+                                <p class="text-sm font-semibold">{{ selectedCount }} selected</p>
+                                <button
+                                    type="button"
+                                    class="text-xs font-medium text-neutral-500 underline decoration-neutral-300 underline-offset-4 transition hover:text-neutral-900 hover:decoration-neutral-400"
+                                    @click="clearSelection"
+                                >
+                                    Clear selection
+                                </button>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2">
+                                <Button
+                                    variant="outline"
+                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium shadow-none"
+                                    :disabled="batchActionLoading === 'count_pages'"
+                                    @click="runBatchAction('count_pages')"
+                                >
+                                    <span v-if="batchActionLoading === 'count_pages'">Counting...</span>
+                                    <span v-else>Count pages</span>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium shadow-none"
+                                    :disabled="batchActionLoading === 'detect_redesign'"
+                                    @click="runBatchAction('detect_redesign')"
+                                >
+                                    <span v-if="batchActionLoading === 'detect_redesign'">Queuing...</span>
+                                    <span v-else>Detect redesign</span>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium shadow-none"
+                                    :disabled="batchActionLoading === 'detect_cms'"
+                                    @click="runBatchAction('detect_cms')"
+                                >
+                                    <span v-if="batchActionLoading === 'detect_cms'">Queuing...</span>
+                                    <span v-else>Detect CMS</span>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium shadow-none"
+                                    :disabled="batchActionLoading === 'check_website_status'"
+                                    @click="runBatchAction('check_website_status')"
+                                >
+                                    <span v-if="batchActionLoading === 'check_website_status'">Queuing...</span>
+                                    <span v-else>Check website status</span>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-red-600 shadow-none hover:bg-red-600 hover:text-white"
+                                    :disabled="batchActionLoading === 'archive'"
+                                    @click="runBatchAction('archive')"
+                                >
+                                    <span v-if="batchActionLoading === 'archive'">Archiving...</span>
+                                    <span v-else>Archive</span>
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </transition>
+        </Teleport>
 
         <!-- Right-side drawer for view/edit -->
         <RightDrawer
@@ -707,5 +718,20 @@ const editFormRef = ref(null)
 .scale-fade-leave-to {
     opacity: 0;
     transform: scale(0.95);
+}
+
+.selection-actions-enter-active,
+.selection-actions-leave-active {
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+.selection-actions-enter-from,
+.selection-actions-leave-to {
+    opacity: 0;
+    transform: translateY(8px);
+}
+.selection-actions-enter-to,
+.selection-actions-leave-from {
+    opacity: 1;
+    transform: translateY(0);
 }
 </style>
