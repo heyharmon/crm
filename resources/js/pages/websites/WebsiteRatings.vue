@@ -351,7 +351,13 @@ onMounted(() => {
                                 </div>
                                 <div class="flex flex-wrap items-center gap-2 sm:justify-end sm:gap-3">
                                     <span v-if="isRating" class="text-xs text-neutral-400">Saving rating…</span>
-                                    <Button variant="outline" size="sm" class="flex-1 sm:flex-none" :disabled="isRating" @click="skipWebsite"> Skip </Button>
+                                    <button
+                                        class="cursor-pointer text-sm text-neutral-500 hover:text-neutral-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        :disabled="isRating"
+                                        @click="skipWebsite"
+                                    >
+                                        Skip for now
+                                    </button>
                                 </div>
                             </div>
                         </div>
