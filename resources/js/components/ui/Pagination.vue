@@ -8,11 +8,18 @@ const props = defineProps({
     }
 })
 
-const emit = defineEmits(['page-change'])
+const emit = defineEmits(['page-change', 'per-page-change'])
 
 const handlePageChange = (page) => {
     emit('page-change', page)
 }
+
+const handlePerPageChange = (event) => {
+    const newPerPage = parseInt(event.target.value)
+    emit('per-page-change', newPerPage)
+}
+
+const perPageOptions = [25, 50, 100, 200]
 </script>
 
 <template>
@@ -24,7 +31,7 @@ const handlePageChange = (page) => {
             </Button>
         </div>
         <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-            <div>
+            <div class="flex items-center gap-4">
                 <p class="text-sm text-neutral-700">
                     Showing
                     <span class="font-medium">{{ (pagination.current_page - 1) * pagination.per_page + 1 }}</span>
@@ -34,6 +41,19 @@ const handlePageChange = (page) => {
                     <span class="font-medium">{{ pagination.total }}</span>
                     results
                 </p>
+                <div class="flex items-center gap-2">
+                    <label for="per-page-select" class="text-sm text-neutral-600">Per page:</label>
+                    <select
+                        id="per-page-select"
+                        :value="pagination.per_page"
+                        @change="handlePerPageChange"
+                        class="rounded-md border border-neutral-200 bg-white px-2 py-1 text-sm text-neutral-700 shadow-sm transition hover:border-neutral-300 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400"
+                    >
+                        <option v-for="option in perPageOptions" :key="option" :value="option">
+                            {{ option }}
+                        </option>
+                    </select>
+                </div>
             </div>
             <div>
                 <nav class="relative z-0 inline-flex gap-1.5">

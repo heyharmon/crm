@@ -230,7 +230,7 @@ const getScreenshotUrl = (website) => {
         </div>
 
         <div class="border-t border-neutral-200 bg-white px-4 py-3">
-            <Pagination :pagination="props.pagination" @page-change="emit('page-change', $event)" />
+            <Pagination :pagination="props.pagination" @page-change="emit('page-change', $event)" @per-page-change="emit('per-page-change', $event)" />
         </div>
     </div>
 </template>

@@ -11,7 +11,7 @@ export const useOrganizationStore = defineStore('organization', {
         pagination: {
             current_page: 1,
             last_page: 1,
-            per_page: 20,
+            per_page: 100,
             total: 0
         },
         filters: {
@@ -34,13 +34,14 @@ export const useOrganizationStore = defineStore('organization', {
     }),
 
     actions: {
-        async fetchOrganizations(page = 1) {
+        async fetchOrganizations(page = 1, perPage = null) {
             this.listLoading = true
             this.error = null
 
             try {
                 const params = {
                     page,
+                    per_page: perPage || this.pagination.per_page,
                     ...this.filters
                 }
 
@@ -188,7 +189,7 @@ export const useOrganizationStore = defineStore('organization', {
             try {
                 await api.delete(`/organizations/${id}`)
                 // Remove the deleted organization from local state instead of refetching
-                this.organizations = this.organizations.filter(org => org.id !== id)
+                this.organizations = this.organizations.filter((org) => org.id !== id)
 
                 // Clear currentOrganization if it was the one deleted
                 if (this.currentOrganization && this.currentOrganization.id === id) {

@@ -168,8 +168,8 @@ class OrganizationController extends Controller
             }
         }
 
-        $perPage = (int) $request->input('per_page', 20);
-        $perPage = max(1, min($perPage, 100));
+        $perPage = (int) $request->input('per_page', 100);
+        $perPage = max(1, min($perPage, 200));
 
         $organizations = $query->paginate($perPage);
         return response()->json($organizations);

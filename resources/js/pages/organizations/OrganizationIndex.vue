@@ -87,12 +87,27 @@ const fetchRatingOptions = async () => {
 }
 
 onMounted(async () => {
+    // Check if there are any query params
+    const hasQueryParams = Object.keys(route.query).length > 0
+
     // Hydrate filters and page from the URL on load
     const { filters, page } = parseFiltersFromQuery(route.query)
+
+    // If no query params exist, set default filters
+    if (!hasQueryParams) {
+        filters.website_status = ['up']
+    }
+
     // prevent filter watcher from resetting page on initial load
     syncingQuery.value = true
     try {
         if (filters) organizationStore.setFilters(filters)
+
+        // If we applied default filters, update the URL to reflect them
+        if (!hasQueryParams) {
+            const nextQuery = buildQueryFromFilters(filters, page)
+            await router.replace({ query: nextQuery })
+        }
     } finally {
         syncingQuery.value = false
     }
@@ -146,6 +161,19 @@ const handlePageChange = async (page) => {
     }
     clearSelection()
     await organizationStore.fetchOrganizations(page)
+}
+
+const handlePerPageChange = async (perPage) => {
+    // Reset to page 1 when changing per_page
+    const q = buildQueryFromFilters(organizationStore.filters, 1, route.query)
+    syncingQuery.value = true
+    try {
+        await router.replace({ query: q })
+    } finally {
+        syncingQuery.value = false
+    }
+    clearSelection()
+    await organizationStore.fetchOrganizations(1, perPage)
 }
 
 const deleteOrganization = async (id) => {
@@ -569,6 +597,7 @@ const editFormRef = ref(null)
                         @toggle-row-selection="handleRowSelection"
                         @toggle-select-all="handleSelectAllRows"
                         @page-change="handlePageChange"
+                        @per-page-change="handlePerPageChange"
                     />
 
                     <OrganizationGridView
@@ -583,6 +612,7 @@ const editFormRef = ref(null)
                         @update-website-rating="({ id, optionId }) => submitWebsiteRating(id, optionId)"
                         @clear-website-rating="(id) => clearWebsiteRating(id)"
                         @page-change="handlePageChange"
+                        @per-page-change="handlePerPageChange"
                     />
                 </div>
             </div>
