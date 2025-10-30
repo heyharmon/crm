@@ -218,19 +218,19 @@ class TeamController extends Controller
             ]);
 
             // Send email with registration link
-            Mail::to($user->email)->send(new NewUserTeamInvitation(
-                $team,
-                $user,
-                $validated['role'],
-                $token
-            ));
+            // Mail::to($user->email)->send(new NewUserTeamInvitation(
+            //     $team,
+            //     $user,
+            //     $validated['role'],
+            //     $token
+            // ));
         } else {
             // For existing users, send regular team invitation
-            Mail::to($user->email)->send(new TeamInvitation(
-                $team,
-                $user,
-                $validated['role']
-            ));
+            // Mail::to($user->email)->send(new TeamInvitation(
+            //     $team,
+            //     $user,
+            //     $validated['role']
+            // ));
         }
 
         return response()->json(['message' => 'Invitation sent successfully']);

@@ -10,6 +10,8 @@ const user = computed(() => auth.getUser())
 const navLinkClasses = 'rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900'
 const activeNavClasses = 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white'
 const mobileMenuOpen = ref(false)
+const adminDropdownOpen = ref(false)
+const mobileAdminOpen = ref(false)
 
 const logout = async () => {
     await auth.logout()
@@ -57,6 +59,18 @@ const toggleMobileMenu = () => {
 const closeMobileMenu = () => {
     mobileMenuOpen.value = false
 }
+
+const toggleAdminDropdown = () => {
+    adminDropdownOpen.value = !adminDropdownOpen.value
+}
+
+const closeAdminDropdown = () => {
+    adminDropdownOpen.value = false
+}
+
+const toggleMobileAdmin = () => {
+    mobileAdminOpen.value = !mobileAdminOpen.value
+}
 </script>
 
 <template>
@@ -71,12 +85,6 @@ const closeMobileMenu = () => {
                     </router-link>
                     <router-link :to="{ name: 'organizations.index' }" :class="[navLinkClasses, { [activeNavClasses]: isRouteActive('organizations.index') }]">
                         Organizations
-                    </router-link>
-                    <router-link to="/organization-categories" :class="[navLinkClasses, { [activeNavClasses]: isRouteActive('/organization-categories') }]">
-                        Categories
-                    </router-link>
-                    <router-link :to="{ name: 'websites.options' }" :class="[navLinkClasses, { [activeNavClasses]: isRouteActive('websites.options') }]">
-                        Rating Options
                     </router-link>
                     <router-link :to="{ name: 'websites.ratings' }" :class="[navLinkClasses, { [activeNavClasses]: isRouteActive('websites.ratings') }]">
                         Rate Websites
@@ -122,8 +130,38 @@ const closeMobileMenu = () => {
                 </router-link>
             </div>
 
-            <div class="hidden items-center gap-3 md:flex">
+            <div class="hidden items-center gap-2 md:flex">
                 <template v-if="isAuthenticated">
+                    <div class="relative" @keydown.escape="closeAdminDropdown">
+                        <button
+                            type="button"
+                            @click="toggleAdminDropdown"
+                            :aria-expanded="adminDropdownOpen"
+                            :class="[navLinkClasses, 'inline-flex items-center gap-1 text-sm font-medium text-neutral-500']"
+                        >
+                            Admin
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none">
+                                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 9l6 6 6-6" />
+                            </svg>
+                        </button>
+                        <div v-if="adminDropdownOpen" class="absolute right-0 top-full mt-2 w-48 rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
+                            <router-link
+                                to="/organization-categories"
+                                @click="closeAdminDropdown"
+                                class="block px-4 py-2 text-sm text-neutral-700 transition hover:bg-neutral-100"
+                            >
+                                Organization Categories
+                            </router-link>
+                            <router-link
+                                :to="{ name: 'websites.options' }"
+                                @click="closeAdminDropdown"
+                                class="block px-4 py-2 text-sm text-neutral-700 transition hover:bg-neutral-100"
+                            >
+                                Website Rating Options
+                            </router-link>
+                        </div>
+                    </div>
+
                     <button
                         @click="logout"
                         class="inline-flex items-center rounded-full border border-neutral-200 bg-white px-4 py-1.5 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-100"
@@ -174,26 +212,6 @@ const closeMobileMenu = () => {
                                 Organizations
                             </router-link>
                             <router-link
-                                to="/organization-categories"
-                                :class="[
-                                    'block rounded-xl px-3 py-2 transition hover:bg-neutral-100 hover:text-neutral-900',
-                                    { 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white': isRouteActive('/organization-categories') }
-                                ]"
-                                @click="closeMobileMenu"
-                            >
-                                Categories
-                            </router-link>
-                            <router-link
-                                :to="{ name: 'websites.options' }"
-                                :class="[
-                                    'block rounded-xl px-3 py-2 transition hover:bg-neutral-100 hover:text-neutral-900',
-                                    { 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white': isRouteActive('websites.options') }
-                                ]"
-                                @click="closeMobileMenu"
-                            >
-                                Rating Options
-                            </router-link>
-                            <router-link
                                 :to="{ name: 'websites.ratings' }"
                                 :class="[
                                     'block rounded-xl px-3 py-2 transition hover:bg-neutral-100 hover:text-neutral-900',
@@ -214,6 +232,49 @@ const closeMobileMenu = () => {
                             >
                                 My Team
                             </router-link>
+                        </div>
+
+                        <div class="border-t border-neutral-200"></div>
+
+                        <div class="space-y-2">
+                            <button
+                                type="button"
+                                @click="toggleMobileAdmin"
+                                class="flex w-full items-center justify-between rounded-xl px-3 py-2 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900"
+                            >
+                                <span>Admin</span>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-4 w-4 transition-transform"
+                                    :class="{ 'rotate-180': mobileAdminOpen }"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                >
+                                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M6 9l6 6 6-6" />
+                                </svg>
+                            </button>
+                            <div v-if="mobileAdminOpen" class="space-y-2 pl-3">
+                                <router-link
+                                    to="/organization-categories"
+                                    :class="[
+                                        'block rounded-xl px-3 py-2 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900',
+                                        { 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white': isRouteActive('/organization-categories') }
+                                    ]"
+                                    @click="closeMobileMenu"
+                                >
+                                    Organization Categories
+                                </router-link>
+                                <router-link
+                                    :to="{ name: 'websites.options' }"
+                                    :class="[
+                                        'block rounded-xl px-3 py-2 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900',
+                                        { 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white': isRouteActive('websites.options') }
+                                    ]"
+                                    @click="closeMobileMenu"
+                                >
+                                    Website Rating Options
+                                </router-link>
+                            </div>
                         </div>
 
                         <div class="rounded-2xl border border-neutral-200 bg-neutral-50/80 p-4">

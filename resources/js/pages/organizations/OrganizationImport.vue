@@ -222,8 +222,8 @@ const uploadNcuaCsv = async (file) => {
                         <span>
                             Only import rows where <span class="font-medium">Country/Region</span> is <span class="font-semibold">United States</span>
                             <span class="mt-1 block text-xs text-neutral-500">
-                                Rows with other countries (or missing values) are skipped. Disable this filter if you need to import organizations outside
-                                the United States.
+                                Rows with other countries (or missing values) are skipped. Disable this filter if you need to import organizations outside the
+                                United States.
                             </span>
                         </span>
                     </label>
@@ -278,18 +278,13 @@ const uploadNcuaCsv = async (file) => {
                     <div>
                         <h2 class="text-xl font-semibold">Update Organizations with NCUA Data</h2>
                         <p class="text-neutral-600 text-sm mt-1">
-                            Upload the quarterly NCUA CSV to refresh financial metrics for existing organizations. We match by website domain and only
-                            update the NCUA-specific data points listed below.
+                            Upload the quarterly NCUA CSV to refresh financial metrics for existing organizations. We match by website domain and only update
+                            the NCUA-specific data points listed below.
                         </p>
                     </div>
                     <div class="flex items-center gap-3">
                         <input ref="ncuaFileInput" type="file" accept=".csv,text/csv" class="hidden" @change="handleNcuaFileChange" />
-                        <Button
-                            type="button"
-                            class="bg-neutral-900 text-white hover:bg-neutral-800"
-                            :disabled="isUploadingNcua"
-                            @click="triggerNcuaPicker"
-                        >
+                        <Button type="button" class="bg-neutral-900 text-white hover:bg-neutral-800" :disabled="isUploadingNcua" @click="triggerNcuaPicker">
                             {{ isUploadingNcua ? 'Uploading...' : 'Upload NCUA CSV' }}
                         </Button>
                     </div>
@@ -297,7 +292,10 @@ const uploadNcuaCsv = async (file) => {
 
                 <ul class="text-sm text-neutral-600 list-disc pl-5 mt-4 space-y-1">
                     <li>Required heading: <span class="font-medium">Website</span> (used for domain matching).</li>
-                    <li>Updates: charter number, low-income designation, members, assets, loans, deposits, ROAA, net worth ratio, loan-to-share ratio, and growth metrics.</li>
+                    <li>
+                        Updates: charter number, low-income designation, members, assets, loans, deposits, ROAA, net worth ratio, loan-to-share ratio, and
+                        growth metrics.
+                    </li>
                     <li>Existing CRM data outside these fields remains unchanged.</li>
                 </ul>
 
@@ -341,10 +339,16 @@ const uploadNcuaCsv = async (file) => {
                 </div>
             </div>
 
-            <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6 mb-8">
-                <h2 class="text-xl font-semibold mb-4">Start New Import</h2>
+            <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+                <div class="mb-4">
+                    <h2 class="text-xl font-semibold">Import Organizations from Google Maps</h2>
+                    <p class="text-neutral-600 text-sm mt-1">
+                        Search Google Maps for businesses by type and location. We use Apify's Google Maps actor to scrape business listings and automatically
+                        import them as organizations, including contact details, ratings, and categories.
+                    </p>
+                </div>
 
-                <form @submit.prevent="startImport" class="space-y-4">
+                <form @submit.prevent="startImport" class="space-y-4 mb-8">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-neutral-700 mb-1">Search Term *</label>
@@ -391,54 +395,55 @@ const uploadNcuaCsv = async (file) => {
                         </Button>
                     </div>
                 </form>
-            </div>
 
-            <div class="bg-white rounded-lg shadow-sm border border-neutral-200">
-                <div class="px-6 py-4 border-b border-neutral-200 flex justify-between items-center">
-                    <h2 class="text-xl font-semibold">Import History</h2>
-                    <Button @click="refreshImports" variant="outline" size="sm"> Refresh </Button>
-                </div>
+                <!-- Import History -->
+                <div class="border-t border-neutral-200 pt-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">Import History</h3>
+                        <Button @click="refreshImports" variant="outline" size="sm"> Refresh </Button>
+                    </div>
 
-                <div v-if="apifyImportStore.isLoading" class="flex justify-center py-8">
-                    <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-neutral-900"></div>
-                </div>
+                    <div v-if="apifyImportStore.isLoading" class="flex justify-center py-8">
+                        <div class="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-neutral-900"></div>
+                    </div>
 
-                <div v-else-if="apifyImportStore.imports.length === 0" class="p-6 text-center text-neutral-500">
-                    No imports yet. Start your first import above!
-                </div>
+                    <div v-else-if="apifyImportStore.imports.length === 0" class="p-6 text-center text-neutral-500 bg-neutral-50 rounded-lg">
+                        No imports yet. Start your first import above!
+                    </div>
 
-                <!-- List imports -->
-                <div v-else class="divide-y divide-neutral-200">
-                    <div v-for="importRun in apifyImportStore.imports" :key="importRun.id" class="p-6">
-                        <div class="flex justify-between items-start">
-                            <div class="flex-1">
-                                <div class="flex items-center space-x-2 mb-2">
-                                    <span :class="getStatusBadgeClass(importRun.status)" class="px-2 py-1 rounded-full text-xs font-medium">
-                                        {{ importRun.status }}
-                                    </span>
-                                    <span class="text-sm text-neutral-500">
-                                        {{ formatDisplayDate(importRun.created_at, 'MMM D, YYYY h:mm A') }}
-                                    </span>
+                    <!-- List imports -->
+                    <div v-else class="space-y-4">
+                        <div v-for="importRun in apifyImportStore.imports" :key="importRun.id" class="p-4 border border-neutral-200 rounded-lg">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-2 mb-2">
+                                        <span :class="getStatusBadgeClass(importRun.status)" class="px-2 py-1 rounded-full text-xs font-medium">
+                                            {{ importRun.status }}
+                                        </span>
+                                        <span class="text-sm text-neutral-500">
+                                            {{ formatDisplayDate(importRun.created_at, 'MMM D, YYYY h:mm A') }}
+                                        </span>
+                                    </div>
+
+                                    <div class="text-sm text-neutral-600 space-x-4">
+                                        <span v-if="importRun.items_processed > 0"> Processed: {{ importRun.items_processed }} </span>
+                                        <span v-if="importRun.items_imported > 0"> Imported: {{ importRun.items_imported }} </span>
+                                        <span v-if="importRun.items_updated > 0"> Updated: {{ importRun.items_updated }} </span>
+                                        <span v-if="importRun.items_skipped > 0"> Skipped: {{ importRun.items_skipped }} </span>
+                                    </div>
+
+                                    <div v-if="importRun.error_message" class="text-sm text-red-600 mt-2">Error: {{ importRun.error_message }}</div>
                                 </div>
 
-                                <div class="text-sm text-neutral-600 space-x-4">
-                                    <span v-if="importRun.items_processed > 0"> Processed: {{ importRun.items_processed }} </span>
-                                    <span v-if="importRun.items_imported > 0"> Imported: {{ importRun.items_imported }} </span>
-                                    <span v-if="importRun.items_updated > 0"> Updated: {{ importRun.items_updated }} </span>
-                                    <span v-if="importRun.items_skipped > 0"> Skipped: {{ importRun.items_skipped }} </span>
+                                <div v-if="importRun.status === 'RUNNING'" class="ml-4">
+                                    <div class="w-32 bg-neutral-200 rounded-full h-2">
+                                        <div
+                                            class="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                            :style="{ width: importRun.progress_percentage + '%' }"
+                                        ></div>
+                                    </div>
+                                    <div class="text-xs text-neutral-500 mt-1 text-center">{{ importRun.progress_percentage }}%</div>
                                 </div>
-
-                                <div v-if="importRun.error_message" class="text-sm text-red-600 mt-2">Error: {{ importRun.error_message }}</div>
-                            </div>
-
-                            <div v-if="importRun.status === 'RUNNING'" class="ml-4">
-                                <div class="w-32 bg-neutral-200 rounded-full h-2">
-                                    <div
-                                        class="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                                        :style="{ width: importRun.progress_percentage + '%' }"
-                                    ></div>
-                                </div>
-                                <div class="text-xs text-neutral-500 mt-1 text-center">{{ importRun.progress_percentage }}%</div>
                             </div>
                         </div>
                     </div>

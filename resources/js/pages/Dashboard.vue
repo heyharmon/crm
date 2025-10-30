@@ -56,9 +56,7 @@ const ratingBadgeClasses = (option) => getRatingPillClasses(option?.slug)
                 <div>
                     <p class="text-sm font-medium uppercase tracking-wide text-neutral-500">Overview</p>
                     <h1 class="text-3xl font-semibold text-neutral-900">Dashboard</h1>
-                    <p class="mt-2 text-sm text-neutral-500">
-                        Snapshot of organization coverage, website ratings, and redesign activity.
-                    </p>
+                    <p class="mt-2 text-sm text-neutral-500">Snapshot of organization coverage, website ratings, and redesign activity.</p>
                 </div>
 
                 <button
@@ -75,9 +73,7 @@ const ratingBadgeClasses = (option) => getRatingPillClasses(option?.slug)
                 {{ error }}
             </div>
 
-            <div v-else-if="loading" class="rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-600">
-                Loading dashboard metrics…
-            </div>
+            <div v-else-if="loading" class="rounded-xl border border-neutral-200 bg-white px-4 py-3 text-sm text-neutral-600">Loading dashboard metrics…</div>
 
             <div v-else class="space-y-8">
                 <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -96,11 +92,11 @@ const ratingBadgeClasses = (option) => getRatingPillClasses(option?.slug)
                     </article>
 
                     <article class="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Missing ratings</p>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Missing website ratings</p>
                         <p class="mt-2 text-3xl font-semibold text-neutral-900">
                             {{ formatInteger(totals.organizations_without_ratings) }}
                         </p>
-                        <p class="mt-1 text-sm text-neutral-500">Organizations still waiting for a score</p>
+                        <p class="mt-1 text-sm text-neutral-500">Websites still waiting for a score</p>
                         <router-link
                             :to="{ name: 'websites.ratings' }"
                             class="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-neutral-600 underline underline-offset-4 transition hover:text-neutral-900"
@@ -118,13 +114,11 @@ const ratingBadgeClasses = (option) => getRatingPillClasses(option?.slug)
                     </article>
 
                     <article class="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
-                        <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Pages tracked</p>
+                        <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Pages crawled</p>
                         <p class="mt-2 text-3xl font-semibold text-neutral-900">
                             {{ formatInteger(totals.pages_tracked) }}
                         </p>
-                        <p class="mt-1 text-sm text-neutral-500">
-                            Avg. {{ formatDecimal(totals.average_pages_per_organization) }} pages / org
-                        </p>
+                        <p class="mt-1 text-sm text-neutral-500">Avg. {{ formatDecimal(totals.average_pages_per_organization) }} pages / org website</p>
                     </article>
                 </div>
 
@@ -135,17 +129,11 @@ const ratingBadgeClasses = (option) => getRatingPillClasses(option?.slug)
                                 <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Website ratings</p>
                                 <h2 class="text-xl font-semibold text-neutral-900">Rating distribution</h2>
                             </div>
-                            <span class="text-sm font-medium text-neutral-500">
-                                {{ formatInteger(ratings.total_ratings) }} total ratings
-                            </span>
+                            <span class="text-sm font-medium text-neutral-500"> {{ formatInteger(ratings.total_ratings) }} total ratings </span>
                         </header>
 
                         <div v-if="ratingDistribution.length" class="space-y-4">
-                            <div
-                                v-for="option in ratingDistribution"
-                                :key="option.id"
-                                class="space-y-2 rounded-xl border border-neutral-100 p-4"
-                            >
+                            <div v-for="option in ratingDistribution" :key="option.id" class="space-y-2 rounded-xl border border-neutral-100 p-4">
                                 <div class="flex items-baseline justify-between gap-4 text-sm">
                                     <div class="flex items-center gap-3">
                                         <span
@@ -158,16 +146,11 @@ const ratingBadgeClasses = (option) => getRatingPillClasses(option?.slug)
                                     </div>
                                     <div class="text-sm font-semibold text-neutral-700">
                                         {{ formatInteger(option.count) }}
-                                        <span class="ml-1 text-xs font-normal text-neutral-500">
-                                            ({{ formatDecimal(option.percentage) }}%)
-                                        </span>
+                                        <span class="ml-1 text-xs font-normal text-neutral-500"> ({{ formatDecimal(option.percentage) }}%) </span>
                                     </div>
                                 </div>
                                 <div class="h-2 rounded-full bg-neutral-100">
-                                    <div
-                                        class="h-full rounded-full bg-neutral-900 transition-all"
-                                        :style="{ width: `${option.percentage}%` }"
-                                    />
+                                    <div class="h-full rounded-full bg-neutral-900 transition-all" :style="{ width: `${option.percentage}%` }" />
                                 </div>
                             </div>
                         </div>
@@ -176,9 +159,7 @@ const ratingBadgeClasses = (option) => getRatingPillClasses(option?.slug)
 
                     <section class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
                         <header class="mb-4">
-                            <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                                Website redesigns
-                            </p>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Website redesigns</p>
                             <h2 class="text-xl font-semibold text-neutral-900">Redesign activity</h2>
                         </header>
 
