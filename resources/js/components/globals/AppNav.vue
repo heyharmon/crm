@@ -81,6 +81,13 @@ const closeMobileMenu = () => {
                     <router-link :to="{ name: 'websites.ratings' }" :class="[navLinkClasses, { [activeNavClasses]: isRouteActive('websites.ratings') }]">
                         Rate Websites
                     </router-link>
+                    <router-link
+                        v-if="user?.current_team_id"
+                        :to="{ name: 'teams.show', params: { id: user.current_team_id } }"
+                        :class="[navLinkClasses, { [activeNavClasses]: isRouteActive('teams.show') }]"
+                    >
+                        My Team
+                    </router-link>
                 </div>
                 <button
                     v-if="isAuthenticated"
@@ -195,6 +202,17 @@ const closeMobileMenu = () => {
                                 @click="closeMobileMenu"
                             >
                                 Rate Websites
+                            </router-link>
+                            <router-link
+                                v-if="user?.current_team_id"
+                                :to="{ name: 'teams.show', params: { id: user.current_team_id } }"
+                                :class="[
+                                    'block rounded-xl px-3 py-2 transition hover:bg-neutral-100 hover:text-neutral-900',
+                                    { 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white': isRouteActive('teams.show') }
+                                ]"
+                                @click="closeMobileMenu"
+                            >
+                                My Team
                             </router-link>
                         </div>
 

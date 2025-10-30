@@ -18,7 +18,7 @@ class AuthController extends Controller
         if ($request->has('token')) {
             return $this->registerWithInvitation($request);
         }
-        
+
         $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
@@ -44,6 +44,10 @@ class AuthController extends Controller
             'joined_at' => now(),
         ]);
 
+        // Set the current team
+        $user->current_team_id = $team->id;
+        $user->save();
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -65,6 +69,15 @@ class AuthController extends Controller
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
+        }
+
+        // Set current team if not set
+        if (!$user->current_team_id) {
+            $firstTeam = $user->joinedTeams()->first();
+            if ($firstTeam) {
+                $user->current_team_id = $firstTeam->id;
+                $user->save();
+            }
         }
 
         // Revoke all existing tokens
@@ -89,7 +102,7 @@ class AuthController extends Controller
     {
         return response()->json($request->user());
     }
-    
+
     /**
      * Register a new user with an invitation token.
      */
@@ -101,29 +114,29 @@ class AuthController extends Controller
             'token' => 'required|string',
             'email' => 'required|string|email|max:255',
         ]);
-        
+
         // Find the invitation token
         $invitationToken = InvitationToken::where('token', $request->token)
             ->where('email', $request->email)
             ->where('expires_at', '>', now())
             ->first();
-            
+
         if (!$invitationToken) {
             return response()->json(['message' => 'Invalid or expired invitation token'], 422);
         }
-        
+
         // Find the user (should exist as it was created during invitation)
         $user = User::where('email', $request->email)->first();
-        
+
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
-        
+
         // Update user details
         $user->name = $request->name;
         $user->password = Hash::make($request->password);
         $user->save();
-        
+
         // Accept the team invitation
         DB::table('team_user')
             ->where('team_id', $invitationToken->team_id)
@@ -132,13 +145,17 @@ class AuthController extends Controller
                 'invitation_accepted' => true,
                 'joined_at' => now(),
             ]);
-            
+
+        // Set the current team
+        $user->current_team_id = $invitationToken->team_id;
+        $user->save();
+
         // Delete the used token
         $invitationToken->delete();
-        
+
         // Generate auth token
         $token = $user->createToken('auth_token')->plainTextToken;
-        
+
         return response()->json([
             'user' => $user,
             'token' => $token

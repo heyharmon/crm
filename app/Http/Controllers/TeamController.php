@@ -23,20 +23,20 @@ class TeamController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
+
         // Get teams owned by the user
         $ownedTeams = Team::where('owner_id', $user->id)->get();
-        
+
         // Get teams where user is a member with accepted invitation
-        $joinedTeams = Team::whereHas('users', function($query) use ($user) {
+        $joinedTeams = Team::whereHas('users', function ($query) use ($user) {
             $query->where('user_id', $user->id)
-                  ->where('invitation_accepted', true);
+                ->where('invitation_accepted', true);
         })->get();
-        
+
         // Get pending team invitations
-        $pendingInvitations = Team::whereHas('users', function($query) use ($user) {
+        $pendingInvitations = Team::whereHas('users', function ($query) use ($user) {
             $query->where('user_id', $user->id)
-                  ->where('invitation_accepted', false);
+                ->where('invitation_accepted', false);
         })->get();
 
         // Add counts for UI display
@@ -44,7 +44,7 @@ class TeamController extends Controller
             $team->members_count = $team->members()->count();
             $team->pending_invitations_count = $team->pendingInvitations()->count();
         });
-        
+
         $joinedTeams->each(function ($team) {
             $team->members_count = $team->members()->count();
         });
@@ -86,18 +86,30 @@ class TeamController extends Controller
         // Check if user is a member of the team
         $user = Auth::user();
         $isMember = $team->users()->where('user_id', $user->id)->exists();
-        
+
         if (!$isMember && $team->owner_id !== $user->id) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         // Load the team owner relationship
         $team->load('owner');
-        
+
         // Get members and pending invitations
         $members = $team->members;
         $pendingInvitations = $team->pendingInvitations;
-        
+
+        // Add invitation tokens to pending invitations
+        $pendingInvitations->each(function ($invitation) use ($team) {
+            $token = InvitationToken::where('email', $invitation->email)
+                ->where('team_id', $team->id)
+                ->where('expires_at', '>', now())
+                ->first();
+
+            if ($token) {
+                $invitation->invitation_url = url('/register?token=' . $token->token . '&email=' . urlencode($invitation->email));
+            }
+        });
+
         // Check if current user is owner or admin
         $isOwner = $team->owner_id === $user->id;
         $isAdmin = $members->contains(function ($member) use ($user) {
@@ -122,7 +134,7 @@ class TeamController extends Controller
         $user = Auth::user();
         $isOwner = $team->owner_id === $user->id;
         $isAdmin = $team->members()->where('user_id', $user->id)->where('role', 'admin')->exists();
-        
+
         if (!$isOwner && !$isAdmin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -160,7 +172,7 @@ class TeamController extends Controller
         $user = Auth::user();
         $isOwner = $team->owner_id === $user->id;
         $isAdmin = $team->members()->where('user_id', $user->id)->where('role', 'admin')->exists();
-        
+
         if (!$isOwner && !$isAdmin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -192,11 +204,11 @@ class TeamController extends Controller
 
         // Check if this is a new user (just created) or existing user
         $wasRecentlyCreated = $user->wasRecentlyCreated;
-        
+
         if ($wasRecentlyCreated) {
             // For new users, create a token and send registration invitation
             $token = Str::random(64);
-            
+
             // Store the token with expiration
             InvitationToken::create([
                 'email' => $user->email,
@@ -204,7 +216,7 @@ class TeamController extends Controller
                 'team_id' => $team->id,
                 'expires_at' => now()->addHours(24),
             ]);
-            
+
             // Send email with registration link
             Mail::to($user->email)->send(new NewUserTeamInvitation(
                 $team,
@@ -230,7 +242,7 @@ class TeamController extends Controller
     public function acceptInvitation(Team $team)
     {
         $user = Auth::user();
-        
+
         // Check if there's a pending invitation
         $invitation = DB::table('team_user')
             ->where('team_id', $team->id)
@@ -277,7 +289,7 @@ class TeamController extends Controller
         $currentUser = Auth::user();
         $isOwner = $team->owner_id === $currentUser->id;
         $isAdmin = $team->members()->where('user_id', $currentUser->id)->where('role', 'admin')->exists();
-        
+
         if (!$isOwner && !$isAdmin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
@@ -301,7 +313,7 @@ class TeamController extends Controller
         $currentUser = Auth::user();
         $isOwner = $team->owner_id === $currentUser->id;
         $isAdmin = $team->members()->where('user_id', $currentUser->id)->where('role', 'admin')->exists();
-        
+
         if (!$isOwner && !$isAdmin) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }

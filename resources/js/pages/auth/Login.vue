@@ -4,8 +4,8 @@ import { useRouter } from 'vue-router'
 import auth from '@/services/auth'
 
 const router = useRouter()
-const email = ref('heyharmon@gmail.com')
-const password = ref('letpass123!')
+const email = ref('')
+const password = ref('')
 const error = ref('')
 const loading = ref(false)
 
