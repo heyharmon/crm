@@ -335,7 +335,7 @@ onMounted(() => {
                                     </template>
                                     <span v-else class="text-neutral-400">No ratings yet</span>
                                 </div>
-                                <div class="flex flex-wrap gap-2 sm:justify-end sm:gap-3">
+                                <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:justify-end sm:gap-3">
                                     <Button
                                         v-for="option in ratingOptions"
                                         :key="option.id"
