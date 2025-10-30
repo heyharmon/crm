@@ -351,15 +351,7 @@ onMounted(() => {
                                 </div>
                                 <div class="flex flex-wrap items-center gap-2 sm:justify-end sm:gap-3">
                                     <span v-if="isRating" class="text-xs text-neutral-400">Saving rating…</span>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        class="flex-1 sm:flex-none"
-                                        :disabled="isRating"
-                                        @click="skipWebsite"
-                                    >
-                                        Skip
-                                    </Button>
+                                    <Button variant="outline" size="sm" class="flex-1 sm:flex-none" :disabled="isRating" @click="skipWebsite"> Skip </Button>
                                 </div>
                             </div>
                         </div>
@@ -369,17 +361,6 @@ onMounted(() => {
                         v-if="currentOrg.website"
                         class="relative w-full overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-900 shadow-lg shadow-neutral-900/20 sm:rounded-3xl min-h-[360px] sm:min-h-[480px] lg:min-h-[60vh]"
                     >
-                        <div class="absolute inset-x-0 top-0 z-10 flex items-center justify-between px-4 py-3 text-xs font-semibold uppercase tracking-wide text-neutral-500">
-                            <span class="rounded-full border border-neutral-700 bg-neutral-900/70 px-3 py-1 text-neutral-200 shadow-sm shadow-neutral-900/40">
-                                Live Preview
-                            </span>
-                            <span
-                                v-if="currentOrg.website"
-                                class="hidden rounded-full border border-neutral-700 bg-neutral-900/60 px-3 py-1 text-neutral-300 shadow-sm shadow-neutral-900/40 sm:inline-flex"
-                            >
-                                {{ currentOrg.website }}
-                            </span>
-                        </div>
                         <div
                             v-if="!screenshotReady && !screenshotError"
                             class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-neutral-900 text-neutral-300"
