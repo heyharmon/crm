@@ -81,7 +81,21 @@ const updateRating = async (rating, newOptionId) => {
         await api.post(`/organizations/${rating.organization_id}/website-ratings`, {
             website_rating_option_id: newOptionId
         })
-        await loadRatings()
+
+        // Find the new option details
+        const newOption = ratingOptions.value.find((opt) => opt.id === newOptionId)
+
+        // Update the rating in place (optimistic update)
+        const ratingIndex = ratings.value.findIndex((r) => r.id === rating.id)
+        if (ratingIndex !== -1 && newOption) {
+            ratings.value[ratingIndex] = {
+                ...ratings.value[ratingIndex],
+                website_rating_option_id: newOptionId,
+                website_rating_option_name: newOption.name,
+                website_rating_option_slug: newOption.slug,
+                updated_at: new Date().toISOString()
+            }
+        }
     } catch (err) {
         error.value = err?.message || 'Failed to update rating.'
         console.error('Error updating rating:', err)
