@@ -153,14 +153,14 @@ const toggleMobileAdmin = () => {
                                 @click="closeAdminDropdown"
                                 class="block px-4 py-2 text-sm text-neutral-700 transition hover:bg-neutral-100"
                             >
-                                Organization Categories
+                                Categories
                             </router-link>
                             <router-link
                                 :to="{ name: 'websites.options' }"
                                 @click="closeAdminDropdown"
                                 class="block px-4 py-2 text-sm text-neutral-700 transition hover:bg-neutral-100"
                             >
-                                Website Rating Options
+                                Rating Options
                             </router-link>
                         </div>
                     </div>
@@ -275,7 +275,7 @@ const toggleMobileAdmin = () => {
                                     ]"
                                     @click="closeMobileMenu"
                                 >
-                                    Organization Categories
+                                    Categories
                                 </router-link>
                                 <router-link
                                     :to="{ name: 'websites.options' }"
@@ -285,7 +285,7 @@ const toggleMobileAdmin = () => {
                                     ]"
                                     @click="closeMobileMenu"
                                 >
-                                    Website Rating Options
+                                    Options
                                 </router-link>
                             </div>
                         </div>
