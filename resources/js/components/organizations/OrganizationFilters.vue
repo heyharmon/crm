@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/Input.vue'
+import { useNumberFormat } from '@/composables/useNumberFormat'
 
 const props = defineProps({
     filters: {
@@ -33,6 +34,10 @@ const emit = defineEmits(['update:filters', 'reset-filters', 'search'])
 const updateFilter = (key, value) => {
     emit('update:filters', { [key]: value })
 }
+
+// Use number formatting for assets fields
+const assetsMin = useNumberFormat(props, updateFilter, 'assets_min')
+const assetsMax = useNumberFormat(props, updateFilter, 'assets_max')
 
 const setWebsiteFilter = (value) => {
     // Clicking the active option should revert to "any"
@@ -163,8 +168,8 @@ const getSortIcon = (column) => {
                 <div>
                     <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Assets</label>
                     <div class="grid grid-cols-2 gap-2">
-                        <Input :model-value="filters.assets_min" @update:model-value="updateFilter('assets_min', $event)" type="number" placeholder="Min" />
-                        <Input :model-value="filters.assets_max" @update:model-value="updateFilter('assets_max', $event)" type="number" placeholder="Max" />
+                        <Input :model-value="assetsMin.displayValue.value" @update:model-value="assetsMin.handleInput" type="text" placeholder="Min" />
+                        <Input :model-value="assetsMax.displayValue.value" @update:model-value="assetsMax.handleInput" type="text" placeholder="Max" />
                     </div>
                 </div>
 
