@@ -119,7 +119,8 @@ const fetchNextBatch = async () => {
             const params = {
                 website: 'present',
                 my_website_rating: 'none',
-                website_status: 'up'
+                website_status: 'up',
+                assets_min: 400000000
             }
 
             if (RANDOMIZE_UNRATED_WEBSITES) {
@@ -294,6 +295,7 @@ onMounted(() => {
                         <p class="text-sm text-neutral-500 sm:max-w-[560px]">
                             Review each organization's website and choose a rating. Skip any you want to revisit later.
                         </p>
+                        <p class="mt-2 text-xs text-neutral-400">Showing organizations with: Website status is up • Assets ≥ $400M • Not yet rated by you</p>
                     </div>
                 </div>
 
