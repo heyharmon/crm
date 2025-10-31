@@ -1,7 +1,5 @@
 # App To-Dos
 
-**Add filter for last redesign**
-
 **Save filter/sort presets**
 
 **Add Websites I have Rated Page**

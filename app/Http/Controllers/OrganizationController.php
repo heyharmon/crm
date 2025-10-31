@@ -81,12 +81,6 @@ class OrganizationController extends Controller
             $redesignFilter = $request->get('last_redesign');
             if ($redesignFilter === 'has_date') {
                 $query->whereNotNull('organizations.last_major_redesign_at');
-            } elseif ($redesignFilter === 'cant_predict') {
-                $query->where('organizations.website_redesign_status', 'no_major_events');
-            } elseif ($redesignFilter === 'no_snapshots') {
-                $query->where('organizations.website_redesign_status', 'no_wayback_data');
-            } elseif ($redesignFilter === 'request_failed') {
-                $query->where('organizations.website_redesign_status', 'wayback_failed');
             }
         }
         if ($request->filled('cms')) {
@@ -104,6 +98,14 @@ class OrganizationController extends Controller
         }
         if ($request->filled('asset_growth_max')) {
             $query->where('organizations.asset_growth', '<=', $request->get('asset_growth_max'));
+        }
+        if ($request->filled('last_redesign_year_min')) {
+            $yearMin = $request->get('last_redesign_year_min');
+            $query->whereYear('organizations.last_major_redesign_at', '>=', $yearMin);
+        }
+        if ($request->filled('last_redesign_year_max')) {
+            $yearMax = $request->get('last_redesign_year_max');
+            $query->whereYear('organizations.last_major_redesign_at', '<=', $yearMax);
         }
         if ($request->filled('website_rating')) {
             $rating = $request->get('website_rating');

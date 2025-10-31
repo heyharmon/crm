@@ -22,12 +22,7 @@ const WEBSITE_STATUS_OPTIONS = [
     { value: 'unknown', label: 'Unknown' }
 ]
 
-const LAST_REDESIGN_OPTIONS = [
-    { value: 'has_date', label: 'Has date' },
-    { value: 'cant_predict', label: "Can't predict" },
-    { value: 'no_snapshots', label: 'No snapshots' },
-    { value: 'request_failed', label: 'Request failed' }
-]
+const LAST_REDESIGN_OPTIONS = [{ value: 'has_date', label: 'Has date' }]
 
 const emit = defineEmits(['update:filters', 'reset-filters', 'search'])
 
@@ -48,6 +43,7 @@ const setSweetSpot = () => {
 const locationAccordionOpen = ref(false)
 const categoryAccordionOpen = ref(false)
 const cmsAccordionOpen = ref(false)
+const lastRedesignAccordionOpen = ref(false)
 
 const setWebsiteFilter = (value) => {
     // Clicking the active option should revert to "any"
@@ -203,6 +199,50 @@ const getSortIcon = (column) => {
                             placeholder="Max"
                         />
                     </div>
+                </div>
+
+                <!-- Last Redesign Accordion -->
+                <div class="border-t border-neutral-200 pt-4">
+                    <button
+                        type="button"
+                        @click="lastRedesignAccordionOpen = !lastRedesignAccordionOpen"
+                        class="flex w-full items-center justify-between text-xs font-medium uppercase tracking-wide text-neutral-500 transition hover:text-neutral-700"
+                    >
+                        <span>Last Redesign</span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transition-transform"
+                            :class="{ 'rotate-180': lastRedesignAccordionOpen }"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <transition name="accordion">
+                        <div v-if="lastRedesignAccordionOpen" class="mt-4">
+                            <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Year Range</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <Input
+                                    :model-value="filters.last_redesign_year_min"
+                                    @update:model-value="updateFilter('last_redesign_year_min', $event)"
+                                    type="number"
+                                    placeholder="Min Year"
+                                    min="2000"
+                                    :max="new Date().getFullYear()"
+                                />
+                                <Input
+                                    :model-value="filters.last_redesign_year_max"
+                                    @update:model-value="updateFilter('last_redesign_year_max', $event)"
+                                    type="number"
+                                    placeholder="Max Year"
+                                    min="2000"
+                                    :max="new Date().getFullYear()"
+                                />
+                            </div>
+                        </div>
+                    </transition>
                 </div>
 
                 <!-- Location Accordion -->
