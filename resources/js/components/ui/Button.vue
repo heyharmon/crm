@@ -20,7 +20,7 @@ const props = defineProps({
 const variants = {
     default: 'bg-black text-white shadow-xs hover:bg-black/80',
     destructive: 'bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20',
-    outline: 'border border-gray-300 bg-background shadow-xs hover:bg-accent hover:text-accent-foreground',
+    outline: 'border border-gray-300 bg-white shadow-xs hover:bg-accent hover:text-accent-foreground',
     secondary: 'bg-secondary text-secondary-foreground shadow-xs hover:bg-secondary/80',
     ghost: 'bg-gray-100 hover:bg-gray-200',
     link: 'text-black underline-offset-4 underline !px-0'

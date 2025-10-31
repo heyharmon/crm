@@ -16,7 +16,7 @@ defineProps({
         <div class="mx-auto flex w-full flex-1 min-h-0 flex-col overflow-hidden lg:flex-row">
             <aside
                 v-if="$slots.sidebar"
-                :class="['hidden h-full min-h-0 flex-shrink-0 border-r border-neutral-200 bg-white pl-8 pr-4 py-6 lg:block', sidebarWidth]"
+                :class="['hidden h-[(100vh - 1rem)] min-h-0 flex-shrink-0 border-r border-neutral-200  pl-8 pr-4 py-6 lg:block', sidebarWidth]"
             >
                 <slot name="sidebar" />
             </aside>
