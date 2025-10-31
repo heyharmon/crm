@@ -24,7 +24,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'current_team_id',
+        'role',
     ];
 
     /**
@@ -48,47 +48,5 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
-    }
-
-    /**
-     * Get the user's current team.
-     */
-    public function currentTeam()
-    {
-        return $this->belongsTo(Team::class, 'current_team_id');
-    }
-
-    /**
-     * Get the teams owned by the user.
-     */
-    public function ownedTeams(): HasMany
-    {
-        return $this->hasMany(Team::class, 'owner_id');
-    }
-
-    /**
-     * Get all teams that the user belongs to.
-     */
-    public function teams(): BelongsToMany
-    {
-        return $this->belongsToMany(Team::class)
-            ->withPivot('role', 'invitation_accepted', 'invitation_sent_at', 'joined_at')
-            ->withTimestamps();
-    }
-
-    /**
-     * Get the teams that the user is a member of (accepted invitations).
-     */
-    public function joinedTeams(): BelongsToMany
-    {
-        return $this->teams()->wherePivot('invitation_accepted', true);
-    }
-
-    /**
-     * Get the pending team invitations for the user.
-     */
-    public function pendingTeamInvitations(): BelongsToMany
-    {
-        return $this->teams()->wherePivot('invitation_accepted', false);
     }
 }

@@ -4,8 +4,6 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from '@/pages/Dashboard.vue'
 import Login from '@/pages/auth/Login.vue'
 import Register from '@/pages/auth/Register.vue'
-import TeamIndex from '@/pages/teams/TeamIndex.vue'
-import TeamShow from '@/pages/teams/TeamShow.vue'
 // Organization pages
 import OrganizationIndex from '@/pages/organizations/OrganizationIndex.vue'
 import OrganizationCreate from '@/pages/organizations/OrganizationCreate.vue'
@@ -33,18 +31,6 @@ const routes = [
         name: 'register',
         component: Register,
         meta: { guest: true }
-    },
-    {
-        path: '/teams',
-        name: 'teams.index',
-        component: TeamIndex,
-        meta: { requiresAuth: true }
-    },
-    {
-        path: '/teams/:id',
-        name: 'teams.show',
-        component: TeamShow,
-        meta: { requiresAuth: true }
     },
     {
         path: '/organizations',

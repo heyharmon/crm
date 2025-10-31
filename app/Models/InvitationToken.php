@@ -14,15 +14,10 @@ class InvitationToken extends Model
         'email',
         'token',
         'expires_at',
-        'team_id'
+        'role'
     ];
 
     protected $casts = [
         'expires_at' => 'datetime',
     ];
-
-    public function team(): BelongsTo
-    {
-        return $this->belongsTo(Team::class);
-    }
 }

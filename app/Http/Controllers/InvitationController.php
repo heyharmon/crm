@@ -32,7 +32,7 @@ class InvitationController extends Controller
         return response()->json([
             'valid' => true,
             'email' => $token->email,
-            'team_id' => $token->team_id
+            'role' => $token->role
         ]);
     }
 }

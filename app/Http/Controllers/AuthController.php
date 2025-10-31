@@ -3,10 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\InvitationToken;
-use App\Models\Team;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 
@@ -29,24 +27,8 @@ class AuthController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-        ]);
-
-        // Create a team for the user
-        $team = Team::create([
-            'name' => $user->name . ' Team',
-            'owner_id' => $user->id,
-        ]);
-
-        // Add user to their team as admin
-        $team->users()->attach($user->id, [
             'role' => 'admin',
-            'invitation_accepted' => true,
-            'joined_at' => now(),
         ]);
-
-        // Set the current team
-        $user->current_team_id = $team->id;
-        $user->save();
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -69,15 +51,6 @@ class AuthController extends Controller
             throw ValidationException::withMessages([
                 'email' => ['The provided credentials are incorrect.'],
             ]);
-        }
-
-        // Set current team if not set
-        if (!$user->current_team_id) {
-            $firstTeam = $user->joinedTeams()->first();
-            if ($firstTeam) {
-                $user->current_team_id = $firstTeam->id;
-                $user->save();
-            }
         }
 
         // Revoke all existing tokens
@@ -125,30 +98,13 @@ class AuthController extends Controller
             return response()->json(['message' => 'Invalid or expired invitation token'], 422);
         }
 
-        // Find the user (should exist as it was created during invitation)
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user) {
-            return response()->json(['message' => 'User not found'], 404);
-        }
-
-        // Update user details
-        $user->name = $request->name;
-        $user->password = Hash::make($request->password);
-        $user->save();
-
-        // Accept the team invitation
-        DB::table('team_user')
-            ->where('team_id', $invitationToken->team_id)
-            ->where('user_id', $user->id)
-            ->update([
-                'invitation_accepted' => true,
-                'joined_at' => now(),
-            ]);
-
-        // Set the current team
-        $user->current_team_id = $invitationToken->team_id;
-        $user->save();
+        // Create the user
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'role' => $invitationToken->role,
+        ]);
 
         // Delete the used token
         $invitationToken->delete();
