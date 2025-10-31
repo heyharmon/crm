@@ -95,7 +95,7 @@ class DashboardController extends Controller
                 'median_duration_human' => $medianDays !== null
                     ? $now->copy()->subDays((int) round($medianDays))->diffForHumans($now, [
                         'parts' => 2,
-                        'short' => true,
+                        'short' => false,
                         'syntax' => Carbon::DIFF_ABSOLUTE,
                     ])
                     : null,

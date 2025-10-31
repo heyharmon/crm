@@ -47,6 +47,14 @@ const redesignCounts = computed(() => {
 })
 const cms = computed(() => stats.value?.cms ?? {})
 const cmsDistribution = computed(() => stats.value?.cms?.distribution ?? [])
+const showAllCms = ref(false)
+const visibleCmsDistribution = computed(() => {
+    if (showAllCms.value || cmsDistribution.value.length <= 12) {
+        return cmsDistribution.value
+    }
+    return cmsDistribution.value.slice(0, 12)
+})
+const hasMoreCms = computed(() => cmsDistribution.value.length > 12)
 
 const ratingBadgeClasses = (option) => getRatingPillClasses(option?.slug)
 </script>
@@ -197,7 +205,7 @@ const ratingBadgeClasses = (option) => getRatingPillClasses(option?.slug)
                     </header>
 
                     <div v-if="cmsDistribution.length" class="space-y-4">
-                        <div v-for="item in cmsDistribution" :key="item.name" class="space-y-2">
+                        <div v-for="item in visibleCmsDistribution" :key="item.name" class="space-y-2">
                             <div class="flex items-baseline justify-between gap-4 text-sm">
                                 <div class="font-medium text-neutral-700">{{ item.name }}</div>
                                 <div class="text-sm font-semibold text-neutral-700">
@@ -209,6 +217,15 @@ const ratingBadgeClasses = (option) => getRatingPillClasses(option?.slug)
                                 <div class="h-full rounded-full bg-neutral-900 transition-all" :style="{ width: `${item.percentage}%` }" />
                             </div>
                         </div>
+
+                        <button
+                            v-if="hasMoreCms"
+                            type="button"
+                            class="mt-4 w-full rounded-lg border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 transition hover:border-neutral-300 hover:bg-neutral-50"
+                            @click="showAllCms = !showAllCms"
+                        >
+                            {{ showAllCms ? 'Show less' : `Show ${cmsDistribution.length - 12} more` }}
+                        </button>
                     </div>
                     <p v-else class="text-sm text-neutral-500">No CMS data has been recorded yet.</p>
                 </section>
