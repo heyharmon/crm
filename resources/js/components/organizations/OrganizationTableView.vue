@@ -200,7 +200,7 @@ const websiteStatusClasses = (status) => getWebsiteStatusClasses(status)
                                 @change.stop="emit('toggle-select-all', $event.target.checked)"
                             />
                         </th>
-                        <th class="border-b border-neutral-200 px-4 py-3 min-w-64">Name</th>
+                        <th class="border-b border-neutral-200 px-4 py-3 min-w-64 md:min-w-80">Name</th>
                         <!-- <th class="border-b border-neutral-200 px-4 py-3">Category</th> -->
                         <th class="border-b border-neutral-200 px-4 py-3">Location</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Assets</th>
@@ -240,7 +240,7 @@ const websiteStatusClasses = (status) => getWebsiteStatusClasses(status)
                                 "
                             />
                         </td>
-                        <td class="px-4 py-3 align-top min-w-64">
+                        <td class="px-4 py-3 align-top min-w-64 md:min-w-80">
                             <div class="flex items-start gap-3">
                                 <img
                                     v-if="organization.banner"
