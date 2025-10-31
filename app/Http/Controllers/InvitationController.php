@@ -39,6 +39,18 @@ class InvitationController extends Controller
     }
 
     /**
+     * Get all pending invitations.
+     */
+    public function index()
+    {
+        $invitations = InvitationToken::where('expires_at', '>', now())
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json($invitations);
+    }
+
+    /**
      * Create a new invitation.
      */
     public function store(Request $request)

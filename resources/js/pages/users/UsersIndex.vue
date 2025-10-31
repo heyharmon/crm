@@ -6,6 +6,7 @@ import Input from '@/components/ui/Input.vue'
 import api from '@/services/api'
 
 const users = ref([])
+const invitations = ref([])
 const loading = ref(false)
 const error = ref(null)
 
@@ -17,6 +18,7 @@ const inviteForm = ref({
 const invitationUrl = ref('')
 const inviteLoading = ref(false)
 const inviteError = ref('')
+const copiedId = ref(null)
 
 const fetchUsers = async () => {
     loading.value = true
@@ -31,7 +33,19 @@ const fetchUsers = async () => {
     }
 }
 
-onMounted(fetchUsers)
+const fetchInvitations = async () => {
+    try {
+        invitations.value = await api.get('/invitations')
+    } catch (err) {
+        console.error('Failed to load invitations:', err)
+        invitations.value = []
+    }
+}
+
+onMounted(() => {
+    fetchUsers()
+    fetchInvitations()
+})
 
 const openInviteModal = () => {
     showInviteModal.value = true
@@ -61,6 +75,7 @@ const createInvitation = async () => {
     try {
         const response = await api.post('/invitations', inviteForm.value)
         invitationUrl.value = response.url
+        await fetchInvitations()
     } catch (err) {
         inviteError.value = err?.message || 'Failed to create invitation'
     } finally {
@@ -68,13 +83,22 @@ const createInvitation = async () => {
     }
 }
 
-const copyInvitationUrl = async () => {
+const copyInvitationUrl = async (url, id = null) => {
     try {
-        await navigator.clipboard.writeText(invitationUrl.value)
-        alert('Invitation URL copied to clipboard!')
+        await navigator.clipboard.writeText(url)
+        if (id) {
+            copiedId.value = id
+            setTimeout(() => {
+                copiedId.value = null
+            }, 2000)
+        }
     } catch (error) {
         console.error('Failed to copy:', error)
     }
+}
+
+const getInvitationUrl = (invitation) => {
+    return `${window.location.origin}/register?token=${invitation.token}&email=${encodeURIComponent(invitation.email)}`
 }
 
 const formatDate = (date) => {
@@ -169,6 +193,83 @@ const formatDate = (date) => {
                     </div>
                 </div>
             </div>
+
+            <div class="mt-6 rounded-lg border border-neutral-200 bg-white shadow-sm">
+                <div class="border-b border-neutral-200 px-4 py-3">
+                    <h2 class="text-lg font-semibold text-neutral-900">Pending Invitations</h2>
+                </div>
+
+                <div class="hidden md:block">
+                    <table class="min-w-full divide-y divide-neutral-200">
+                        <thead class="bg-neutral-50 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                            <tr>
+                                <th class="px-4 py-3 text-left">Email</th>
+                                <th class="px-4 py-3 text-left">Role</th>
+                                <th class="px-4 py-3 text-left">Expires</th>
+                                <th class="px-4 py-3 text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-neutral-200">
+                            <tr v-for="invitation in invitations" :key="invitation.id" class="hover:bg-neutral-50/60">
+                                <td class="px-4 py-3 text-sm font-medium text-neutral-900">{{ invitation.email }}</td>
+                                <td class="px-4 py-3">
+                                    <span
+                                        :class="[
+                                            'inline-flex rounded-full px-3 py-1 text-xs font-semibold',
+                                            invitation.role === 'admin' ? 'bg-blue-100 text-blue-800' : 'bg-neutral-100 text-neutral-800'
+                                        ]"
+                                    >
+                                        {{ invitation.role }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-neutral-600">{{ formatDate(invitation.expires_at) }}</td>
+                                <td class="px-4 py-3">
+                                    <Button size="sm" variant="outline" @click="copyInvitationUrl(getInvitationUrl(invitation), invitation.id)">
+                                        {{ copiedId === invitation.id ? 'Copied!' : 'Copy URL' }}
+                                    </Button>
+                                </td>
+                            </tr>
+                            <tr v-if="!invitations.length">
+                                <td colspan="4" class="px-4 py-6 text-center text-sm text-neutral-500">No pending invitations.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="space-y-4 px-4 py-4 md:hidden">
+                    <div
+                        v-for="invitation in invitations"
+                        :key="`inv-card-${invitation.id}`"
+                        class="rounded-2xl border border-neutral-200 bg-neutral-50/80 p-4 shadow-sm shadow-neutral-200/40"
+                    >
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1 min-w-0">
+                                <div class="text-base font-semibold text-neutral-900">{{ invitation.email }}</div>
+                                <div class="mt-1 text-xs text-neutral-500">Expires {{ formatDate(invitation.expires_at) }}</div>
+                            </div>
+                            <span
+                                :class="[
+                                    'inline-flex rounded-full px-3 py-1 text-xs font-semibold',
+                                    invitation.role === 'admin' ? 'bg-blue-100 text-blue-800' : 'bg-neutral-100 text-neutral-800'
+                                ]"
+                            >
+                                {{ invitation.role }}
+                            </span>
+                        </div>
+                        <div class="mt-3">
+                            <Button size="sm" variant="outline" class="w-full" @click="copyInvitationUrl(getInvitationUrl(invitation), invitation.id)">
+                                {{ copiedId === invitation.id ? 'Copied!' : 'Copy Invitation URL' }}
+                            </Button>
+                        </div>
+                    </div>
+                    <div
+                        v-if="!invitations.length"
+                        class="rounded-xl border border-dashed border-neutral-300 bg-white/60 p-6 text-center text-sm text-neutral-500"
+                    >
+                        No pending invitations.
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Invite Modal -->
@@ -213,9 +314,11 @@ const formatDate = (date) => {
 
                             <div>
                                 <label class="mb-1 block text-sm font-medium text-neutral-700">Invitation URL</label>
-                                <div class="flex gap-2">
+                                <div class="flex items-center gap-2">
                                     <Input :model-value="invitationUrl" readonly class="flex-1 bg-neutral-50" />
-                                    <Button @click="copyInvitationUrl">Copy</Button>
+                                    <Button @click="copyInvitationUrl(invitationUrl, 'modal')">
+                                        {{ copiedId === 'modal' ? 'Copied!' : 'Copy URL' }}
+                                    </Button>
                                 </div>
                             </div>
 

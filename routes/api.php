@@ -32,6 +32,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // User routes
     Route::get('users', [UserController::class, 'index']);
+    Route::get('invitations', [InvitationController::class, 'index']);
     Route::post('invitations', [InvitationController::class, 'store']);
 
     // Organization routes
