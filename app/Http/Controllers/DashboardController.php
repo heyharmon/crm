@@ -48,9 +48,9 @@ class DashboardController extends Controller
         $redesignDates = Organization::whereNotNull('last_major_redesign_at')
             ->pluck('last_major_redesign_at')
             ->filter()
-            ->map(fn ($date) => Carbon::parse($date));
+            ->map(fn($date) => Carbon::parse($date));
         $daysSinceRedesign = $redesignDates
-            ->map(fn (Carbon $date) => $now->diffInDays($date))
+            ->map(fn(Carbon $date) => $now->diffInDays($date))
             ->sort()
             ->values();
         $medianDays = $this->calculateMedian($daysSinceRedesign);
@@ -59,9 +59,24 @@ class DashboardController extends Controller
         foreach (range(1, 5) as $years) {
             $threshold = $now->copy()->subYears($years);
             $redesignCounts["within_{$years}_years"] = $redesignDates
-                ->filter(fn (Carbon $date) => $date->greaterThanOrEqualTo($threshold))
+                ->filter(fn(Carbon $date) => $date->greaterThanOrEqualTo($threshold))
                 ->count();
         }
+
+        $cmsDistribution = Organization::whereNotNull('cms')
+            ->where('cms', '!=', '')
+            ->selectRaw('cms, COUNT(*) as count')
+            ->groupBy('cms')
+            ->orderByDesc('count')
+            ->get();
+        $totalWithCms = $cmsDistribution->sum('count');
+        $cmsStats = $cmsDistribution->map(function ($item) use ($totalWithCms) {
+            return [
+                'name' => $item->cms,
+                'count' => $item->count,
+                'percentage' => $totalWithCms > 0 ? round(($item->count / $totalWithCms) * 100, 1) : 0,
+            ];
+        });
 
         return response()->json([
             'totals' => [
@@ -85,6 +100,10 @@ class DashboardController extends Controller
                     ])
                     : null,
                 'counts_by_years' => $redesignCounts,
+            ],
+            'cms' => [
+                'total_with_cms' => $totalWithCms,
+                'distribution' => $cmsStats,
             ],
         ]);
     }

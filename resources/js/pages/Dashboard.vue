@@ -45,6 +45,8 @@ const redesignCounts = computed(() => {
         count: counts[`within_${years}_years`] ?? 0
     }))
 })
+const cms = computed(() => stats.value?.cms ?? {})
+const cmsDistribution = computed(() => stats.value?.cms?.distribution ?? [])
 
 const ratingBadgeClasses = (option) => getRatingPillClasses(option?.slug)
 </script>
@@ -167,10 +169,7 @@ const ratingBadgeClasses = (option) => getRatingPillClasses(option?.slug)
                             <div class="rounded-xl border border-neutral-100 bg-neutral-50 p-4">
                                 <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Median time since redesign</p>
                                 <p class="mt-1 text-3xl font-semibold text-neutral-900">
-                                    {{ redesigns.median_days_since_last_redesign ? `${formatDecimal(redesigns.median_days_since_last_redesign)}d` : '—' }}
-                                </p>
-                                <p class="text-sm text-neutral-500">
-                                    {{ redesigns.median_duration_human ?? 'No redesign data yet' }}
+                                    {{ redesigns.median_duration_human ?? '—' }}
                                 </p>
                             </div>
 
@@ -187,6 +186,32 @@ const ratingBadgeClasses = (option) => getRatingPillClasses(option?.slug)
                         </div>
                     </section>
                 </div>
+
+                <section class="rounded-2xl border border-neutral-200 bg-white p-6 shadow-sm">
+                    <header class="mb-4 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-semibold uppercase tracking-wide text-neutral-500">Content Management Systems</p>
+                            <h2 class="text-xl font-semibold text-neutral-900">CMS distribution</h2>
+                        </div>
+                        <span class="text-sm font-medium text-neutral-500"> {{ formatInteger(cms.total_with_cms) }} organizations </span>
+                    </header>
+
+                    <div v-if="cmsDistribution.length" class="space-y-4">
+                        <div v-for="item in cmsDistribution" :key="item.name" class="space-y-2">
+                            <div class="flex items-baseline justify-between gap-4 text-sm">
+                                <div class="font-medium text-neutral-700">{{ item.name }}</div>
+                                <div class="text-sm font-semibold text-neutral-700">
+                                    {{ formatInteger(item.count) }}
+                                    <span class="ml-1 text-xs font-normal text-neutral-500"> ({{ formatDecimal(item.percentage) }}%) </span>
+                                </div>
+                            </div>
+                            <div class="h-2 rounded-full bg-neutral-100">
+                                <div class="h-full rounded-full bg-neutral-900 transition-all" :style="{ width: `${item.percentage}%` }" />
+                            </div>
+                        </div>
+                    </div>
+                    <p v-else class="text-sm text-neutral-500">No CMS data has been recorded yet.</p>
+                </section>
             </div>
         </section>
     </DefaultLayout>
