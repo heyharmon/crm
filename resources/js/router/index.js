@@ -6,6 +6,7 @@ import Dashboard from '@/pages/Dashboard.vue'
 import Login from '@/pages/auth/Login.vue'
 import Register from '@/pages/auth/Register.vue'
 import UsersIndex from '@/pages/users/UsersIndex.vue'
+import UserShow from '@/pages/users/UserShow.vue'
 // Organization pages
 import OrganizationIndex from '@/pages/organizations/OrganizationIndex.vue'
 import OrganizationCreate from '@/pages/organizations/OrganizationCreate.vue'
@@ -38,6 +39,12 @@ const routes = [
         path: '/users',
         name: 'users.index',
         component: UsersIndex,
+        meta: { requiresAuth: true, roles: ['admin'] }
+    },
+    {
+        path: '/users/:id',
+        name: 'users.show',
+        component: UserShow,
         meta: { requiresAuth: true, roles: ['admin'] }
     },
     {

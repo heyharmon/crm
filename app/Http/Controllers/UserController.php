@@ -13,4 +13,11 @@ class UserController extends Controller
 
         return response()->json($users);
     }
+
+    public function show(User $user)
+    {
+        $user->load(['websiteRatings.organization', 'websiteRatings.option']);
+
+        return response()->json($user);
+    }
 }

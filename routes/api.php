@@ -45,6 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // User routes
         Route::get('users', [UserController::class, 'index']);
+        Route::get('users/{user}', [UserController::class, 'show']);
         Route::get('invitations', [InvitationController::class, 'index']);
         Route::post('invitations', [InvitationController::class, 'store']);
 

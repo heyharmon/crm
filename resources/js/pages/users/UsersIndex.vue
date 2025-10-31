@@ -138,10 +138,16 @@ const formatDate = (date) => {
                                 <th class="px-4 py-3 text-left">Email</th>
                                 <th class="px-4 py-3 text-left">Role</th>
                                 <th class="px-4 py-3 text-left">Created</th>
+                                <th class="px-4 py-3 text-left">Actions</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-neutral-200">
-                            <tr v-for="user in users" :key="user.id" class="hover:bg-neutral-50/60">
+                            <tr
+                                v-for="user in users"
+                                :key="user.id"
+                                class="hover:bg-neutral-50/60 cursor-pointer"
+                                @click="$router.push({ name: 'users.show', params: { id: user.id } })"
+                            >
                                 <td class="px-4 py-3 text-sm font-medium text-neutral-900">{{ user.name }}</td>
                                 <td class="px-4 py-3 text-sm text-neutral-600">{{ user.email }}</td>
                                 <td class="px-4 py-3">
@@ -155,9 +161,14 @@ const formatDate = (date) => {
                                     </span>
                                 </td>
                                 <td class="px-4 py-3 text-sm text-neutral-600">{{ formatDate(user.created_at) }}</td>
+                                <td class="px-4 py-3">
+                                    <Button size="sm" variant="outline" @click.stop="$router.push({ name: 'users.show', params: { id: user.id } })">
+                                        View
+                                    </Button>
+                                </td>
                             </tr>
                             <tr v-if="!users.length && !loading">
-                                <td colspan="4" class="px-4 py-6 text-center text-sm text-neutral-500">No users found.</td>
+                                <td colspan="5" class="px-4 py-6 text-center text-sm text-neutral-500">No users found.</td>
                             </tr>
                         </tbody>
                     </table>
@@ -167,7 +178,8 @@ const formatDate = (date) => {
                     <div
                         v-for="user in users"
                         :key="`card-${user.id}`"
-                        class="rounded-2xl border border-neutral-200 bg-neutral-50/80 p-4 shadow-sm shadow-neutral-200/40"
+                        class="rounded-2xl border border-neutral-200 bg-neutral-50/80 p-4 shadow-sm shadow-neutral-200/40 cursor-pointer"
+                        @click="$router.push({ name: 'users.show', params: { id: user.id } })"
                     >
                         <div class="flex items-start justify-between gap-3">
                             <div class="flex-1 min-w-0">
@@ -183,7 +195,10 @@ const formatDate = (date) => {
                                 {{ user.role }}
                             </span>
                         </div>
-                        <div class="mt-3 text-xs text-neutral-500">Created {{ formatDate(user.created_at) }}</div>
+                        <div class="mt-3 flex items-center justify-between">
+                            <div class="text-xs text-neutral-500">Created {{ formatDate(user.created_at) }}</div>
+                            <Button size="sm" variant="outline" @click.stop="$router.push({ name: 'users.show', params: { id: user.id } })"> View </Button>
+                        </div>
                     </div>
                     <div
                         v-if="!users.length && !loading"

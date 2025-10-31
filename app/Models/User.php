@@ -49,4 +49,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function websiteRatings(): HasMany
+    {
+        return $this->hasMany(OrganizationWebsiteRating::class);
+    }
 }
