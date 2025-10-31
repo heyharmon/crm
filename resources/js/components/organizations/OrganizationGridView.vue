@@ -25,28 +25,6 @@ const props = defineProps({
 
 const emit = defineEmits(['update:columns', 'open-sidebar', 'delete-organization', 'update-website-rating', 'clear-website-rating', 'page-change'])
 
-const optionsBySlug = computed(() => {
-    return (props.ratingOptions || []).reduce((map, option) => {
-        map[option.slug] = option
-        return map
-    }, {})
-})
-
-const optionNameById = computed(() => {
-    return (props.ratingOptions || []).reduce((map, option) => {
-        map[option.id] = option.name
-        return map
-    }, {})
-})
-
-const getOptionLabelFromSlug = (slug) => optionsBySlug.value?.[slug]?.name || slug || '-'
-const getOptionLabelFromId = (id, fallback) => optionNameById.value?.[id] || fallback || null
-
-const formatAverage = (value) => {
-    if (value === null || value === undefined) return null
-    return Number(value).toFixed(2)
-}
-
 const getScreenshotUrl = (website) => {
     if (!website) return null
     const baseUrl = 'https://api.apiflash.com/v1/urltoimage'
@@ -117,7 +95,7 @@ const getScreenshotUrl = (website) => {
                             <div v-if="organization.city || organization.state" class="text-sm text-neutral-500">
                                 {{ [organization.city, organization.state].filter(Boolean).join(', ') }}
                             </div>
-                            <div v-if="organization.last_major_redesign_at" class="text-xs font-medium text-emerald-700">
+                            <div v-if="organization.last_major_redesign_at" class="text-xs font-medium">
                                 Last redesign · {{ formatDisplayDate(organization.last_major_redesign_at) }}
                             </div>
                         </div>
@@ -149,53 +127,20 @@ const getScreenshotUrl = (website) => {
 
                     <div v-if="organization.website" class="space-y-2">
                         <label class="block text-xs font-medium uppercase tracking-wide text-neutral-500">Website Ratings</label>
-                        <div class="flex flex-col gap-2">
-                            <div class="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-white p-1">
-                                <button
-                                    v-for="option in ratingOptions"
-                                    :key="option.id"
-                                    class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
-                                    :class="
-                                        organization.my_website_rating_option_id === option.id
-                                            ? 'bg-neutral-900 text-white shadow-sm'
-                                            : 'hover:bg-neutral-100 hover:text-neutral-900'
-                                    "
-                                    @click="emit('update-website-rating', { id: organization.id, optionId: option.id })"
-                                >
-                                    {{ option.name }}
-                                </button>
-                            </div>
-                            <div class="flex items-center justify-between text-xs text-neutral-500">
-                                <div class="flex flex-col items-end gap-1 text-right">
-                                    <span v-if="organization.website_rating_summary" class="inline-flex items-center gap-2">
-                                        <span class="font-medium text-neutral-700">
-                                            Average: {{ getOptionLabelFromSlug(organization.website_rating_summary) }}
-                                        </span>
-                                        <span v-if="organization.website_rating_average !== null">
-                                            ({{ formatAverage(organization.website_rating_average) }})
-                                        </span>
-                                        <span v-if="organization.website_rating_count"> • {{ organization.website_rating_count }} ratings </span>
-                                    </span>
-                                    <span v-else class="text-neutral-400">No ratings yet</span>
-                                    <span v-if="organization.website_rating_weighted !== null" class="inline-flex items-center gap-1 text-neutral-500">
-                                        Weighted: {{ formatAverage(organization.website_rating_weighted) }}
-                                    </span>
-                                    <span
-                                        v-if="getOptionLabelFromId(organization.my_website_rating_option_id, organization.my_website_rating_option_name)"
-                                        class="text-neutral-500"
-                                    >
-                                        Your rating:
-                                        {{ getOptionLabelFromId(organization.my_website_rating_option_id, organization.my_website_rating_option_name) }}
-                                    </span>
-                                </div>
-                                <button
-                                    class="text-xs font-medium text-neutral-500 underline underline-offset-4 transition-colors hover:text-neutral-700"
-                                    :disabled="!organization.my_website_rating_option_id"
-                                    @click="emit('clear-website-rating', organization.id)"
-                                >
-                                    Clear
-                                </button>
-                            </div>
+                        <div class="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-white p-1">
+                            <button
+                                v-for="option in ratingOptions"
+                                :key="option.id"
+                                class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
+                                :class="
+                                    organization.my_website_rating_option_id === option.id
+                                        ? 'bg-neutral-900 text-white shadow-sm'
+                                        : 'hover:bg-neutral-100 hover:text-neutral-900'
+                                "
+                                @click="emit('update-website-rating', { id: organization.id, optionId: option.id })"
+                            >
+                                {{ option.name }}
+                            </button>
                         </div>
                     </div>
 
