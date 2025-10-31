@@ -1,9 +1,11 @@
 <script setup>
 import { ref, computed, onMounted, watch, reactive } from 'vue'
+import moment from 'moment'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Button from '@/components/ui/Button.vue'
 import api from '@/services/api'
 import { getRatingButtonClasses } from '@/utils/ratingStyles'
+import { formatAssets } from '@/composables/useNumberFormat'
 
 const RANDOMIZE_UNRATED_WEBSITES = true
 
@@ -37,19 +39,9 @@ const formatAverage = (value) => {
     if (value === null || value === undefined) return null
     return Number(value).toFixed(2)
 }
-const formatAssets = (value) => {
-    if (value === null || value === undefined) return null
-    const billions = value / 1000000000
-    const millions = value / 1000000
-    if (billions >= 1) {
-        return `$${billions.toFixed(2)}B`
-    }
-    return `$${millions.toFixed(0)}M`
-}
 const formatDate = (dateString) => {
     if (!dateString) return null
-    const date = new Date(dateString)
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    return moment(dateString).format('MMM D, YYYY')
 }
 const ratingButtonClasses = (option) => getRatingButtonClasses(option.slug, myRatingOptionId.value === option.id)
 

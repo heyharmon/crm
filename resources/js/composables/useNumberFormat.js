@@ -61,3 +61,18 @@ export function useNumberFormat(props, updateFilter, filterKey) {
         parseNumber
     }
 }
+
+/**
+ * Format assets value to display in billions or millions
+ * @param {number} value - The asset value
+ * @returns {string|null} - Formatted asset string (e.g., "$1.25B" or "$450M")
+ */
+export function formatAssets(value) {
+    if (value === null || value === undefined) return null
+    const billions = value / 1000000000
+    const millions = value / 1000000
+    if (billions >= 1) {
+        return `$${billions.toFixed(2)}B`
+    }
+    return `$${millions.toFixed(0)}M`
+}
