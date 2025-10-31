@@ -149,11 +149,8 @@ onMounted(async () => {
                         :key="option.id"
                         size="sm"
                         variant="ghost"
-                        class="rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wide transition"
-                        :class="[
-                            ratingButtonClasses(option, isFilterActive(option.id) ? option.id : null),
-                            isFilterActive(option.id) ? 'ring-2 ring-offset-2' : ''
-                        ]"
+                        class="rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wide transition hover:opacity-100"
+                        :class="[ratingButtonClasses(option, isFilterActive(option.id) ? option.id : null), isFilterActive(option.id) ? '' : 'opacity-30']"
                         @click="toggleFilter(option.id)"
                     >
                         {{ option.name }}
@@ -227,8 +224,11 @@ onMounted(async () => {
                                     :key="option.id"
                                     size="sm"
                                     variant="ghost"
-                                    class="rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wide transition"
-                                    :class="ratingButtonClasses(option, rating.website_rating_option_id)"
+                                    class="rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wide transition hover:opacity-100"
+                                    :class="[
+                                        ratingButtonClasses(option, rating.website_rating_option_id),
+                                        rating.website_rating_option_id !== option.id ? 'opacity-30' : ''
+                                    ]"
                                     :disabled="isUpdating"
                                     @click="updateRating(rating, option.id)"
                                 >
