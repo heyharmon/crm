@@ -37,6 +37,20 @@ const formatAverage = (value) => {
     if (value === null || value === undefined) return null
     return Number(value).toFixed(2)
 }
+const formatAssets = (value) => {
+    if (value === null || value === undefined) return null
+    const billions = value / 1000000000
+    const millions = value / 1000000
+    if (billions >= 1) {
+        return `$${billions.toFixed(2)}B`
+    }
+    return `$${millions.toFixed(0)}M`
+}
+const formatDate = (dateString) => {
+    if (!dateString) return null
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+}
 const ratingButtonClasses = (option) => getRatingButtonClasses(option.slug, myRatingOptionId.value === option.id)
 
 const loadRatingOptions = async () => {
@@ -120,7 +134,8 @@ const fetchNextBatch = async () => {
                 website: 'present',
                 my_website_rating: 'none',
                 website_status: 'up',
-                assets_min: 400000000
+                assets_min: 400000000,
+                assets_max: 2000000000
             }
 
             if (RANDOMIZE_UNRATED_WEBSITES) {
@@ -289,16 +304,6 @@ onMounted(() => {
     <DefaultLayout>
         <div class="py-6 sm:py-10">
             <div class="flex flex-col gap-6">
-                <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-                    <div>
-                        <h1 class="text-2xl font-semibold text-neutral-900 sm:text-3xl">Website Ratings</h1>
-                        <p class="text-sm text-neutral-500 sm:max-w-[560px]">
-                            Review each organization's website and choose a rating. Skip any you want to revisit later.
-                        </p>
-                        <p class="mt-2 text-xs text-neutral-400">Showing organizations with: Website status is up • Assets ≥ $400M • Not yet rated by you</p>
-                    </div>
-                </div>
-
                 <div v-if="error" class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                     {{ error }}
                 </div>
@@ -314,6 +319,10 @@ onMounted(() => {
                                 <h2 class="text-xl font-semibold text-neutral-900 sm:text-2xl">
                                     {{ currentOrg.name }}
                                 </h2>
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-neutral-600">
+                                    <span v-if="currentOrg.assets">Assets: {{ formatAssets(currentOrg.assets) }}</span>
+                                    <span v-if="currentOrg.last_major_redesign_at">Last Redesign: {{ formatDate(currentOrg.last_major_redesign_at) }}</span>
+                                </div>
                                 <a
                                     v-if="currentOrg.website"
                                     :href="formatWebsite(currentOrg.website)"
@@ -365,33 +374,36 @@ onMounted(() => {
                         </div>
                     </div>
 
-                    <div
-                        v-if="currentOrg.website"
-                        class="relative w-full overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-900 shadow-lg shadow-neutral-900/20 sm:rounded-3xl min-h-[360px] sm:min-h-[480px] lg:min-h-[60vh]"
-                    >
+                    <div class="flex flex-col gap-3">
                         <div
-                            v-if="!screenshotReady && !screenshotError"
-                            class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-neutral-900 text-neutral-300"
+                            v-if="currentOrg.website"
+                            class="relative w-full overflow-hidden rounded-2xl border border-neutral-200 bg-neutral-900 shadow-lg shadow-neutral-900/20 sm:rounded-3xl min-h-[360px] sm:min-h-[480px] lg:min-h-[60vh]"
                         >
-                            <span class="text-sm font-medium uppercase tracking-wide">Loading screenshot…</span>
-                            <span class="text-xs text-neutral-500">Fetching a fresh view of the site.</span>
+                            <div
+                                v-if="!screenshotReady && !screenshotError"
+                                class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-neutral-900 text-neutral-300"
+                            >
+                                <span class="text-sm font-medium uppercase tracking-wide">Loading screenshot…</span>
+                                <span class="text-xs text-neutral-500">Fetching a fresh view of the site.</span>
+                            </div>
+                            <div
+                                v-else-if="screenshotError"
+                                class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-neutral-900 text-neutral-200"
+                            >
+                                <span class="text-sm font-semibold">Screenshot unavailable</span>
+                                <span class="text-xs text-neutral-500">Open the site directly to complete the review.</span>
+                            </div>
+                            <img
+                                v-if="getScreenshotUrl(currentOrg.website) && !screenshotError"
+                                :key="currentOrg.id"
+                                :src="getScreenshotUrl(currentOrg.website)"
+                                :alt="`Screenshot of ${currentOrg.name} website`"
+                                class="h-full w-full min-h-[320px] max-h-[70vh] object-contain bg-black sm:min-h-[480px] lg:max-h-none"
+                                @load="handleScreenshotLoad"
+                                @error="handleScreenshotError"
+                            />
                         </div>
-                        <div
-                            v-else-if="screenshotError"
-                            class="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-neutral-900 text-neutral-200"
-                        >
-                            <span class="text-sm font-semibold">Screenshot unavailable</span>
-                            <span class="text-xs text-neutral-500">Open the site directly to complete the review.</span>
-                        </div>
-                        <img
-                            v-if="getScreenshotUrl(currentOrg.website) && !screenshotError"
-                            :key="currentOrg.id"
-                            :src="getScreenshotUrl(currentOrg.website)"
-                            :alt="`Screenshot of ${currentOrg.name} website`"
-                            class="h-full w-full min-h-[320px] max-h-[70vh] object-contain bg-black sm:min-h-[480px] lg:max-h-none"
-                            @load="handleScreenshotLoad"
-                            @error="handleScreenshotError"
-                        />
+                        <p class="text-sm text-neutral-400">Showing organizations with: Website status is up • Assets $400M–$2B • Not yet rated by you</p>
                     </div>
                 </div>
 
