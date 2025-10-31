@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import Button from '@/components/ui/Button.vue'
 import Input from '@/components/ui/Input.vue'
 import { useNumberFormat } from '@/composables/useNumberFormat'
@@ -43,6 +43,11 @@ const setSweetSpot = () => {
     assetsMin.handleInput('400000000')
     assetsMax.handleInput('2000000000')
 }
+
+// Accordion state
+const locationAccordionOpen = ref(false)
+const categoryAccordionOpen = ref(false)
+const cmsAccordionOpen = ref(false)
 
 const setWebsiteFilter = (value) => {
     // Clicking the active option should revert to "any"
@@ -131,7 +136,7 @@ const getSortIcon = (column) => {
     <div class="flex flex-col gap-6">
         <div class="flex items-center justify-between">
             <p class="text-xs font-semibold uppercase tracking-wide text-neutral-400">Filters</p>
-            <Button v-if="hasActiveFilters" @click="resetFilters" size="sm" variant="link"> Clear Filters </Button>
+            <Button v-if="hasActiveFilters" @click="resetFilters" size="sm" variant="link">Clear filters</Button>
         </div>
 
         <div class="space-y-3">
@@ -147,39 +152,9 @@ const getSortIcon = (column) => {
         <div class="space-y-6">
             <div class="space-y-4">
                 <div>
-                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">City</label>
-                    <Input :model-value="filters.city" @update:model-value="updateFilter('city', $event)" placeholder="Filter by city" />
-                </div>
-
-                <div>
-                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">State</label>
-                    <Input :model-value="filters.state" @update:model-value="updateFilter('state', $event)" placeholder="Filter by state" />
-                </div>
-
-                <div>
-                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Country</label>
-                    <Input :model-value="filters.country" @update:model-value="updateFilter('country', $event)" placeholder="Filter by country" />
-                </div>
-
-                <div>
-                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Category</label>
-                    <Input :model-value="filters.category" @update:model-value="updateFilter('category', $event)" placeholder="Filter by category" />
-                </div>
-                <div>
-                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">CMS</label>
-                    <Input :model-value="filters.cms" @update:model-value="updateFilter('cms', $event)" placeholder="Filter by CMS" />
-                </div>
-
-                <div>
                     <div class="mb-2 flex items-center justify-between">
                         <label class="text-xs font-medium uppercase tracking-wide text-neutral-500">Assets</label>
-                        <button
-                            type="button"
-                            @click="setSweetSpot"
-                            class="rounded bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-600 transition hover:bg-neutral-200 hover:text-neutral-800"
-                        >
-                            Preset: Sweet Spot
-                        </button>
+                        <Button size="sm" variant="link" @click="setSweetSpot">Apply sweet spot</Button>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <Input :model-value="assetsMin.displayValue.value" @update:model-value="assetsMin.handleInput" type="text" placeholder="Min" />
@@ -205,6 +180,95 @@ const getSortIcon = (column) => {
                             placeholder="Max"
                         />
                     </div>
+                </div>
+
+                <!-- Location Accordion -->
+                <div class="border-t border-neutral-200 pt-4">
+                    <button
+                        type="button"
+                        @click="locationAccordionOpen = !locationAccordionOpen"
+                        class="flex w-full items-center justify-between text-xs font-medium uppercase tracking-wide text-neutral-500 transition hover:text-neutral-700"
+                    >
+                        <span>Location</span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transition-transform"
+                            :class="{ 'rotate-180': locationAccordionOpen }"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <transition name="accordion">
+                        <div v-if="locationAccordionOpen" class="mt-4 space-y-4">
+                            <div>
+                                <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">City</label>
+                                <Input :model-value="filters.city" @update:model-value="updateFilter('city', $event)" placeholder="Filter by city" />
+                            </div>
+                            <div>
+                                <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">State</label>
+                                <Input :model-value="filters.state" @update:model-value="updateFilter('state', $event)" placeholder="Filter by state" />
+                            </div>
+                            <div>
+                                <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Country</label>
+                                <Input :model-value="filters.country" @update:model-value="updateFilter('country', $event)" placeholder="Filter by country" />
+                            </div>
+                        </div>
+                    </transition>
+                </div>
+
+                <!-- Category Accordion -->
+                <div class="border-t border-neutral-200 pt-4">
+                    <button
+                        type="button"
+                        @click="categoryAccordionOpen = !categoryAccordionOpen"
+                        class="flex w-full items-center justify-between text-xs font-medium uppercase tracking-wide text-neutral-500 transition hover:text-neutral-700"
+                    >
+                        <span>Category</span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transition-transform"
+                            :class="{ 'rotate-180': categoryAccordionOpen }"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <transition name="accordion">
+                        <div v-if="categoryAccordionOpen" class="mt-4">
+                            <Input :model-value="filters.category" @update:model-value="updateFilter('category', $event)" placeholder="Filter by category" />
+                        </div>
+                    </transition>
+                </div>
+
+                <!-- CMS Accordion -->
+                <div class="border-t border-neutral-200 pt-4">
+                    <button
+                        type="button"
+                        @click="cmsAccordionOpen = !cmsAccordionOpen"
+                        class="flex w-full items-center justify-between text-xs font-medium uppercase tracking-wide text-neutral-500 transition hover:text-neutral-700"
+                    >
+                        <span>CMS</span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transition-transform"
+                            :class="{ 'rotate-180': cmsAccordionOpen }"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <transition name="accordion">
+                        <div v-if="cmsAccordionOpen" class="mt-4">
+                            <Input :model-value="filters.cms" @update:model-value="updateFilter('cms', $event)" placeholder="Filter by CMS" />
+                        </div>
+                    </transition>
                 </div>
             </div>
 
@@ -416,3 +480,23 @@ const getSortIcon = (column) => {
         </div>
     </div>
 </template>
+
+<style scoped>
+.accordion-enter-active,
+.accordion-leave-active {
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.accordion-enter-from,
+.accordion-leave-to {
+    max-height: 0;
+    opacity: 0;
+}
+
+.accordion-enter-to,
+.accordion-leave-from {
+    max-height: 500px;
+    opacity: 1;
+}
+</style>
