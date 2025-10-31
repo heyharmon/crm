@@ -130,12 +130,12 @@ const getScreenshotUrl = (website) => {
                         </div>
                     </div>
 
-                    <div v-if="organization.website" class="relative h-40 overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100">
+                    <div v-if="organization.website" class="relative aspect-[3/2] overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100">
                         <img
                             v-if="getScreenshotUrl(organization.website)"
                             :src="getScreenshotUrl(organization.website)"
                             :alt="`Screenshot of ${organization.name} website`"
-                            class="absolute inset-0 h-full w-full object-cover"
+                            class="absolute inset-0 h-full w-full object-contain"
                             @error="(e) => (e.target.style.display = 'none')"
                         />
                         <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent px-3 py-2 text-xs font-medium text-white">
