@@ -142,6 +142,13 @@ const toggleMobileAdmin = () => {
                         </button>
                         <div v-if="adminDropdownOpen" class="absolute right-0 top-full mt-2 w-48 rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
                             <router-link
+                                :to="{ name: 'users.index' }"
+                                @click="closeAdminDropdown"
+                                class="block px-4 py-2 text-sm text-neutral-700 transition hover:bg-neutral-100"
+                            >
+                                Users
+                            </router-link>
+                            <router-link
                                 to="/organization-categories"
                                 @click="closeAdminDropdown"
                                 class="block px-4 py-2 text-sm text-neutral-700 transition hover:bg-neutral-100"
@@ -249,6 +256,16 @@ const toggleMobileAdmin = () => {
                                 </svg>
                             </button>
                             <div v-if="mobileAdminOpen" class="space-y-2 pl-3">
+                                <router-link
+                                    :to="{ name: 'users.index' }"
+                                    :class="[
+                                        'block rounded-xl px-3 py-2 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900',
+                                        { 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white': isRouteActive('users.index') }
+                                    ]"
+                                    @click="closeMobileMenu"
+                                >
+                                    Users
+                                </router-link>
                                 <router-link
                                     to="/organization-categories"
                                     :class="[

@@ -4,6 +4,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import Dashboard from '@/pages/Dashboard.vue'
 import Login from '@/pages/auth/Login.vue'
 import Register from '@/pages/auth/Register.vue'
+import UsersIndex from '@/pages/users/UsersIndex.vue'
 // Organization pages
 import OrganizationIndex from '@/pages/organizations/OrganizationIndex.vue'
 import OrganizationCreate from '@/pages/organizations/OrganizationCreate.vue'
@@ -31,6 +32,12 @@ const routes = [
         name: 'register',
         component: Register,
         meta: { guest: true }
+    },
+    {
+        path: '/users',
+        name: 'users.index',
+        component: UsersIndex,
+        meta: { requiresAuth: true }
     },
     {
         path: '/organizations',

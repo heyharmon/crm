@@ -6,7 +6,7 @@ Manages user authentication including standard registration, invitation-based si
 
 ## Backend
 
--   **AuthController**: provides endpoints for registering, logging in, logging out and retrieving the current user. Handles invitation tokens during registration. New users registering without an invitation are assigned the 'admin' role by default, while invited users receive the role specified in their invitation token.
+-   **AuthController**: provides endpoints for registering, logging in, logging out and retrieving the current user. Handles invitation tokens during registration. New users registering without an invitation are assigned the 'guest' role by default, while invited users receive the role specified in their invitation token.
 -   **User model**: stores account details including a role field ('admin' or 'guest').
 -   **InvitationToken model**: tracks pending invitations that can be redeemed during registration, including the role to be assigned.
 

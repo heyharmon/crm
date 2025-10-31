@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationBatchActionController;
 use App\Http\Controllers\OrganizationCategoryController;
@@ -28,6 +29,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
     Route::get('/dashboard', DashboardController::class);
+
+    // User routes
+    Route::get('users', [UserController::class, 'index']);
+    Route::post('invitations', [InvitationController::class, 'store']);
 
     // Organization routes
     Route::post('organizations/batch/actions', OrganizationBatchActionController::class);
