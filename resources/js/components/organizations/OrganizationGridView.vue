@@ -1,8 +1,10 @@
 <script setup>
 import { computed } from 'vue'
+import moment from 'moment'
 import Button from '@/components/ui/Button.vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import { formatDisplayDate } from '@/utils/date'
+import { formatAssets } from '@/composables/useNumberFormat'
 
 const props = defineProps({
     organizations: {
@@ -24,6 +26,16 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['update:columns', 'open-sidebar', 'delete-organization', 'update-website-rating', 'clear-website-rating', 'page-change'])
+
+const formatDate = (dateString) => {
+    if (!dateString) return null
+    return moment(dateString).format('MMM D, YYYY')
+}
+
+const formatWebsite = (url) => {
+    if (!url) return ''
+    return /^https?:\/\//i.test(url) ? url : `https://${url}`
+}
 
 const getScreenshotUrl = (website) => {
     if (!website) return null
@@ -85,18 +97,27 @@ const getScreenshotUrl = (website) => {
                     class="flex flex-col gap-4 rounded-xl border border-neutral-200 bg-white p-5 shadow-sm transition hover:shadow-md"
                 >
                     <div class="flex items-start justify-between">
-                        <div>
-                            <h3 class="text-lg font-semibold leading-tight text-neutral-900">
+                        <div class="space-y-2">
+                            <h3 class="text-lg font-semibold text-neutral-900">
                                 {{ organization.name }}
                             </h3>
-                            <div v-if="organization.category" class="text-sm font-medium text-neutral-600">
-                                {{ organization.category.name }}
+                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-neutral-600">
+                                <span v-if="organization.assets"> Assets: {{ formatAssets(organization.assets) }} </span>
                             </div>
-                            <div v-if="organization.city || organization.state" class="text-sm text-neutral-500">
-                                {{ [organization.city, organization.state].filter(Boolean).join(', ') }}
-                            </div>
-                            <div v-if="organization.last_major_redesign_at" class="text-xs font-medium">
-                                Last redesign · {{ formatDisplayDate(organization.last_major_redesign_at) }}
+                            <a
+                                v-if="organization.website"
+                                :href="formatWebsite(organization.website)"
+                                target="_blank"
+                                rel="noopener"
+                                class="inline-flex items-center gap-2 text-sm font-medium text-neutral-600 underline underline-offset-4 hover:text-neutral-900"
+                            >
+                                {{ formatWebsite(organization.website) }}
+                            </a>
+                            <div v-if="organization.my_website_rating_created_at" class="pt-1 text-xs text-neutral-500">
+                                Rated {{ formatDate(organization.my_website_rating_created_at) }}
+                                <span v-if="organization.my_website_rating_updated_at !== organization.my_website_rating_created_at">
+                                    • Updated {{ formatDate(organization.my_website_rating_updated_at) }}
+                                </span>
                             </div>
                         </div>
                         <div
