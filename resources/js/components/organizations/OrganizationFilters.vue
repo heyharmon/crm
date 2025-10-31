@@ -153,7 +153,30 @@ const getSortIcon = (column) => {
             <div class="space-y-4">
                 <div>
                     <div class="mb-2 flex items-center justify-between">
-                        <label class="text-xs font-medium uppercase tracking-wide text-neutral-500">Assets</label>
+                        <div class="flex items-center gap-1">
+                            <label class="text-xs font-medium uppercase tracking-wide text-neutral-500">Assets</label>
+                            <span class="group relative">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-3.5 w-3.5 text-neutral-400 cursor-help"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        stroke-width="2"
+                                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                                    />
+                                </svg>
+                                <span
+                                    class="invisible group-hover:visible absolute left-0 top-5 z-10 w-48 rounded bg-neutral-800 px-2 py-1 text-xs text-white shadow-lg"
+                                >
+                                    Source of assets from 2025 NCUA data
+                                </span>
+                            </span>
+                        </div>
                         <Button size="sm" variant="link" @click="setSweetSpot">Apply sweet spot</Button>
                     </div>
                     <div class="grid grid-cols-2 gap-2">

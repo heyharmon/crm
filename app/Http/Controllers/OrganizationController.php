@@ -213,6 +213,7 @@ class OrganizationController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'source' => 'nullable|string|max:255',
             'banner' => 'nullable|url|max:500',
             'score' => 'nullable|numeric|min:0|max:5',
             'reviews' => 'nullable|integer|min:0',
@@ -235,6 +236,7 @@ class OrganizationController extends Controller
     {
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
+            'source' => 'nullable|string|max:255',
             'banner' => 'nullable|url|max:500',
             'score' => 'nullable|numeric|min:0|max:5',
             'reviews' => 'nullable|integer|min:0',
