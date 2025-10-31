@@ -46,7 +46,7 @@ const goBack = () => {
     <DefaultLayout>
         <div class="container mx-auto px-4 py-8">
             <div class="mb-6">
-                <Button variant="outline" @click="goBack" class="mb-4"> ← Back to Users </Button>
+                <Button variant="link" @click="goBack" class="mb-6"> ← Back to Users </Button>
                 <h1 class="text-2xl font-bold text-neutral-900">User Profile</h1>
             </div>
 
