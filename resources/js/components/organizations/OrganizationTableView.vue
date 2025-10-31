@@ -246,11 +246,11 @@ const websiteStatusClasses = (status) => getWebsiteStatusClasses(status)
                                     v-if="organization.banner"
                                     :src="organization.banner"
                                     :alt="organization.name"
-                                    class="h-10 w-10 rounded-full border border-neutral-200 object-cover"
+                                    class="h-10 w-10 shrink-0 rounded-full border border-neutral-200 object-cover"
                                 />
                                 <div
                                     v-else
-                                    class="flex h-10 w-10 items-center justify-center rounded-full border border-dashed border-neutral-200 bg-neutral-100 text-sm font-medium text-neutral-500"
+                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-dashed border-neutral-200 bg-neutral-100 text-sm font-medium text-neutral-500"
                                 >
                                     <span>{{ organization.name.charAt(0).toUpperCase() }}</span>
                                 </div>
