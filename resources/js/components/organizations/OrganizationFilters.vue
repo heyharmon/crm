@@ -39,6 +39,11 @@ const updateFilter = (key, value) => {
 const assetsMin = useNumberFormat(props, updateFilter, 'assets_min')
 const assetsMax = useNumberFormat(props, updateFilter, 'assets_max')
 
+const setSweetSpot = () => {
+    assetsMin.handleInput('400000000')
+    assetsMax.handleInput('2000000000')
+}
+
 const setWebsiteFilter = (value) => {
     // Clicking the active option should revert to "any"
     const next = props.filters.website === value ? '' : value
@@ -166,7 +171,16 @@ const getSortIcon = (column) => {
                 </div>
 
                 <div>
-                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Assets</label>
+                    <div class="mb-2 flex items-center justify-between">
+                        <label class="text-xs font-medium uppercase tracking-wide text-neutral-500">Assets</label>
+                        <button
+                            type="button"
+                            @click="setSweetSpot"
+                            class="rounded bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-600 transition hover:bg-neutral-200 hover:text-neutral-800"
+                        >
+                            Preset: Sweet Spot
+                        </button>
+                    </div>
                     <div class="grid grid-cols-2 gap-2">
                         <Input :model-value="assetsMin.displayValue.value" @update:model-value="assetsMin.handleInput" type="text" placeholder="Min" />
                         <Input :model-value="assetsMax.displayValue.value" @update:model-value="assetsMax.handleInput" type="text" placeholder="Max" />
