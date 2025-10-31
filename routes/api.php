@@ -49,15 +49,22 @@ Route::middleware('auth:sanctum')->group(function () {
     // Define bulk route BEFORE resource to avoid matching {organization-category}='bulk'
     Route::delete('organization-categories/bulk', [OrganizationCategoryController::class, 'bulkDestroy']);
     Route::resource('organization-categories', OrganizationCategoryController::class)->only([
-        'index', 'store', 'update', 'destroy'
+        'index',
+        'store',
+        'update',
+        'destroy'
     ]);
 
     // Website rating options
     Route::resource('website-rating-options', WebsiteRatingOptionController::class)->only([
-        'index', 'store', 'update', 'destroy'
+        'index',
+        'store',
+        'update',
+        'destroy'
     ]);
 
     // Organization website ratings
+    Route::get('website-ratings', [WebsiteRatingController::class, 'index']);
     Route::post('organizations/{organization}/website-ratings', [WebsiteRatingController::class, 'store']);
     Route::delete('organizations/{organization}/website-ratings', [WebsiteRatingController::class, 'destroy']);
     Route::post('organizations/{organization}/website-redesigns', [OrganizationWebsiteRedesignController::class, 'store']);

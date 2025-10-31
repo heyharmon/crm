@@ -13,6 +13,7 @@ import OrganizationImport from '@/pages/organizations/OrganizationImport.vue'
 import OrganizationCategoriesIndex from '@/pages/organization-categories/OrganizationCategoriesIndex.vue'
 import WebsiteRatingOptions from '@/pages/websites/WebsiteRatingOptions.vue'
 import WebsiteRatings from '@/pages/websites/WebsiteRatings.vue'
+import MyWebsiteRatings from '@/pages/websites/MyWebsiteRatings.vue'
 
 const routes = [
     {
@@ -84,6 +85,12 @@ const routes = [
         path: '/websites/ratings',
         name: 'websites.ratings',
         component: WebsiteRatings,
+        meta: { requiresAuth: true }
+    },
+    {
+        path: '/websites/my-ratings',
+        name: 'websites.my-ratings',
+        component: MyWebsiteRatings,
         meta: { requiresAuth: true }
     },
     {

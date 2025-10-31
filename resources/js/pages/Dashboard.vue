@@ -121,6 +121,12 @@ const ratingBadgeClasses = (option) => getRatingPillClasses(option?.slug)
                             {{ formatInteger(ratings.user_rated_websites) }}
                         </p>
                         <p class="mt-1 text-sm text-neutral-500">Your personal contributions</p>
+                        <router-link
+                            :to="{ name: 'websites.my-ratings' }"
+                            class="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-neutral-600 underline underline-offset-4 transition hover:text-neutral-900"
+                        >
+                            View My Ratings
+                        </router-link>
                     </article>
 
                     <article class="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
