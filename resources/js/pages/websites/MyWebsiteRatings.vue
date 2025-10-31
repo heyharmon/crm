@@ -13,6 +13,7 @@ const selectedFilters = ref([])
 const isLoading = ref(false)
 const isUpdating = ref(false)
 const error = ref(null)
+const columns = ref(2)
 
 const formatDate = (dateString) => {
     if (!dateString) return null
@@ -25,6 +26,13 @@ const formatWebsite = (url) => {
 }
 
 const ratingButtonClasses = (option, currentRatingId) => getRatingButtonClasses(option.slug, currentRatingId === option.id)
+
+const getScreenshotUrl = (website) => {
+    if (!website) return null
+    const baseUrl = 'https://api.apiflash.com/v1/urltoimage'
+    const accessKey = '3725d3868ee3426e82b2a3b9eebde219'
+    return `${baseUrl}?access_key=${accessKey}&wait_until=network_idle&no_cookie_banners=true&url=${encodeURIComponent(website)}`
+}
 
 const loadRatingOptions = async () => {
     try {
@@ -153,9 +161,42 @@ onMounted(async () => {
             <div v-if="ratingOptions.length" class="mb-6 rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm">
                 <div class="mb-3 flex items-center justify-between">
                     <p class="text-sm font-semibold text-neutral-700">Filter by rating</p>
-                    <button v-if="selectedFilters.length > 0" class="text-xs text-neutral-500 hover:text-neutral-700" @click="clearFilters">
-                        Clear filters
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <button v-if="selectedFilters.length > 0" class="text-xs text-neutral-500 hover:text-neutral-700" @click="clearFilters">
+                            Clear filters
+                        </button>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-neutral-400">Columns</span>
+                        <div class="inline-flex items-center gap-1 rounded-full border border-neutral-200 bg-white p-1">
+                            <button
+                                class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
+                                :class="columns === 1 ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
+                                @click="columns = 1"
+                            >
+                                1
+                            </button>
+                            <button
+                                class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
+                                :class="columns === 2 ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
+                                @click="columns = 2"
+                            >
+                                2
+                            </button>
+                            <button
+                                class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
+                                :class="columns === 3 ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
+                                @click="columns = 3"
+                            >
+                                3
+                            </button>
+                            <button
+                                class="rounded-full px-3 py-1 text-xs font-semibold text-neutral-600 transition-colors focus-visible:outline-neutral-400"
+                                :class="columns === 4 ? 'bg-neutral-900 text-white shadow-sm' : 'hover:bg-neutral-100 hover:text-neutral-900'"
+                                @click="columns = 4"
+                            >
+                                4
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="flex flex-wrap gap-2">
                     <Button
@@ -199,63 +240,87 @@ onMounted(async () => {
                 </router-link>
             </div>
 
-            <div v-else class="space-y-4">
+            <div
+                v-else
+                class="grid gap-4"
+                :class="{
+                    'sm:grid-cols-1': columns === 1,
+                    'sm:grid-cols-2': columns === 2,
+                    'sm:grid-cols-2 lg:grid-cols-3': columns === 3,
+                    'sm:grid-cols-2 lg:grid-cols-4': columns === 4
+                }"
+            >
                 <div
                     v-for="rating in ratings"
                     :key="rating.id"
                     class="rounded-2xl border border-neutral-200 bg-white p-5 shadow-sm transition hover:border-neutral-300"
                 >
-                    <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                        <div class="flex-1 space-y-2">
-                            <h3 class="text-lg font-semibold text-neutral-900">
-                                {{ rating.organization_name }}
-                            </h3>
-                            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-neutral-600">
-                                <span v-if="rating.organization_assets"> Assets: {{ formatAssets(rating.organization_assets) }} </span>
-                                <span v-if="rating.organization_last_major_redesign_at">
-                                    Last Redesign: {{ formatDate(rating.organization_last_major_redesign_at) }}
-                                </span>
+                    <div class="flex flex-col gap-4">
+                        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                            <div class="flex-1 space-y-2">
+                                <h3 class="text-lg font-semibold text-neutral-900">
+                                    {{ rating.organization_name }}
+                                </h3>
+                                <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-neutral-600">
+                                    <span v-if="rating.organization_assets"> Assets: {{ formatAssets(rating.organization_assets) }} </span>
+                                    <span v-if="rating.organization_last_major_redesign_at">
+                                        Last Redesign: {{ formatDate(rating.organization_last_major_redesign_at) }}
+                                    </span>
+                                </div>
+                                <a
+                                    v-if="rating.organization_website"
+                                    :href="formatWebsite(rating.organization_website)"
+                                    target="_blank"
+                                    rel="noopener"
+                                    class="inline-flex items-center gap-2 text-sm font-medium text-neutral-600 underline underline-offset-4 hover:text-neutral-900"
+                                >
+                                    {{ formatWebsite(rating.organization_website) }}
+                                </a>
+                                <div class="pt-1 text-xs text-neutral-500">
+                                    Rated {{ formatDate(rating.created_at) }}
+                                    <span v-if="rating.updated_at !== rating.created_at"> • Updated {{ formatDate(rating.updated_at) }} </span>
+                                </div>
                             </div>
-                            <a
-                                v-if="rating.organization_website"
-                                :href="formatWebsite(rating.organization_website)"
-                                target="_blank"
-                                rel="noopener"
-                                class="inline-flex items-center gap-2 text-sm font-medium text-neutral-600 underline underline-offset-4 hover:text-neutral-900"
-                            >
-                                {{ formatWebsite(rating.organization_website) }}
-                            </a>
-                            <div class="pt-1 text-xs text-neutral-500">
-                                Rated {{ formatDate(rating.created_at) }}
-                                <span v-if="rating.updated_at !== rating.created_at"> • Updated {{ formatDate(rating.updated_at) }} </span>
+
+                            <div class="flex flex-col gap-3 sm:items-end">
+                                <div class="flex flex-wrap gap-2 sm:justify-end">
+                                    <Button
+                                        v-for="option in ratingOptions"
+                                        :key="option.id"
+                                        size="sm"
+                                        variant="ghost"
+                                        class="rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wide transition hover:opacity-100"
+                                        :class="[
+                                            ratingButtonClasses(option, rating.website_rating_option_id),
+                                            rating.website_rating_option_id !== option.id ? 'opacity-30' : ''
+                                        ]"
+                                        :disabled="isUpdating"
+                                        @click="updateRating(rating, option.id)"
+                                    >
+                                        {{ option.name }}
+                                    </Button>
+                                </div>
+                                <button
+                                    class="text-xs text-neutral-500 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+                                    :disabled="isUpdating"
+                                    @click="deleteRating(rating)"
+                                >
+                                    Remove rating
+                                </button>
                             </div>
                         </div>
 
-                        <div class="flex flex-col gap-3 sm:items-end">
-                            <div class="flex flex-wrap gap-2 sm:justify-end">
-                                <Button
-                                    v-for="option in ratingOptions"
-                                    :key="option.id"
-                                    size="sm"
-                                    variant="ghost"
-                                    class="rounded-full px-4 py-1.5 text-xs font-semibold uppercase tracking-wide transition hover:opacity-100"
-                                    :class="[
-                                        ratingButtonClasses(option, rating.website_rating_option_id),
-                                        rating.website_rating_option_id !== option.id ? 'opacity-30' : ''
-                                    ]"
-                                    :disabled="isUpdating"
-                                    @click="updateRating(rating, option.id)"
-                                >
-                                    {{ option.name }}
-                                </Button>
-                            </div>
-                            <button
-                                class="text-xs text-neutral-500 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
-                                :disabled="isUpdating"
-                                @click="deleteRating(rating)"
-                            >
-                                Remove rating
-                            </button>
+                        <div
+                            v-if="rating.organization_website"
+                            class="relative aspect-[3/2] overflow-hidden rounded-lg border border-neutral-200 bg-neutral-100"
+                        >
+                            <img
+                                v-if="getScreenshotUrl(rating.organization_website)"
+                                :src="getScreenshotUrl(rating.organization_website)"
+                                :alt="`Screenshot of ${rating.organization_name} website`"
+                                class="absolute inset-0 h-full w-full object-contain"
+                                @error="(e) => (e.target.style.display = 'none')"
+                            />
                         </div>
                     </div>
                 </div>
