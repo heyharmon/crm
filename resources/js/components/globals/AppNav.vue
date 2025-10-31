@@ -7,6 +7,7 @@ const router = useRouter()
 const route = useRoute()
 const isAuthenticated = computed(() => auth.isAuthenticated())
 const user = computed(() => auth.getUser())
+const isAdmin = computed(() => auth.isAdmin())
 const navLinkClasses = 'rounded-full px-3 py-1 transition hover:bg-neutral-100 hover:text-neutral-900'
 const activeNavClasses = 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white'
 const mobileMenuOpen = ref(false)
@@ -80,10 +81,14 @@ const toggleMobileAdmin = () => {
                 <router-link to="/" class="text-lg font-semibold text-neutral-900"> CRM </router-link>
 
                 <div v-if="isAuthenticated" class="hidden items-center gap-1 text-sm font-medium text-neutral-500 md:flex">
-                    <router-link :to="{ name: 'dashboard' }" :class="[navLinkClasses, { [activeNavClasses]: isRouteActive('dashboard') }]">
+                    <router-link v-if="isAdmin" :to="{ name: 'dashboard' }" :class="[navLinkClasses, { [activeNavClasses]: isRouteActive('dashboard') }]">
                         Dashboard
                     </router-link>
-                    <router-link :to="{ name: 'organizations.index' }" :class="[navLinkClasses, { [activeNavClasses]: isRouteActive('organizations.index') }]">
+                    <router-link
+                        v-if="isAdmin"
+                        :to="{ name: 'organizations.index' }"
+                        :class="[navLinkClasses, { [activeNavClasses]: isRouteActive('organizations.index') }]"
+                    >
                         Organizations
                     </router-link>
                     <router-link :to="{ name: 'websites.ratings' }" :class="[navLinkClasses, { [activeNavClasses]: isRouteActive('websites.ratings') }]">
@@ -91,13 +96,6 @@ const toggleMobileAdmin = () => {
                     </router-link>
                     <router-link :to="{ name: 'websites.my-ratings' }" :class="[navLinkClasses, { [activeNavClasses]: isRouteActive('websites.my-ratings') }]">
                         My Ratings
-                    </router-link>
-                    <router-link
-                        v-if="user?.current_team_id"
-                        :to="{ name: 'teams.show', params: { id: user.current_team_id } }"
-                        :class="[navLinkClasses, { [activeNavClasses]: isRouteActive('teams.show') }]"
-                    >
-                        My Team
                     </router-link>
                 </div>
                 <button
@@ -135,7 +133,7 @@ const toggleMobileAdmin = () => {
 
             <div class="hidden items-center gap-2 md:flex">
                 <template v-if="isAuthenticated">
-                    <div class="relative" @keydown.escape="closeAdminDropdown">
+                    <div v-if="isAdmin" class="relative" @keydown.escape="closeAdminDropdown">
                         <button
                             type="button"
                             @click="toggleAdminDropdown"
@@ -148,6 +146,13 @@ const toggleMobileAdmin = () => {
                             </svg>
                         </button>
                         <div v-if="adminDropdownOpen" class="absolute right-0 top-full mt-2 w-48 rounded-lg border border-neutral-200 bg-white py-1 shadow-lg">
+                            <router-link
+                                :to="{ name: 'users.index' }"
+                                @click="closeAdminDropdown"
+                                class="block px-4 py-2 text-sm text-neutral-700 transition hover:bg-neutral-100"
+                            >
+                                Users
+                            </router-link>
                             <router-link
                                 to="/organization-categories"
                                 @click="closeAdminDropdown"
@@ -195,6 +200,7 @@ const toggleMobileAdmin = () => {
                     <div class="mx-auto flex w-full max-w-[1563px] flex-col gap-4 px-4 sm:px-6 lg:px-8">
                         <div class="space-y-2 text-sm font-medium text-neutral-600">
                             <router-link
+                                v-if="isAdmin"
                                 :to="{ name: 'dashboard' }"
                                 :class="[
                                     'block rounded-xl px-3 py-2 transition hover:bg-neutral-100 hover:text-neutral-900',
@@ -205,6 +211,7 @@ const toggleMobileAdmin = () => {
                                 Dashboard
                             </router-link>
                             <router-link
+                                v-if="isAdmin"
                                 :to="{ name: 'organizations.index' }"
                                 :class="[
                                     'block rounded-xl px-3 py-2 transition hover:bg-neutral-100 hover:text-neutral-900',
@@ -234,22 +241,11 @@ const toggleMobileAdmin = () => {
                             >
                                 My Ratings
                             </router-link>
-                            <router-link
-                                v-if="user?.current_team_id"
-                                :to="{ name: 'teams.show', params: { id: user.current_team_id } }"
-                                :class="[
-                                    'block rounded-xl px-3 py-2 transition hover:bg-neutral-100 hover:text-neutral-900',
-                                    { 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white': isRouteActive('teams.show') }
-                                ]"
-                                @click="closeMobileMenu"
-                            >
-                                My Team
-                            </router-link>
                         </div>
 
-                        <div class="border-t border-neutral-200"></div>
+                        <div v-if="isAdmin" class="border-t border-neutral-200"></div>
 
-                        <div class="space-y-2">
+                        <div v-if="isAdmin" class="space-y-2">
                             <button
                                 type="button"
                                 @click="toggleMobileAdmin"
@@ -267,6 +263,16 @@ const toggleMobileAdmin = () => {
                                 </svg>
                             </button>
                             <div v-if="mobileAdminOpen" class="space-y-2 pl-3">
+                                <router-link
+                                    :to="{ name: 'users.index' }"
+                                    :class="[
+                                        'block rounded-xl px-3 py-2 text-sm font-medium text-neutral-600 transition hover:bg-neutral-100 hover:text-neutral-900',
+                                        { 'bg-neutral-900 text-white hover:bg-neutral-900 hover:text-white': isRouteActive('users.index') }
+                                    ]"
+                                    @click="closeMobileMenu"
+                                >
+                                    Users
+                                </router-link>
                                 <router-link
                                     to="/organization-categories"
                                     :class="[

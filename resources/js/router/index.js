@@ -1,11 +1,11 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import auth from '@/services/auth'
 
 // Import pages
 import Dashboard from '@/pages/Dashboard.vue'
 import Login from '@/pages/auth/Login.vue'
 import Register from '@/pages/auth/Register.vue'
-import TeamIndex from '@/pages/teams/TeamIndex.vue'
-import TeamShow from '@/pages/teams/TeamShow.vue'
+import UsersIndex from '@/pages/users/UsersIndex.vue'
 // Organization pages
 import OrganizationIndex from '@/pages/organizations/OrganizationIndex.vue'
 import OrganizationCreate from '@/pages/organizations/OrganizationCreate.vue'
@@ -20,7 +20,7 @@ const routes = [
         path: '/',
         name: 'dashboard',
         component: Dashboard,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, roles: ['admin'] }
     },
     {
         path: '/login',
@@ -35,83 +35,77 @@ const routes = [
         meta: { guest: true }
     },
     {
-        path: '/teams',
-        name: 'teams.index',
-        component: TeamIndex,
-        meta: { requiresAuth: true }
-    },
-    {
-        path: '/teams/:id',
-        name: 'teams.show',
-        component: TeamShow,
-        meta: { requiresAuth: true }
+        path: '/users',
+        name: 'users.index',
+        component: UsersIndex,
+        meta: { requiresAuth: true, roles: ['admin'] }
     },
     {
         path: '/organizations',
         name: 'organizations.index',
         component: OrganizationIndex,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, roles: ['admin'] }
     },
     {
         path: '/organizations/browse',
         redirect: { name: 'organizations.index', query: { view: 'grid' } },
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, roles: ['admin'] }
     },
     {
         path: '/organizations/create',
         name: 'organizations.create',
         component: OrganizationCreate,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, roles: ['admin'] }
     },
     {
         path: '/organizations/import',
         name: 'organizations.import',
         component: OrganizationImport,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, roles: ['admin'] }
     },
     {
         path: '/organization-categories',
         name: 'organization-categories.index',
         component: OrganizationCategoriesIndex,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, roles: ['admin'] }
     },
     {
         path: '/websites/options',
         name: 'websites.options',
         component: WebsiteRatingOptions,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, roles: ['admin'] }
     },
     {
         path: '/websites/ratings',
         name: 'websites.ratings',
         component: WebsiteRatings,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, roles: ['admin', 'guest'] }
     },
     {
         path: '/websites/my-ratings',
         name: 'websites.my-ratings',
         component: MyWebsiteRatings,
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, roles: ['admin', 'guest'] }
     },
     {
         path: '/website-rating-options',
         redirect: { name: 'websites.options' },
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, roles: ['admin'] }
     },
     {
         path: '/website-ratings',
         redirect: { name: 'websites.ratings' },
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, roles: ['admin', 'guest'] }
     },
     {
         path: '/organization-websites/options',
         redirect: { name: 'websites.options' },
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, roles: ['admin'] }
     },
     {
         path: '/organization-websites/ratings',
         redirect: { name: 'websites.ratings' },
-        meta: { requiresAuth: true }
+        meta: { requiresAuth: true, roles: ['admin', 'guest'] }
     }
 ]
 
@@ -120,19 +114,32 @@ const router = createRouter({
     routes
 })
 
-// Navigation guard for authentication
+// Navigation guard for authentication and authorization
 router.beforeEach((to, from, next) => {
     const token = localStorage.getItem('token')
+    const userRole = auth.getUserRole()
 
     if (to.matched.some((record) => record.meta.requiresAuth)) {
         if (!token) {
             next({ name: 'login' })
         } else {
-            next()
+            // Check role-based access
+            const allowedRoles = to.meta.roles
+            if (allowedRoles && !allowedRoles.includes(userRole)) {
+                // Redirect guests to their allowed page
+                next({ name: 'websites.ratings' })
+            } else {
+                next()
+            }
         }
     } else if (to.matched.some((record) => record.meta.guest)) {
         if (token) {
-            next({ name: 'dashboard' })
+            // Redirect based on role after login
+            if (userRole === 'admin') {
+                next({ name: 'dashboard' })
+            } else {
+                next({ name: 'websites.ratings' })
+            }
         } else {
             next()
         }

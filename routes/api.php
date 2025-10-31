@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\InvitationController;
-use App\Http\Controllers\TeamController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationBatchActionController;
 use App\Http\Controllers\OrganizationCategoryController;
@@ -30,13 +30,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'user']);
     Route::get('/dashboard', DashboardController::class);
 
-    // Team routes
-    Route::resource('teams', TeamController::class);
-    Route::post('teams/{team}/invite', [TeamController::class, 'invite']);
-    Route::post('teams/{team}/accept-invitation', [TeamController::class, 'acceptInvitation']);
-    Route::post('teams/{team}/decline-invitation', [TeamController::class, 'declineInvitation']);
-    Route::delete('teams/{team}/members/{user}', [TeamController::class, 'removeMember']);
-    Route::put('teams/{team}/members/{user}/role', [TeamController::class, 'updateMemberRole']);
+    // User routes
+    Route::get('users', [UserController::class, 'index']);
+    Route::get('invitations', [InvitationController::class, 'index']);
+    Route::post('invitations', [InvitationController::class, 'store']);
 
     // Organization routes
     Route::post('organizations/batch/actions', OrganizationBatchActionController::class);
