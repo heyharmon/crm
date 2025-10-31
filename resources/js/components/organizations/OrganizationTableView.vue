@@ -200,7 +200,7 @@ const websiteStatusClasses = (status) => getWebsiteStatusClasses(status)
                                 @change.stop="emit('toggle-select-all', $event.target.checked)"
                             />
                         </th>
-                        <th class="border-b border-neutral-200 px-4 py-3">Name</th>
+                        <th class="border-b border-neutral-200 px-4 py-3 min-w-64">Name</th>
                         <!-- <th class="border-b border-neutral-200 px-4 py-3">Category</th> -->
                         <th class="border-b border-neutral-200 px-4 py-3">Location</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Assets</th>
@@ -210,7 +210,7 @@ const websiteStatusClasses = (status) => getWebsiteStatusClasses(status)
                         <th class="border-b border-neutral-200 px-4 py-3">Last Redesign</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Website Rating</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Website Status</th>
-                        <th class="border-b border-neutral-200 px-4 py-3">CMS</th>
+                        <th class="border-b border-neutral-200 px-4 py-3 w-32 max-w-32">CMS</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Pages</th>
                         <th class="border-b border-neutral-200 px-4 py-3">Actions</th>
                     </tr>
@@ -240,7 +240,7 @@ const websiteStatusClasses = (status) => getWebsiteStatusClasses(status)
                                 "
                             />
                         </td>
-                        <td class="px-4 py-3 align-top">
+                        <td class="px-4 py-3 align-top min-w-64">
                             <div class="flex items-start gap-3">
                                 <img
                                     v-if="organization.banner"
@@ -344,8 +344,10 @@ const websiteStatusClasses = (status) => getWebsiteStatusClasses(status)
                                 {{ formatWebsiteStatus(organization.website_status) }}
                             </span>
                         </td>
-                        <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
-                            {{ organization.cms || '—' }}
+                        <td class="px-4 py-3 text-sm text-neutral-700 w-32 max-w-32">
+                            <div class="truncate" :title="organization.cms || ''">
+                                {{ organization.cms || '—' }}
+                            </div>
                         </td>
                         <td class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             {{ formatPagesCount(organization) }}
