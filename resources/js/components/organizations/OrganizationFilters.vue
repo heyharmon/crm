@@ -22,7 +22,10 @@ const WEBSITE_STATUS_OPTIONS = [
     { value: 'unknown', label: 'Unknown' }
 ]
 
-const LAST_REDESIGN_OPTIONS = [{ value: 'has_date', label: 'Has date' }]
+const LAST_REDESIGN_OPTIONS = [
+    { value: 'has_date', label: 'Has date' },
+    { value: 'no_date', label: 'No date' }
+]
 
 const emit = defineEmits(['update:filters', 'reset-filters', 'search'])
 

@@ -81,6 +81,8 @@ class OrganizationController extends Controller
             $redesignFilter = $request->get('last_redesign');
             if ($redesignFilter === 'has_date') {
                 $query->whereNotNull('organizations.last_major_redesign_at');
+            } elseif ($redesignFilter === 'no_date') {
+                $query->whereNull('organizations.last_major_redesign_at');
             }
         }
         if ($request->filled('cms')) {
