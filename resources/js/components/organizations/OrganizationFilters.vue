@@ -159,6 +159,34 @@ const getSortIcon = (column) => {
                     <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">CMS</label>
                     <Input :model-value="filters.cms" @update:model-value="updateFilter('cms', $event)" placeholder="Filter by CMS" />
                 </div>
+
+                <div>
+                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Assets</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <Input :model-value="filters.assets_min" @update:model-value="updateFilter('assets_min', $event)" type="number" placeholder="Min" />
+                        <Input :model-value="filters.assets_max" @update:model-value="updateFilter('assets_max', $event)" type="number" placeholder="Max" />
+                    </div>
+                </div>
+
+                <div>
+                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Asset Growth (%)</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <Input
+                            :model-value="filters.asset_growth_min"
+                            @update:model-value="updateFilter('asset_growth_min', $event)"
+                            type="number"
+                            step="0.01"
+                            placeholder="Min"
+                        />
+                        <Input
+                            :model-value="filters.asset_growth_max"
+                            @update:model-value="updateFilter('asset_growth_max', $event)"
+                            type="number"
+                            step="0.01"
+                            placeholder="Max"
+                        />
+                    </div>
+                </div>
             </div>
 
             <div class="space-y-4">

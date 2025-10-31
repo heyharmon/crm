@@ -40,7 +40,11 @@ const parseFiltersFromQuery = (q) => {
             last_redesign: toStr(q.last_redesign),
             website_rating: toStr(q.website_rating),
             website_status: toArr(q.website_status),
-            sort: toArr(q.sort)
+            sort: toArr(q.sort),
+            assets_min: toStr(q.assets_min),
+            assets_max: toStr(q.assets_max),
+            asset_growth_min: toStr(q.asset_growth_min),
+            asset_growth_max: toStr(q.asset_growth_max)
         },
         page: q.page ? Number(q.page) || 1 : 1
     }
@@ -61,6 +65,10 @@ const buildQueryFromFilters = (filters, page, base = {}) => {
     delete q.website_status
     delete q.sort
     delete q.page
+    delete q.assets_min
+    delete q.assets_max
+    delete q.asset_growth_min
+    delete q.asset_growth_max
 
     if (filters.search) q.search = filters.search
     if (filters.city) q.city = filters.city
@@ -73,6 +81,10 @@ const buildQueryFromFilters = (filters, page, base = {}) => {
     if (filters.website_rating) q.website_rating = filters.website_rating
     if (Array.isArray(filters.website_status) && filters.website_status.length) q.website_status = [...filters.website_status]
     if (Array.isArray(filters.sort) && filters.sort.length) q.sort = [...filters.sort]
+    if (filters.assets_min) q.assets_min = filters.assets_min
+    if (filters.assets_max) q.assets_max = filters.assets_max
+    if (filters.asset_growth_min) q.asset_growth_min = filters.asset_growth_min
+    if (filters.asset_growth_max) q.asset_growth_max = filters.asset_growth_max
     if (page && page > 1) q.page = String(page)
     return q
 }

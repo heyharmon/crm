@@ -93,6 +93,18 @@ class OrganizationController extends Controller
             $cms = $request->get('cms');
             $query->where('organizations.cms', 'LIKE', '%' . $cms . '%');
         }
+        if ($request->filled('assets_min')) {
+            $query->where('organizations.assets', '>=', $request->get('assets_min'));
+        }
+        if ($request->filled('assets_max')) {
+            $query->where('organizations.assets', '<=', $request->get('assets_max'));
+        }
+        if ($request->filled('asset_growth_min')) {
+            $query->where('organizations.asset_growth', '>=', $request->get('asset_growth_min'));
+        }
+        if ($request->filled('asset_growth_max')) {
+            $query->where('organizations.asset_growth', '<=', $request->get('asset_growth_max'));
+        }
         if ($request->filled('website_rating')) {
             $rating = $request->get('website_rating');
             if ($rating === 'none') {
