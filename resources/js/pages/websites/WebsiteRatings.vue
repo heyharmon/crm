@@ -328,7 +328,7 @@ onMounted(() => {
                             <div class="flex w-full flex-col gap-4 sm:w-auto sm:items-end">
                                 <div class="text-left text-xs text-neutral-500 sm:text-right">
                                     <template v-if="currentOrg.website_rating_summary">
-                                        <span class="font-semibold text-neutral-700 sm:block">
+                                        <span class="font-semibold text-neutral-700">
                                             Average: {{ optionBySlug[currentOrg.website_rating_summary]?.name || currentOrg.website_rating_summary }}
                                         </span>
                                         <span v-if="currentOrg.website_rating_average !== null">
