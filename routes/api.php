@@ -28,55 +28,68 @@ Route::middleware('auth:sanctum')->group(function () {
     // Auth
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
-    Route::get('/dashboard', DashboardController::class);
 
-    // User routes
-    Route::get('users', [UserController::class, 'index']);
-    Route::get('invitations', [InvitationController::class, 'index']);
-    Route::post('invitations', [InvitationController::class, 'store']);
-
-    // Organization routes
-    Route::post('organizations/batch/actions', OrganizationBatchActionController::class);
-    Route::post('organizations/import/hubspot', [OrganizationHubspotImportController::class, 'store']);
-    Route::post('organizations/import/ncua', [NCUAImportController::class, 'store']);
-    Route::resource('organizations', OrganizationController::class);
-    Route::post('organizations/{id}/restore', [OrganizationController::class, 'restore']);
-
-    // Organization category routes
-    // Define bulk route BEFORE resource to avoid matching {organization-category}='bulk'
-    Route::delete('organization-categories/bulk', [OrganizationCategoryController::class, 'bulkDestroy']);
-    Route::resource('organization-categories', OrganizationCategoryController::class)->only([
-        'index',
-        'store',
-        'update',
-        'destroy'
-    ]);
-
-    // Website rating options
-    Route::resource('website-rating-options', WebsiteRatingOptionController::class)->only([
-        'index',
-        'store',
-        'update',
-        'destroy'
-    ]);
-
-    // Organization website ratings
+    // Guest-accessible routes (website ratings)
     Route::get('website-ratings', [WebsiteRatingController::class, 'index']);
     Route::post('organizations/{organization}/website-ratings', [WebsiteRatingController::class, 'store']);
     Route::delete('organizations/{organization}/website-ratings', [WebsiteRatingController::class, 'destroy']);
-    Route::post('organizations/{organization}/website-redesigns', [OrganizationWebsiteRedesignController::class, 'store']);
-    Route::post('organizations/{organization}/cms-detections', [OrganizationCmsDetectionController::class, 'store']);
-    Route::post('organizations/{organization}/website-status-check', [OrganizationWebsiteStatusController::class, 'store']);
+    Route::get('website-rating-options', [WebsiteRatingOptionController::class, 'index']);
 
-    // Google Maps scraper routes
-    Route::prefix('google-maps-scraper')->group(function () {
-        Route::post('start', [OrganizationGoogleMapsScraperController::class, 'startImport']);
-        Route::get('runs', [OrganizationGoogleMapsScraperController::class, 'getImports']);
-        Route::get('runs/{apifyRun}', [OrganizationGoogleMapsScraperController::class, 'getImport']);
-    });
+    // Guest-accessible organization viewing
+    Route::get('organizations', [OrganizationController::class, 'index']);
+    Route::get('organizations/{organization}', [OrganizationController::class, 'show']);
 
-    // Web scraper routes
-    Route::prefix('web-scraper')->group(function () {
-        Route::post('start', [WebsitePageScraperController::class, 'startScraping']);
+    // Admin-only routes
+    Route::middleware('admin')->group(function () {
+        Route::get('/dashboard', DashboardController::class);
+
+        // User routes
+        Route::get('users', [UserController::class, 'index']);
+        Route::get('invitations', [InvitationController::class, 'index']);
+        Route::post('invitations', [InvitationController::class, 'store']);
+
+        // Organization management routes
+        Route::post('organizations', [OrganizationController::class, 'store']);
+        Route::put('organizations/{organization}', [OrganizationController::class, 'update']);
+        Route::patch('organizations/{organization}', [OrganizationController::class, 'update']);
+        Route::delete('organizations/{organization}', [OrganizationController::class, 'destroy']);
+        Route::post('organizations/{id}/restore', [OrganizationController::class, 'restore']);
+        Route::post('organizations/batch/actions', OrganizationBatchActionController::class);
+
+        // Import routes
+        Route::post('organizations/import/hubspot', [OrganizationHubspotImportController::class, 'store']);
+        Route::post('organizations/import/ncua', [NCUAImportController::class, 'store']);
+
+        // Organization category routes
+        Route::delete('organization-categories/bulk', [OrganizationCategoryController::class, 'bulkDestroy']);
+        Route::resource('organization-categories', OrganizationCategoryController::class)->only([
+            'index',
+            'store',
+            'update',
+            'destroy'
+        ]);
+
+        // Website rating options (admin-only write operations)
+        Route::post('website-rating-options', [WebsiteRatingOptionController::class, 'store']);
+        Route::put('website-rating-options/{website_rating_option}', [WebsiteRatingOptionController::class, 'update']);
+        Route::patch('website-rating-options/{website_rating_option}', [WebsiteRatingOptionController::class, 'update']);
+        Route::delete('website-rating-options/{website_rating_option}', [WebsiteRatingOptionController::class, 'destroy']);
+
+        // Organization enhancement routes
+        Route::post('organizations/{organization}/website-redesigns', [OrganizationWebsiteRedesignController::class, 'store']);
+        Route::post('organizations/{organization}/cms-detections', [OrganizationCmsDetectionController::class, 'store']);
+        Route::post('organizations/{organization}/website-status-check', [OrganizationWebsiteStatusController::class, 'store']);
+
+        // Google Maps scraper routes
+        Route::prefix('google-maps-scraper')->group(function () {
+            Route::post('start', [OrganizationGoogleMapsScraperController::class, 'startImport']);
+            Route::get('runs', [OrganizationGoogleMapsScraperController::class, 'getImports']);
+            Route::get('runs/{apifyRun}', [OrganizationGoogleMapsScraperController::class, 'getImport']);
+        });
+
+        // Web scraper routes
+        Route::prefix('web-scraper')->group(function () {
+            Route::post('start', [WebsitePageScraperController::class, 'startScraping']);
+        });
     });
 });
