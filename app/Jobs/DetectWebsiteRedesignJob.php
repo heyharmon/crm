@@ -117,11 +117,16 @@ class DetectWebsiteRedesignJob implements ShouldQueue
 
     /**
      * Sample snapshots to one per 6-month period (H1: Jan-Jun, H2: Jul-Dec)
+     * Limited to the last 10 years from today
      */
     private function sampleToSixMonthPeriods(array $snapshots): array
     {
         $sampled = [];
         $seenPeriods = [];
+
+        // Calculate cutoff date (10 years ago from today)
+        $tenYearsAgo = Carbon::now()->subYears(10);
+        $cutoffTimestamp = $tenYearsAgo->format('YmdHis');
 
         foreach ($snapshots as $snapshot) {
             if (!isset($snapshot[0])) {
@@ -129,6 +134,12 @@ class DetectWebsiteRedesignJob implements ShouldQueue
             }
 
             $timestamp = $snapshot[0];
+
+            // Skip snapshots older than 10 years
+            if ($timestamp < $cutoffTimestamp) {
+                continue;
+            }
+
             $year = substr($timestamp, 0, 4);
             $month = (int) substr($timestamp, 4, 2);
 
@@ -207,7 +218,7 @@ class DetectWebsiteRedesignJob implements ShouldQueue
     private function extractFeatures(string $timestamp, string $originalUrl): ?array
     {
         $maxRetries = 3;
-        $retryDelay = 2; // seconds
+        $retryDelay = 5; // seconds
 
         for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
             try {
@@ -223,7 +234,6 @@ class DetectWebsiteRedesignJob implements ShouldQueue
                     ->withHeaders([
                         'User-Agent' => 'Mozilla/5.0 (compatible; RedesignDetector/1.0)',
                     ])
-                    ->retry(2, 1000) // Retry twice with 1 second delay
                     ->get($waybackUrl);
 
                 if (!$response->successful()) {
