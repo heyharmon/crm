@@ -257,25 +257,75 @@ const getSortIcon = (column) => {
                         </svg>
                     </button>
                     <transition name="accordion">
-                        <div v-if="lastRedesignAccordionOpen" class="mt-4">
-                            <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Year Range</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <Input
-                                    :model-value="filters.last_redesign_year_min"
-                                    @update:model-value="updateFilter('last_redesign_year_min', $event)"
-                                    type="number"
-                                    placeholder="Min Year"
-                                    min="2000"
-                                    :max="new Date().getFullYear()"
-                                />
-                                <Input
-                                    :model-value="filters.last_redesign_year_max"
-                                    @update:model-value="updateFilter('last_redesign_year_max', $event)"
-                                    type="number"
-                                    placeholder="Max Year"
-                                    min="2000"
-                                    :max="new Date().getFullYear()"
-                                />
+                        <div v-if="lastRedesignAccordionOpen" class="mt-4 space-y-4">
+                            <div>
+                                <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Year Range</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <Input
+                                        :model-value="filters.last_redesign_year_min"
+                                        @update:model-value="updateFilter('last_redesign_year_min', $event)"
+                                        type="number"
+                                        placeholder="Min Year"
+                                        min="2000"
+                                        :max="new Date().getFullYear()"
+                                    />
+                                    <Input
+                                        :model-value="filters.last_redesign_year_max"
+                                        @update:model-value="updateFilter('last_redesign_year_max', $event)"
+                                        type="number"
+                                        placeholder="Max Year"
+                                        min="2000"
+                                        :max="new Date().getFullYear()"
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Last Redesign (Predicted)</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <Button
+                                        size="sm"
+                                        :variant="!filters.last_redesign ? 'default' : 'outline'"
+                                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                                        @click="updateFilter('last_redesign', '')"
+                                    >
+                                        Any
+                                    </Button>
+                                    <Button
+                                        v-for="option in LAST_REDESIGN_OPTIONS"
+                                        :key="option.value"
+                                        size="sm"
+                                        :variant="filters.last_redesign === option.value ? 'default' : 'outline'"
+                                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                                        @click="setLastRedesignFilter(option.value)"
+                                    >
+                                        {{ option.label }}
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Last Redesign (Actual)</label>
+                                <div class="flex flex-wrap gap-2">
+                                    <Button
+                                        size="sm"
+                                        :variant="!filters.last_redesign_actual ? 'default' : 'outline'"
+                                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                                        @click="updateFilter('last_redesign_actual', '')"
+                                    >
+                                        Any
+                                    </Button>
+                                    <Button
+                                        v-for="option in LAST_REDESIGN_ACTUAL_OPTIONS"
+                                        :key="option.value"
+                                        size="sm"
+                                        :variant="filters.last_redesign_actual === option.value ? 'default' : 'outline'"
+                                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                                        @click="setLastRedesignActualFilter(option.value)"
+                                    >
+                                        {{ option.label }}
+                                    </Button>
+                                </div>
                             </div>
                         </div>
                     </transition>
@@ -398,54 +448,6 @@ const getSortIcon = (column) => {
                             @click="setWebsiteFilter('missing')"
                         >
                             No Website
-                        </Button>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Last Redesign</label>
-                    <div class="flex flex-wrap gap-2">
-                        <Button
-                            size="sm"
-                            :variant="!filters.last_redesign ? 'default' : 'outline'"
-                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
-                            @click="updateFilter('last_redesign', '')"
-                        >
-                            Any
-                        </Button>
-                        <Button
-                            v-for="option in LAST_REDESIGN_OPTIONS"
-                            :key="option.value"
-                            size="sm"
-                            :variant="filters.last_redesign === option.value ? 'default' : 'outline'"
-                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
-                            @click="setLastRedesignFilter(option.value)"
-                        >
-                            {{ option.label }}
-                        </Button>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Last Redesign Actual</label>
-                    <div class="flex flex-wrap gap-2">
-                        <Button
-                            size="sm"
-                            :variant="!filters.last_redesign_actual ? 'default' : 'outline'"
-                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
-                            @click="updateFilter('last_redesign_actual', '')"
-                        >
-                            Any
-                        </Button>
-                        <Button
-                            v-for="option in LAST_REDESIGN_ACTUAL_OPTIONS"
-                            :key="option.value"
-                            size="sm"
-                            :variant="filters.last_redesign_actual === option.value ? 'default' : 'outline'"
-                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
-                            @click="setLastRedesignActualFilter(option.value)"
-                        >
-                            {{ option.label }}
                         </Button>
                     </div>
                 </div>
