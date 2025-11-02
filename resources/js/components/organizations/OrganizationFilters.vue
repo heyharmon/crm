@@ -52,6 +52,7 @@ const locationAccordionOpen = ref(false)
 const categoryAccordionOpen = ref(false)
 const cmsAccordionOpen = ref(false)
 const lastRedesignAccordionOpen = ref(false)
+const assetGrowthAccordionOpen = ref(false)
 
 const setWebsiteFilter = (value) => {
     // Clicking the active option should revert to "any"
@@ -194,24 +195,46 @@ const getSortIcon = (column) => {
                     </div>
                 </div>
 
-                <div>
-                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Asset Growth (%)</label>
-                    <div class="grid grid-cols-2 gap-2">
-                        <Input
-                            :model-value="filters.asset_growth_min"
-                            @update:model-value="updateFilter('asset_growth_min', $event)"
-                            type="number"
-                            step="0.01"
-                            placeholder="Min"
-                        />
-                        <Input
-                            :model-value="filters.asset_growth_max"
-                            @update:model-value="updateFilter('asset_growth_max', $event)"
-                            type="number"
-                            step="0.01"
-                            placeholder="Max"
-                        />
-                    </div>
+                <!-- Asset Growth Accordion -->
+                <div class="border-t border-neutral-200 pt-4">
+                    <button
+                        type="button"
+                        @click="assetGrowthAccordionOpen = !assetGrowthAccordionOpen"
+                        class="flex w-full items-center justify-between text-xs font-medium uppercase tracking-wide text-neutral-500 transition hover:text-neutral-700"
+                    >
+                        <span>Asset Growth</span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transition-transform"
+                            :class="{ 'rotate-180': assetGrowthAccordionOpen }"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <transition name="accordion">
+                        <div v-if="assetGrowthAccordionOpen" class="mt-4">
+                            <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Percentage Range</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <Input
+                                    :model-value="filters.asset_growth_min"
+                                    @update:model-value="updateFilter('asset_growth_min', $event)"
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="Min %"
+                                />
+                                <Input
+                                    :model-value="filters.asset_growth_max"
+                                    @update:model-value="updateFilter('asset_growth_max', $event)"
+                                    type="number"
+                                    step="0.01"
+                                    placeholder="Max %"
+                                />
+                            </div>
+                        </div>
+                    </transition>
                 </div>
 
                 <!-- Last Redesign Accordion -->
