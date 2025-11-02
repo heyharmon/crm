@@ -27,6 +27,11 @@ const LAST_REDESIGN_OPTIONS = [
     { value: 'no_date', label: 'No date' }
 ]
 
+const LAST_REDESIGN_ACTUAL_OPTIONS = [
+    { value: 'has_date', label: 'Has date' },
+    { value: 'no_date', label: 'No date' }
+]
+
 const emit = defineEmits(['update:filters', 'reset-filters', 'search'])
 
 const updateFilter = (key, value) => {
@@ -62,6 +67,11 @@ const setWebsiteRatingFilter = (value) => {
 const setLastRedesignFilter = (value) => {
     const next = props.filters.last_redesign === value ? '' : value
     emit('update:filters', { last_redesign: next })
+}
+
+const setLastRedesignActualFilter = (value) => {
+    const next = props.filters.last_redesign_actual === value ? '' : value
+    emit('update:filters', { last_redesign_actual: next })
 }
 
 const toggleWebsiteStatus = (value) => {
@@ -387,6 +397,30 @@ const getSortIcon = (column) => {
                             :variant="filters.last_redesign === option.value ? 'default' : 'outline'"
                             class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                             @click="setLastRedesignFilter(option.value)"
+                        >
+                            {{ option.label }}
+                        </Button>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Last Redesign Actual</label>
+                    <div class="flex flex-wrap gap-2">
+                        <Button
+                            size="sm"
+                            :variant="!filters.last_redesign_actual ? 'default' : 'outline'"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                            @click="updateFilter('last_redesign_actual', '')"
+                        >
+                            Any
+                        </Button>
+                        <Button
+                            v-for="option in LAST_REDESIGN_ACTUAL_OPTIONS"
+                            :key="option.value"
+                            size="sm"
+                            :variant="filters.last_redesign_actual === option.value ? 'default' : 'outline'"
+                            class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                            @click="setLastRedesignActualFilter(option.value)"
                         >
                             {{ option.label }}
                         </Button>

@@ -85,6 +85,14 @@ class OrganizationController extends Controller
                 $query->whereNull('organizations.last_major_redesign_at');
             }
         }
+        if ($request->filled('last_redesign_actual')) {
+            $redesignActualFilter = $request->get('last_redesign_actual');
+            if ($redesignActualFilter === 'has_date') {
+                $query->whereNotNull('organizations.last_major_redesign_at_actual');
+            } elseif ($redesignActualFilter === 'no_date') {
+                $query->whereNull('organizations.last_major_redesign_at_actual');
+            }
+        }
         if ($request->filled('cms')) {
             $cms = $request->get('cms');
             $query->where('organizations.cms', 'LIKE', '%' . $cms . '%');
@@ -230,6 +238,7 @@ class OrganizationController extends Controller
             'phone' => 'nullable|string|max:50',
             'organization_category_id' => 'nullable|exists:organization_categories,id',
             'notes' => 'nullable|string|max:2000',
+            'last_major_redesign_at_actual' => 'nullable|date',
         ]);
         $organization = Organization::create($validated);
         $organization->load('category');
@@ -253,6 +262,7 @@ class OrganizationController extends Controller
             'phone' => 'nullable|string|max:50',
             'organization_category_id' => 'nullable|exists:organization_categories,id',
             'notes' => 'nullable|string|max:2000',
+            'last_major_redesign_at_actual' => 'nullable|date',
         ]);
         $organization->update($validated);
         $organization->load('category');

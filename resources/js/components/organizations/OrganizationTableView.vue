@@ -1,9 +1,10 @@
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch } from 'vue'
 import Pagination from '@/components/ui/Pagination.vue'
 import { getRatingLabel, getRatingPillClasses } from '@/utils/ratingStyles'
 import { formatDisplayDate } from '@/utils/date'
 import { formatWebsiteStatus, getWebsiteStatusClasses } from '@/utils/websiteStatus'
+import { useRedesignAccuracy } from '@/composables/useRedesignAccuracy'
 
 const props = defineProps({
     organizations: {
@@ -183,6 +184,12 @@ const redesignStatusTooltip = (organization) => organization?.website_redesign_s
 const redesignStatusClasses = (status) => REDESIGN_STATUS_META[status]?.classes ?? 'border-neutral-200 bg-neutral-50 text-neutral-600'
 
 const websiteStatusClasses = (status) => getWebsiteStatusClasses(status)
+
+const getRedesignDateClasses = (organization) => {
+    const org = computed(() => organization)
+    const { dateClasses } = useRedesignAccuracy(org)
+    return dateClasses.value
+}
 </script>
 
 <template>
@@ -305,7 +312,7 @@ const websiteStatusClasses = (status) => getWebsiteStatusClasses(status)
                                     {{ redesignStatusLabel(organization) }}
                                 </span>
                             </div>
-                            <span v-else-if="organization.last_major_redesign_at">
+                            <span v-else-if="organization.last_major_redesign_at" :class="getRedesignDateClasses(organization)">
                                 {{ formatDisplayDate(organization.last_major_redesign_at) }}
                             </span>
                             <span v-else class="text-neutral-400">—</span>

@@ -55,6 +55,7 @@ class Organization extends Model
         'asset_growth',
         'member_growth',
         'net_worth_growth',
+        'last_major_redesign_at_actual',
     ];
 
     protected $casts = [
@@ -64,6 +65,7 @@ class Organization extends Model
         'website_rating_count' => 'integer',
         'website_rating_weighted' => 'float',
         'last_major_redesign_at' => 'date',
+        'last_major_redesign_at_actual' => 'date',
         'charter_number' => 'integer',
         'is_low_income' => 'boolean',
         'members' => 'integer',

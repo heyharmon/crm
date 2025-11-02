@@ -218,7 +218,7 @@ class DetectWebsiteRedesignJob implements ShouldQueue
     private function extractFeatures(string $timestamp, string $originalUrl): ?array
     {
         $maxRetries = 3;
-        $retryDelay = 5; // seconds
+        $retryDelay = 10; // seconds
 
         for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
             try {
