@@ -58,7 +58,7 @@ class DetectWebsiteRedesignJob implements ShouldQueue
             }
 
             // Step 2-4: Extract features, calculate differences, and analyze
-            $analysisData = $this->analyzeSnapshots($snapshots, $organization->website);
+            $analysisData = $this->analyzeSnapshots($snapshots);
 
             if (empty($analysisData)) {
                 $this->updateOrganizationStatus($organization, 'no_major_events', 'Unable to analyze snapshots');
@@ -82,7 +82,9 @@ class DetectWebsiteRedesignJob implements ShouldQueue
      */
     private function fetchAndSampleSnapshots(string $url): array
     {
-        $domain = parse_url($url, PHP_URL_HOST) ?? $url;
+        // Extract domain from URL (remove protocol and www)
+        $domain = preg_replace('/^(https?:\/\/)?(www\.)?/', '', $url);
+        $domain = explode('/', $domain)[0];
 
         // Query CDX API for all successful HTML captures
         $response = Http::timeout(60)->get('https://web.archive.org/cdx/search/cdx', [
@@ -91,6 +93,7 @@ class DetectWebsiteRedesignJob implements ShouldQueue
             'fl' => 'timestamp,original',
             'filter' => ['statuscode:200', 'mimetype:text/html'],
             'collapse' => 'timestamp:6', // Collapse to one per month
+            'limit' => 500,
         ]);
 
         if (!$response->successful()) {
@@ -147,55 +150,52 @@ class DetectWebsiteRedesignJob implements ShouldQueue
     /**
      * Analyze all snapshots: extract features, calculate differences, compute statistics
      */
-    private function analyzeSnapshots(array $snapshots, string $baseUrl): array
+    private function analyzeSnapshots(array $snapshots): array
     {
         $analysisData = [];
-        $previousFeatures = null;
 
-        foreach ($snapshots as $snapshot) {
-            $timestamp = $snapshot['timestamp'];
+        // Process pairs of consecutive snapshots
+        for ($i = 0; $i < count($snapshots) - 1; $i++) {
+            $snapshot1 = $snapshots[$i];
+            $snapshot2 = $snapshots[$i + 1];
 
-            // Extract features from this snapshot
-            $features = $this->extractFeatures($timestamp, $baseUrl);
+            // Extract features from both snapshots
+            $features1 = $this->extractFeatures($snapshot1['timestamp'], $snapshot1['url']);
+            $features2 = $this->extractFeatures($snapshot2['timestamp'], $snapshot2['url']);
 
-            if (!$features) {
+            if (!$features1 || !$features2) {
                 continue;
             }
 
-            // Calculate difference from previous snapshot
-            if ($previousFeatures) {
-                $tagScore = $this->calculateDifferenceScore(
-                    $previousFeatures['tagCounts'],
-                    $features['tagCounts']
-                );
+            // Calculate difference scores
+            $tagScore = $this->calculateDifferenceScore(
+                $features1['tagCounts'],
+                $features2['tagCounts']
+            );
 
-                $classScore = $this->calculateDifferenceScore(
-                    $previousFeatures['classCounts'],
-                    $features['classCounts']
-                );
+            $classScore = $this->calculateDifferenceScore(
+                $features1['classCounts'],
+                $features2['classCounts']
+            );
 
-                $assetScore = $this->calculateJaccardDistance(
-                    $previousFeatures['assetUrls'],
-                    $features['assetUrls']
-                );
+            $assetScore = $this->calculateJaccardDistance(
+                $features1['assetUrls'],
+                $features2['assetUrls']
+            );
 
-                // Composite score: weighted average (classes 50%, tags 25%, assets 25%)
-                $compositeScore = ($tagScore * 0.25) + ($classScore * 0.50) + ($assetScore * 0.25);
+            // Composite score: weighted average (classes 50%, tags 25%, assets 25%)
+            $compositeScore = ($tagScore * 0.25) + ($classScore * 0.50) + ($assetScore * 0.25);
 
-                $analysisData[] = [
-                    'before_timestamp' => $previousFeatures['timestamp'],
-                    'after_timestamp' => $timestamp,
-                    'before_features' => $previousFeatures,
-                    'after_features' => $features,
-                    'tag_score' => $tagScore,
-                    'class_score' => $classScore,
-                    'asset_score' => $assetScore,
-                    'composite_score' => $compositeScore,
-                ];
-            }
-
-            $previousFeatures = $features;
-            $previousFeatures['timestamp'] = $timestamp;
+            $analysisData[] = [
+                'before_timestamp' => $snapshot1['timestamp'],
+                'after_timestamp' => $snapshot2['timestamp'],
+                'before_features' => $features1,
+                'after_features' => $features2,
+                'tag_score' => $tagScore,
+                'class_score' => $classScore,
+                'asset_score' => $assetScore,
+                'composite_score' => $compositeScore,
+            ];
         }
 
         return $analysisData;
@@ -204,56 +204,88 @@ class DetectWebsiteRedesignJob implements ShouldQueue
     /**
      * Extract HTML features from a Wayback Machine snapshot
      */
-    private function extractFeatures(string $timestamp, string $baseUrl): ?array
+    private function extractFeatures(string $timestamp, string $originalUrl): ?array
     {
-        try {
-            $waybackUrl = "https://web.archive.org/web/{$timestamp}id_/{$baseUrl}";
+        $maxRetries = 3;
+        $retryDelay = 2; // seconds
 
-            $response = Http::timeout(30)
-                ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; RedesignDetector/1.0)'])
-                ->get($waybackUrl);
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            try {
+                // Add delay between requests to avoid rate limiting (except first request)
+                if ($attempt > 1) {
+                    sleep($retryDelay);
+                }
 
-            if (!$response->successful()) {
-                return null;
+                // Use if_ flag to get the page without Wayback's modifications
+                $waybackUrl = "https://web.archive.org/web/{$timestamp}if_/{$originalUrl}";
+
+                $response = Http::timeout(30)
+                    ->withHeaders([
+                        'User-Agent' => 'Mozilla/5.0 (compatible; RedesignDetector/1.0)',
+                    ])
+                    ->retry(2, 1000) // Retry twice with 1 second delay
+                    ->get($waybackUrl);
+
+                if (!$response->successful()) {
+                    if ($attempt < $maxRetries) {
+                        continue;
+                    }
+                    return null;
+                }
+
+                $html = $response->body();
+
+                // Parse HTML
+                $dom = new DOMDocument();
+                @$dom->loadHTML($html, LIBXML_NOERROR | LIBXML_NOWARNING);
+
+                // Extract tag counts from body
+                $tagCounts = $this->extractTagCounts($dom);
+
+                // Extract CSS class counts from body
+                $classCounts = $this->extractClassCounts($dom);
+
+                // Extract head asset URLs
+                $assetUrls = $this->extractHeadAssetUrls($dom);
+
+                // Add small delay between successful requests to be respectful
+                usleep(500000); // 0.5 seconds
+
+                return [
+                    'tagCounts' => $tagCounts,
+                    'classCounts' => $classCounts,
+                    'assetUrls' => $assetUrls,
+                ];
+            } catch (\Exception $e) {
+                if ($attempt === $maxRetries) {
+                    Log::warning('Failed to extract features from snapshot after retries', [
+                        'timestamp' => $timestamp,
+                        'url' => $originalUrl,
+                        'attempts' => $maxRetries,
+                        'error' => $e->getMessage(),
+                    ]);
+                    return null;
+                }
+                // Continue to next retry
             }
-
-            $html = $response->body();
-
-            // Parse HTML
-            $dom = new DOMDocument();
-            @$dom->loadHTML($html, LIBXML_NOERROR | LIBXML_NOWARNING);
-            $xpath = new DOMXPath($dom);
-
-            // Extract tag counts from body
-            $tagCounts = $this->extractTagCounts($xpath);
-
-            // Extract CSS class counts from body
-            $classCounts = $this->extractClassCounts($xpath);
-
-            // Extract head asset URLs
-            $assetUrls = $this->extractHeadAssetUrls($xpath);
-
-            return [
-                'tagCounts' => $tagCounts,
-                'classCounts' => $classCounts,
-                'assetUrls' => $assetUrls,
-            ];
-        } catch (\Exception $e) {
-            Log::warning('Failed to extract features from snapshot', [
-                'timestamp' => $timestamp,
-                'error' => $e->getMessage(),
-            ]);
-            return null;
         }
+
+        return null;
     }
 
     /**
      * Extract frequency map of HTML tags in body
      */
-    private function extractTagCounts(DOMXPath $xpath): array
+    private function extractTagCounts(DOMDocument $dom): array
     {
         $counts = [];
-        $elements = $xpath->query('//body//*');
+
+        if (!$dom->documentElement || !$dom->getElementsByTagName('body')->item(0)) {
+            return $counts;
+        }
+
+        $body = $dom->getElementsByTagName('body')->item(0);
+        $elements = $body->getElementsByTagName('*');
 
         foreach ($elements as $element) {
             $tagName = strtolower($element->tagName);
@@ -266,17 +298,26 @@ class DetectWebsiteRedesignJob implements ShouldQueue
     /**
      * Extract frequency map of CSS classes in body
      */
-    private function extractClassCounts(DOMXPath $xpath): array
+    private function extractClassCounts(DOMDocument $dom): array
     {
         $counts = [];
-        $elements = $xpath->query('//body//*[@class]');
+
+        if (!$dom->documentElement || !$dom->getElementsByTagName('body')->item(0)) {
+            return $counts;
+        }
+
+        $body = $dom->getElementsByTagName('body')->item(0);
+        $elements = $body->getElementsByTagName('*');
 
         foreach ($elements as $element) {
-            $classes = preg_split('/\s+/', $element->getAttribute('class'));
-            foreach ($classes as $class) {
-                $class = trim($class);
-                if ($class !== '') {
-                    $counts[$class] = ($counts[$class] ?? 0) + 1;
+            $classList = $element->getAttribute('class');
+            if ($classList) {
+                $classes = preg_split('/\s+/', $classList);
+                foreach ($classes as $class) {
+                    $class = trim($class);
+                    if ($class !== '') {
+                        $counts[$class] = ($counts[$class] ?? 0) + 1;
+                    }
                 }
             }
         }
@@ -287,20 +328,34 @@ class DetectWebsiteRedesignJob implements ShouldQueue
     /**
      * Extract unique URLs of stylesheets and scripts from head
      */
-    private function extractHeadAssetUrls(DOMXPath $xpath): array
+    private function extractHeadAssetUrls(DOMDocument $dom): array
     {
         $urls = [];
 
+        if (!$dom->documentElement || !$dom->getElementsByTagName('head')->item(0)) {
+            return $urls;
+        }
+
+        $head = $dom->getElementsByTagName('head')->item(0);
+
         // Stylesheets
-        $stylesheets = $xpath->query('//head//link[@rel="stylesheet"][@href]');
+        $stylesheets = $head->getElementsByTagName('link');
         foreach ($stylesheets as $link) {
-            $urls[] = $link->getAttribute('href');
+            if ($link->getAttribute('rel') === 'stylesheet') {
+                $href = $link->getAttribute('href');
+                if ($href) {
+                    $urls[] = $href;
+                }
+            }
         }
 
         // Scripts
-        $scripts = $xpath->query('//head//script[@src]');
+        $scripts = $head->getElementsByTagName('script');
         foreach ($scripts as $script) {
-            $urls[] = $script->getAttribute('src');
+            $src = $script->getAttribute('src');
+            if ($src) {
+                $urls[] = $src;
+            }
         }
 
         return array_unique($urls);
@@ -355,31 +410,69 @@ class DetectWebsiteRedesignJob implements ShouldQueue
      */
     private function predictAndStoreRedesign(Organization $organization, array $analysisData): void
     {
+        // Sort analysis data by timestamp (ascending)
+        usort($analysisData, function ($a, $b) {
+            return strcmp($a['after_timestamp'], $b['after_timestamp']);
+        });
+
         // Calculate statistical baseline
         $compositeScores = array_column($analysisData, 'composite_score');
         $mean = $this->calculateMean($compositeScores);
         $stdDev = $this->calculateStandardDeviation($compositeScores, $mean);
         $threshold = $mean + $stdDev;
 
+        Log::info('Redesign detection statistics', [
+            'organization_id' => $organization->id,
+            'total_comparisons' => count($analysisData),
+            'mean' => $mean,
+            'stdDev' => $stdDev,
+            'threshold' => $threshold,
+            'scores' => array_map(function ($d) {
+                return [
+                    'timestamp' => $d['after_timestamp'],
+                    'score' => $d['composite_score'],
+                ];
+            }, $analysisData),
+        ]);
+
         // Find all major redesigns (scores above threshold)
         $majorRedesigns = array_filter($analysisData, function ($data) use ($threshold) {
             return $data['composite_score'] > $threshold;
         });
 
+        // Reset array keys after filter
+        $majorRedesigns = array_values($majorRedesigns);
+
+        Log::info('Major redesigns found', [
+            'organization_id' => $organization->id,
+            'count' => count($majorRedesigns),
+            'redesigns' => array_map(function ($d) {
+                return [
+                    'timestamp' => $d['after_timestamp'],
+                    'score' => $d['composite_score'],
+                ];
+            }, $majorRedesigns),
+        ]);
+
         // Select the most recent redesign, or fallback to highest score
         if (!empty($majorRedesigns)) {
-            // Sort by timestamp descending and take the first
-            usort($majorRedesigns, function ($a, $b) {
-                return strcmp($b['after_timestamp'], $a['after_timestamp']);
-            });
-            $predictedRedesign = $majorRedesigns[0];
+            // Get the latest redesign (last in chronological order)
+            $predictedRedesign = end($majorRedesigns);
         } else {
             // Fallback: use the period with highest change score
-            usort($analysisData, function ($a, $b) {
-                return $b['composite_score'] <=> $a['composite_score'];
-            });
             $predictedRedesign = $analysisData[0];
+            foreach ($analysisData as $data) {
+                if ($data['composite_score'] > $predictedRedesign['composite_score']) {
+                    $predictedRedesign = $data;
+                }
+            }
         }
+
+        Log::info('Predicted redesign', [
+            'organization_id' => $organization->id,
+            'timestamp' => $predictedRedesign['after_timestamp'],
+            'score' => $predictedRedesign['composite_score'],
+        ]);
 
         // Store the redesign event
         DB::transaction(function () use ($organization, $predictedRedesign, $threshold) {
