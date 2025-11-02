@@ -34,7 +34,8 @@ const form = ref({
     website: '',
     phone: '',
     organization_category_id: '',
-    notes: ''
+    notes: '',
+    last_major_redesign_at_actual: ''
 })
 
 const errors = ref({})
@@ -44,7 +45,12 @@ watch(
     (newOrg) => {
         if (newOrg) {
             Object.keys(form.value).forEach((key) => {
-                form.value[key] = newOrg[key] || ''
+                if (key === 'last_major_redesign_at_actual' && newOrg[key]) {
+                    // Format date to yyyy-MM-dd for date input
+                    form.value[key] = newOrg[key].split('T')[0]
+                } else {
+                    form.value[key] = newOrg[key] || ''
+                }
             })
             if (newOrg.category) {
                 form.value.organization_category_id = newOrg.category.id
@@ -134,6 +140,11 @@ defineExpose({ submitForm })
                 <div>
                     <label class="block text-sm font-medium text-neutral-700 mb-1">Website</label>
                     <Input v-model="form.website" type="url" @blur="validateWebsite" placeholder="https://example.com" />
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-neutral-700 mb-1">Last Major Redesign Date</label>
+                    <Input v-model="form.last_major_redesign_at_actual" type="date" placeholder="2018-07-11" />
                 </div>
             </div>
         </div>

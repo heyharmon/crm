@@ -5,6 +5,7 @@ import { useOrganizationStore } from '@/stores/organizationStore'
 import { getRatingLabel, getRatingPillClasses } from '@/utils/ratingStyles'
 import { formatDisplayDate } from '@/utils/date'
 import { formatWebsiteStatus, getWebsiteStatusClasses } from '@/utils/websiteStatus'
+import { useRedesignAccuracy } from '@/composables/useRedesignAccuracy'
 
 const props = defineProps({
     organizationId: { type: [String, Number], required: true }
@@ -320,7 +321,6 @@ const bodyClassCountLabel = (event, view = 'after') => {
     return `${count} body class${count === 1 ? '' : 'es'}`
 }
 
-
 const openRedesignDetails = (event) => {
     const key = redesignEventKey(event)
     if (!key) return
@@ -347,7 +347,6 @@ const getBodyClasses = (event, view = 'after') => {
     const classes = view === 'before' ? event.before_body_classes : event.after_body_classes
     return Array.isArray(classes) ? classes.map((value) => (typeof value === 'string' ? value.trim() : '')).filter(Boolean) : []
 }
-
 
 const REDESIGN_STATUS_META = {
     wayback_failed: {
@@ -385,6 +384,13 @@ const redesignFallbackDescription = (organization) => {
     }
     return "We haven't confirmed any major redesigns yet."
 }
+
+const currentOrg = computed(() => org())
+const {
+    classes: getPredictedRedesignClasses,
+    textClasses: getPredictedRedesignTextClasses,
+    dateClasses: getPredictedRedesignDateClasses
+} = useRedesignAccuracy(currentOrg)
 
 const syncRedesignPreviewStates = (organization) => {
     if (!organization?.website_redesigns?.length) {
@@ -759,17 +765,64 @@ watch(selectedRedesignEvent, (value) => {
                 </p>
                 <div class="space-y-3 text-sm text-neutral-700">
                     <div
-                        class="flex flex-col gap-1 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+                        class="flex flex-col gap-1 rounded-xl border px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+                        :class="getPredictedRedesignClasses"
                         v-if="org().last_major_redesign_at"
                     >
-                        <span class="font-semibold text-emerald-900">Last major redesign:</span>
-                        <span class="text-xs font-semibold uppercase tracking-wide text-emerald-700">
+                        <span class="font-semibold flex items-center gap-1" :class="getPredictedRedesignTextClasses">
+                            Last major redesign (predicted):
+                            <span v-if="org().last_major_redesign_at_actual" class="group relative inline-flex">
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    class="h-3.5 w-3.5 cursor-help"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    stroke="currentColor"
+                                    stroke-width="2"
+                                >
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <span
+                                    class="invisible group-hover:visible absolute left-0 top-5 z-10 w-64 rounded-lg bg-neutral-800 px-3 py-2 text-xs font-normal text-white shadow-lg"
+                                >
+                                    <div class="space-y-1">
+                                        <div class="font-semibold mb-2">Prediction Accuracy:</div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="inline-block h-2 w-2 rounded-full bg-green-400"></span>
+                                            <span>Green: Within 30 days</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="inline-block h-2 w-2 rounded-full bg-yellow-400"></span>
+                                            <span>Yellow: Within 90 days</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="inline-block h-2 w-2 rounded-full bg-orange-400"></span>
+                                            <span>Orange: Within 180 days</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="inline-block h-2 w-2 rounded-full bg-red-400"></span>
+                                            <span>Red: More than 180 days</span>
+                                        </div>
+                                    </div>
+                                </span>
+                            </span>
+                        </span>
+                        <span class="text-xs font-semibold uppercase tracking-wide" :class="getPredictedRedesignDateClasses">
                             {{ formatDisplayDate(org().last_major_redesign_at) }}
                         </span>
                     </div>
                     <div v-else class="flex items-center justify-between">
-                        <span class="font-medium text-neutral-900">Last major redesign:</span>
+                        <span class="font-medium text-neutral-900">Last major redesign (predicted):</span>
                         <span class="text-neutral-400"> Not detected </span>
+                    </div>
+                    <div
+                        class="flex flex-col gap-1 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+                        v-if="org().last_major_redesign_at_actual"
+                    >
+                        <span class="font-semibold text-blue-900">Last major redesign (actual):</span>
+                        <span class="text-xs font-semibold uppercase tracking-wide text-blue-700">
+                            {{ formatDisplayDate(org().last_major_redesign_at_actual) }}
+                        </span>
                     </div>
                     <div v-if="org().website_redesigns && org().website_redesigns.length" class="space-y-3">
                         <div

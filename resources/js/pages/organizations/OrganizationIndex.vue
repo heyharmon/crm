@@ -38,6 +38,7 @@ const parseFiltersFromQuery = (q) => {
             cms: toStr(q.cms),
             website: toStr(q.website),
             last_redesign: toStr(q.last_redesign),
+            last_redesign_actual: toStr(q.last_redesign_actual),
             website_rating: toStr(q.website_rating),
             website_status: toArr(q.website_status),
             sort: toArr(q.sort),
@@ -61,6 +62,7 @@ const buildQueryFromFilters = (filters, page, base = {}) => {
     delete q.cms
     delete q.website
     delete q.last_redesign
+    delete q.last_redesign_actual
     delete q.website_rating
     delete q.website_status
     delete q.sort
@@ -78,6 +80,7 @@ const buildQueryFromFilters = (filters, page, base = {}) => {
     if (filters.cms) q.cms = filters.cms
     if (filters.website) q.website = filters.website
     if (filters.last_redesign) q.last_redesign = filters.last_redesign
+    if (filters.last_redesign_actual) q.last_redesign_actual = filters.last_redesign_actual
     if (filters.website_rating) q.website_rating = filters.website_rating
     if (Array.isArray(filters.website_status) && filters.website_status.length) q.website_status = [...filters.website_status]
     if (Array.isArray(filters.sort) && filters.sort.length) q.sort = [...filters.sort]
