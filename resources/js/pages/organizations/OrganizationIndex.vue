@@ -714,10 +714,7 @@ const editFormRef = ref(null)
         >
             <div v-if="isDrawerOpen">
                 <div v-if="sidebarMode === 'view'" class="h-full">
-                    <OrganizationDetails :organization-id="Number(sidebarOrgId)" />
-                    <div class="flex justify-end border-t border-neutral-100 bg-neutral-50/80 px-5 py-4">
-                        <Button variant="outline" @click="openSidebar('edit', sidebarOrgId)">Edit</Button>
-                    </div>
+                    <OrganizationDetails :organization-id="Number(sidebarOrgId)" @edit="openSidebar('edit', sidebarOrgId)" />
                 </div>
                 <div v-else-if="sidebarMode === 'edit'" class="h-full flex flex-col">
                     <div class="flex-1 overflow-y-auto p-4">

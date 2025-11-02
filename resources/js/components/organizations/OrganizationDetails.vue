@@ -479,8 +479,26 @@ watch(selectedRedesignEvent, (value) => {
 
         <div v-else-if="org()" class="space-y-6 p-4">
             <div class="space-y-2">
-                <h2 class="text-xl font-bold text-neutral-900">{{ org().name }}</h2>
-                <p v-if="org().category" class="text-neutral-600">{{ org().category.name }}</p>
+                <div class="flex items-start justify-between gap-3">
+                    <div class="flex-1 min-w-0">
+                        <h2 class="text-xl font-bold text-neutral-900">{{ org().name }}</h2>
+                        <p v-if="org().category" class="text-neutral-600">{{ org().category.name }}</p>
+                    </div>
+                    <button
+                        type="button"
+                        class="cursor-pointer inline-flex items-center gap-1.5 rounded-full border border-neutral-200 bg-white px-3 py-1.5 text-sm font-medium text-neutral-700 transition hover:border-neutral-300 hover:bg-neutral-50"
+                        @click="$emit('edit')"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
+                        </svg>
+                        Edit
+                    </button>
+                </div>
             </div>
 
             <div v-if="org().website" class="rounded-lg overflow-hidden border border-neutral-200">
