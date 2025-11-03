@@ -111,15 +111,15 @@ class DetectWebsiteRedesignJob implements ShouldQueue
             array_shift($data);
         }
 
-        // Sample to one snapshot per 6-month period
-        return $this->sampleToSixMonthPeriods($data);
+        // Sample to one snapshot per quarter
+        return $this->sampleToQuarterlyPeriods($data);
     }
 
     /**
-     * Sample snapshots to one per 6-month period (H1: Jan-Jun, H2: Jul-Dec)
+     * Sample snapshots to one per quarter (Q1-Q4)
      * Limited to the last 10 years from today
      */
-    private function sampleToSixMonthPeriods(array $snapshots): array
+    private function sampleToQuarterlyPeriods(array $snapshots): array
     {
         $sampled = [];
         $seenPeriods = [];
@@ -143,8 +143,9 @@ class DetectWebsiteRedesignJob implements ShouldQueue
             $year = substr($timestamp, 0, 4);
             $month = (int) substr($timestamp, 4, 2);
 
-            // Determine period (H1 or H2)
-            $period = $year . ($month <= 6 ? '-H1' : '-H2');
+            // Determine quarter (Q1: Jan-Mar, Q2: Apr-Jun, Q3: Jul-Sep, Q4: Oct-Dec)
+            $quarter = 'Q' . ceil($month / 3);
+            $period = $year . '-' . $quarter;
 
             if (!in_array($period, $seenPeriods)) {
                 $sampled[] = [
@@ -433,14 +434,23 @@ class DetectWebsiteRedesignJob implements ShouldQueue
 
         Log::info('Redesign detection statistics', [
             'organization_id' => $organization->id,
+            'website' => $organization->website,
             'total_comparisons' => count($analysisData),
             'mean' => $mean,
             'stdDev' => $stdDev,
             'threshold' => $threshold,
             'scores' => array_map(function ($d) {
                 return [
-                    'timestamp' => $d['after_timestamp'],
-                    'score' => $d['composite_score'],
+                    'before_timestamp' => $d['before_timestamp'],
+                    'after_timestamp' => $d['after_timestamp'],
+                    'composite_score' => round($d['composite_score'], 4),
+                    'tag_score' => round($d['tag_score'], 4),
+                    'class_score' => round($d['class_score'], 4),
+                    'asset_score' => round($d['asset_score'], 4),
+                    'before_classes' => count($d['before_features']['classCounts']),
+                    'after_classes' => count($d['after_features']['classCounts']),
+                    'before_assets' => count($d['before_features']['assetUrls']),
+                    'after_assets' => count($d['after_features']['assetUrls']),
                 ];
             }, $analysisData),
         ]);
@@ -455,19 +465,23 @@ class DetectWebsiteRedesignJob implements ShouldQueue
 
         Log::info('Major redesigns found', [
             'organization_id' => $organization->id,
+            'website' => $organization->website,
             'count' => count($majorRedesigns),
             'redesigns' => array_map(function ($d) {
                 return [
-                    'timestamp' => $d['after_timestamp'],
-                    'score' => $d['composite_score'],
+                    'before_timestamp' => $d['before_timestamp'],
+                    'after_timestamp' => $d['after_timestamp'],
+                    'composite_score' => round($d['composite_score'], 4),
+                    'tag_score' => round($d['tag_score'], 4),
+                    'class_score' => round($d['class_score'], 4),
+                    'asset_score' => round($d['asset_score'], 4),
                 ];
             }, $majorRedesigns),
         ]);
 
-        // Select the most recent redesign, or fallback to highest score
+        // Select the best redesign using magnitude-weighted scoring
         if (!empty($majorRedesigns)) {
-            // Get the latest redesign (last in chronological order)
-            $predictedRedesign = end($majorRedesigns);
+            $predictedRedesign = $this->selectBestRedesign($majorRedesigns, $threshold);
         } else {
             // Fallback: use the period with highest change score
             $predictedRedesign = $analysisData[0];
@@ -480,8 +494,15 @@ class DetectWebsiteRedesignJob implements ShouldQueue
 
         Log::info('Predicted redesign', [
             'organization_id' => $organization->id,
-            'timestamp' => $predictedRedesign['after_timestamp'],
-            'score' => $predictedRedesign['composite_score'],
+            'website' => $organization->website,
+            'before_timestamp' => $predictedRedesign['before_timestamp'],
+            'after_timestamp' => $predictedRedesign['after_timestamp'],
+            'composite_score' => round($predictedRedesign['composite_score'], 4),
+            'tag_score' => round($predictedRedesign['tag_score'], 4),
+            'class_score' => round($predictedRedesign['class_score'], 4),
+            'asset_score' => round($predictedRedesign['asset_score'], 4),
+            'is_above_threshold' => $predictedRedesign['composite_score'] > $threshold,
+            'selected_reason' => !empty($majorRedesigns) ? 'most_recent_above_threshold' : 'highest_score_fallback',
         ]);
 
         // Store the redesign event
@@ -529,6 +550,66 @@ class DetectWebsiteRedesignJob implements ShouldQueue
                 'website_redesign_status_message' => null,
             ])->save();
         });
+    }
+
+    /**
+     * Select the best redesign using magnitude-weighted scoring
+     * Balances composite score magnitude with recency
+     */
+    private function selectBestRedesign(array $majorRedesigns, float $threshold): array
+    {
+        $now = Carbon::now();
+        $scoredRedesigns = [];
+
+        foreach ($majorRedesigns as $redesign) {
+            $date = $this->parseWaybackTimestamp($redesign['after_timestamp']);
+            $yearsAgo = $now->diffInYears($date);
+
+            // Calculate weighted score: composite_score * recency_factor * magnitude_factor
+            // Recency factor: 1.0 for recent, decays to 0.5 for 10 years old
+            $recencyFactor = max(0.5, 1.0 - ($yearsAgo * 0.05));
+
+            // Magnitude bonus: extra weight for scores significantly above threshold
+            $magnitudeBonus = ($redesign['composite_score'] - $threshold) / $threshold;
+
+            $weightedScore = $redesign['composite_score'] * $recencyFactor * (1 + $magnitudeBonus);
+
+            $scoredRedesigns[] = [
+                'redesign' => $redesign,
+                'weighted_score' => $weightedScore,
+                'recency_factor' => $recencyFactor,
+                'magnitude_bonus' => $magnitudeBonus,
+                'years_ago' => $yearsAgo,
+            ];
+        }
+
+        // Sort by weighted score (descending)
+        usort($scoredRedesigns, function ($a, $b) {
+            return $b['weighted_score'] <=> $a['weighted_score'];
+        });
+
+        // Log the scoring details for the top candidate
+        Log::info('Magnitude-weighted redesign selection', [
+            'organization_id' => $this->organizationId,
+            'selected' => [
+                'timestamp' => $scoredRedesigns[0]['redesign']['after_timestamp'],
+                'composite_score' => round($scoredRedesigns[0]['redesign']['composite_score'], 4),
+                'weighted_score' => round($scoredRedesigns[0]['weighted_score'], 4),
+                'recency_factor' => round($scoredRedesigns[0]['recency_factor'], 4),
+                'magnitude_bonus' => round($scoredRedesigns[0]['magnitude_bonus'], 4),
+                'years_ago' => $scoredRedesigns[0]['years_ago'],
+            ],
+            'all_candidates' => array_map(function ($s) {
+                return [
+                    'timestamp' => $s['redesign']['after_timestamp'],
+                    'composite_score' => round($s['redesign']['composite_score'], 4),
+                    'weighted_score' => round($s['weighted_score'], 4),
+                    'years_ago' => $s['years_ago'],
+                ];
+            }, $scoredRedesigns),
+        ]);
+
+        return $scoredRedesigns[0]['redesign'];
     }
 
     /**

@@ -6,7 +6,7 @@ The redesign detector identifies the most recent major rebuild of an organizatio
 
 The detection process follows a comprehensive methodology:
 
-1. **Snapshot Acquisition** – Queries the Wayback Machine CDX API for all successful HTML captures of the website, then samples to one snapshot per 6-month period (H1: Jan-Jun, H2: Jul-Dec) to focus on major changes rather than minor updates.
+1. **Snapshot Acquisition** – Queries the Wayback Machine CDX API for all successful HTML captures of the website, then samples to one snapshot per quarter (Q1-Q4) to focus on major changes rather than minor updates while maintaining precise timing.
 
 2. **Feature Extraction** – For each snapshot, extracts three key features:
 
@@ -26,7 +26,7 @@ The detection process follows a comprehensive methodology:
     - Head assets: 25%
     - Calculates statistical baseline (mean + standard deviation) from all composite scores
 
-5. **Redesign Prediction** – Identifies periods where composite score exceeds the statistical threshold (mean + 1 standard deviation), selecting the most recent major redesign event.
+5. **Redesign Prediction** – Identifies periods where composite score exceeds the statistical threshold (mean + 1 standard deviation), then uses magnitude-weighted scoring to select the best redesign. This balances the composite score magnitude with recency, prioritizing major redesigns over minor updates while still favoring more recent changes.
 
 ## Data Model
 
@@ -96,11 +96,13 @@ The job has an extended timeout of 1 hour (`timeout = 3600`) to accommodate the 
 
 ### Snapshot Sampling Strategy
 
-The 6-month sampling period is crucial for distinguishing major redesigns from minor updates:
+The quarterly (3-month) sampling period is crucial for distinguishing major redesigns from minor updates:
 
 -   Smooths out noise from weekly content updates or small component tweaks
 -   Makes large-scale changes associated with full redesigns more prominent
--   Provides sufficient data points for statistical analysis while keeping processing time reasonable
+-   Provides 2x better timing precision than 6-month sampling (reducing max error from 6 months to 3 months)
+-   Provides sufficient data points for statistical analysis (~40 snapshots over 10 years) while keeping processing time reasonable
+-   Maintains consistent granularity across the entire 10-year window, important for industries with 5-year redesign cycles
 
 ### Statistical Threshold
 
@@ -119,3 +121,13 @@ CSS classes receive the highest weight (50%) because:
 -   Component library updates are easily detected
 
 HTML tags (25%) and head assets (25%) provide supporting evidence of structural and technical stack changes.
+
+### Magnitude-Weighted Selection
+
+When multiple redesigns are detected above the statistical threshold, the algorithm uses magnitude-weighted scoring to select the best candidate:
+
+-   **Recency Factor**: Decays from 1.0 (current) to 0.5 (10 years old) at 5% per year
+-   **Magnitude Bonus**: Extra weight for scores significantly above threshold
+-   **Weighted Score**: `composite_score × recency_factor × (1 + magnitude_bonus)`
+
+This approach prioritizes major redesigns over minor updates while still favoring more recent changes. For example, a massive redesign 3 years ago with a very high composite score might be selected over a small framework update last month with a lower score.
