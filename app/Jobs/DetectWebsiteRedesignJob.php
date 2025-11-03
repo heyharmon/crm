@@ -11,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -30,6 +31,9 @@ class DetectWebsiteRedesignJob implements ShouldQueue
 
     public function handle(): void
     {
+        // Implement rate limiting to prevent hitting Wayback Machine API limits
+        $this->enforceRateLimit();
+
         $organization = Organization::find($this->organizationId);
 
         if (!$organization) {
@@ -66,7 +70,7 @@ class DetectWebsiteRedesignJob implements ShouldQueue
             }
 
             // Step 5: Predict redesign
-            $this->predictAndStoreRedesign($organization, $analysisData);
+            $this->predictAndStoreRedesign($organization, $analysisData, $snapshots);
         } catch (\Exception $e) {
             Log::error('Website redesign analysis failed', [
                 'organization_id' => $this->organizationId,
@@ -75,6 +79,38 @@ class DetectWebsiteRedesignJob implements ShouldQueue
             ]);
             $this->updateOrganizationStatus($organization, 'api_failed', 'Analysis failed: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Enforce rate limiting between jobs to prevent API throttling
+     * Ensures minimum 10 second delay between Wayback Machine API calls
+     */
+    private function enforceRateLimit(): void
+    {
+        $cacheKey = 'wayback_machine_last_request';
+        $minDelaySeconds = 15;
+
+        // Get the timestamp of the last API request
+        $lastRequestTime = Cache::get($cacheKey);
+
+        if ($lastRequestTime) {
+            $timeSinceLastRequest = time() - $lastRequestTime;
+
+            if ($timeSinceLastRequest < $minDelaySeconds) {
+                $sleepTime = $minDelaySeconds - $timeSinceLastRequest;
+
+                Log::info('Rate limiting: sleeping before Wayback Machine API call', [
+                    'organization_id' => $this->organizationId,
+                    'sleep_seconds' => $sleepTime,
+                    'time_since_last_request' => $timeSinceLastRequest,
+                ]);
+
+                sleep($sleepTime);
+            }
+        }
+
+        // Update the last request time
+        Cache::put($cacheKey, time(), 3600); // Cache for 1 hour
     }
 
     /**
@@ -419,7 +455,7 @@ class DetectWebsiteRedesignJob implements ShouldQueue
     /**
      * Predict redesign using statistical analysis and store results
      */
-    private function predictAndStoreRedesign(Organization $organization, array $analysisData): void
+    private function predictAndStoreRedesign(Organization $organization, array $analysisData, array $snapshots): void
     {
         // Sort analysis data by timestamp (ascending)
         usort($analysisData, function ($a, $b) {
@@ -481,7 +517,7 @@ class DetectWebsiteRedesignJob implements ShouldQueue
 
         // Select the best redesign using magnitude-weighted scoring
         if (!empty($majorRedesigns)) {
-            $predictedRedesign = $this->selectBestRedesign($majorRedesigns, $threshold);
+            $predictedRedesign = $this->selectBestRedesign($majorRedesigns, $threshold, $snapshots);
         } else {
             // Fallback: use the period with highest change score
             $predictedRedesign = $analysisData[0];
@@ -556,12 +592,39 @@ class DetectWebsiteRedesignJob implements ShouldQueue
      * Select the best redesign using magnitude-weighted scoring
      * Balances composite score magnitude with recency
      */
-    private function selectBestRedesign(array $majorRedesigns, float $threshold): array
+    private function selectBestRedesign(array $majorRedesigns, float $threshold, array $allSnapshots): array
     {
+        // First, validate persistence to filter out anomalies
+        $validRedesigns = [];
+        foreach ($majorRedesigns as $redesign) {
+            $persistenceResult = $this->validateRedesignPersistence($redesign, $allSnapshots);
+
+            if ($persistenceResult['is_valid']) {
+                $validRedesigns[] = $redesign;
+            }
+        }
+
+        // If all candidates failed persistence check, fall back to original list with warning
+        if (empty($validRedesigns)) {
+            Log::warning('All redesign candidates failed persistence check, using original candidates', [
+                'organization_id' => $this->organizationId,
+                'total_candidates' => count($majorRedesigns),
+            ]);
+            $validRedesigns = $majorRedesigns;
+        } else {
+            Log::info('Persistence validation filtered candidates', [
+                'organization_id' => $this->organizationId,
+                'original_count' => count($majorRedesigns),
+                'valid_count' => count($validRedesigns),
+                'filtered_count' => count($majorRedesigns) - count($validRedesigns),
+            ]);
+        }
+
+        // Now apply magnitude-weighted scoring to valid candidates
         $now = Carbon::now();
         $scoredRedesigns = [];
 
-        foreach ($majorRedesigns as $redesign) {
+        foreach ($validRedesigns as $redesign) {
             $date = $this->parseWaybackTimestamp($redesign['after_timestamp']);
             $yearsAgo = $now->diffInYears($date);
 
@@ -610,6 +673,118 @@ class DetectWebsiteRedesignJob implements ShouldQueue
         ]);
 
         return $scoredRedesigns[0]['redesign'];
+    }
+
+    /**
+     * Validate that a redesign persists over time (not a temporary anomaly)
+     * Checks if the "after" snapshot design remains consistent in subsequent snapshots
+     */
+    private function validateRedesignPersistence(array $candidateRedesign, array $allSnapshots): array
+    {
+        // Find the index of this candidate in the snapshots array
+        $candidateIndex = null;
+        foreach ($allSnapshots as $index => $snapshot) {
+            if ($snapshot['timestamp'] === $candidateRedesign['after_timestamp']) {
+                $candidateIndex = $index;
+                break;
+            }
+        }
+
+        if ($candidateIndex === null) {
+            // Shouldn't happen, but if we can't find it, accept it
+            return ['is_valid' => true, 'reason' => 'snapshot_not_found', 'persistence_score' => null];
+        }
+
+        // Need at least 2 snapshots after the candidate to validate persistence
+        $snapshotsToCheck = 2;
+        $availableSnapshots = count($allSnapshots) - $candidateIndex - 1;
+
+        if ($availableSnapshots < $snapshotsToCheck) {
+            // Can't validate recent redesigns (not enough future data), accept them
+            return [
+                'is_valid' => true,
+                'reason' => 'insufficient_future_snapshots',
+                'persistence_score' => null,
+                'available_snapshots' => $availableSnapshots,
+            ];
+        }
+
+        // Extract features from the "after" snapshot
+        $afterFeatures = $candidateRedesign['after_features'];
+
+        // Check next 2-3 snapshots for consistency
+        $similarityScores = [];
+        for ($i = 1; $i <= min($snapshotsToCheck, $availableSnapshots); $i++) {
+            $futureSnapshot = $allSnapshots[$candidateIndex + $i];
+
+            // Extract features from future snapshot
+            $futureFeatures = $this->extractFeatures($futureSnapshot['timestamp'], $futureSnapshot['url']);
+
+            if (!$futureFeatures) {
+                // If we can't extract features, skip this snapshot
+                continue;
+            }
+
+            // Calculate similarity (inverse of difference) for CSS classes
+            // Using classes as primary signal since they're weighted 50% in composite score
+            $classDifference = $this->calculateDifferenceScore(
+                $afterFeatures['classCounts'],
+                $futureFeatures['classCounts']
+            );
+            $classSimilarity = 1 - $classDifference;
+
+            // Also check tag similarity for additional validation
+            $tagDifference = $this->calculateDifferenceScore(
+                $afterFeatures['tagCounts'],
+                $futureFeatures['tagCounts']
+            );
+            $tagSimilarity = 1 - $tagDifference;
+
+            // Weighted average (classes 70%, tags 30% for persistence check)
+            $overallSimilarity = ($classSimilarity * 0.7) + ($tagSimilarity * 0.3);
+
+            $similarityScores[] = [
+                'snapshot_offset' => $i,
+                'timestamp' => $futureSnapshot['timestamp'],
+                'class_similarity' => $classSimilarity,
+                'tag_similarity' => $tagSimilarity,
+                'overall_similarity' => $overallSimilarity,
+            ];
+        }
+
+        if (empty($similarityScores)) {
+            // Couldn't validate any future snapshots, accept the candidate
+            return ['is_valid' => true, 'reason' => 'no_valid_future_snapshots', 'persistence_score' => null];
+        }
+
+        // Calculate average persistence score
+        $avgPersistence = array_sum(array_column($similarityScores, 'overall_similarity')) / count($similarityScores);
+
+        // Threshold: 70% similarity = design persisted (real redesign)
+        $persistenceThreshold = 0.70;
+        $isValid = $avgPersistence >= $persistenceThreshold;
+
+        Log::info('Redesign persistence validation', [
+            'organization_id' => $this->organizationId,
+            'candidate_timestamp' => $candidateRedesign['after_timestamp'],
+            'is_valid' => $isValid,
+            'avg_persistence' => round($avgPersistence, 4),
+            'threshold' => $persistenceThreshold,
+            'similarity_scores' => array_map(function ($s) {
+                return [
+                    'offset' => $s['snapshot_offset'],
+                    'timestamp' => $s['timestamp'],
+                    'similarity' => round($s['overall_similarity'], 4),
+                ];
+            }, $similarityScores),
+        ]);
+
+        return [
+            'is_valid' => $isValid,
+            'reason' => $isValid ? 'design_persisted' : 'likely_anomaly',
+            'persistence_score' => $avgPersistence,
+            'similarity_scores' => $similarityScores,
+        ];
     }
 
     /**

@@ -26,7 +26,7 @@ The detection process follows a comprehensive methodology:
     - Head assets: 25%
     - Calculates statistical baseline (mean + standard deviation) from all composite scores
 
-5. **Redesign Prediction** – Identifies periods where composite score exceeds the statistical threshold (mean + 1 standard deviation), then uses magnitude-weighted scoring to select the best redesign. This balances the composite score magnitude with recency, prioritizing major redesigns over minor updates while still favoring more recent changes.
+5. **Redesign Prediction** – Identifies periods where composite score exceeds the statistical threshold (mean + 1 standard deviation), validates persistence to filter out anomalies, then uses magnitude-weighted scoring to select the best redesign. This balances the composite score magnitude with recency, prioritizing major redesigns over minor updates while still favoring more recent changes.
 
 ## Data Model
 
@@ -55,12 +55,13 @@ The detection process follows a comprehensive methodology:
 1. **DetectWebsiteRedesignJob** (`app/Jobs/DetectWebsiteRedesignJob.php`)
     - Loads the organization and exits early when the record or website URL is missing
     - Fetches historical snapshots from Wayback Machine CDX API
-    - Samples snapshots to one per 6-month period
+    - Samples snapshots to one per quarter
     - Extracts features (tags, classes, assets) from each snapshot's HTML
     - Calculates difference scores between consecutive snapshots
     - Performs statistical analysis to establish baseline and threshold
-    - Identifies and stores the most recent major redesign event
-    - Updates the organization's status and `last_major_redesign_at` field
+    - Validates persistence of candidate redesigns to filter out anomalies
+    - Applies magnitude-weighted scoring to select the best redesign
+    - Stores the redesign event and updates the organization's status and `last_major_redesign_at` field
 
 ## Configuration
 
@@ -122,9 +123,20 @@ CSS classes receive the highest weight (50%) because:
 
 HTML tags (25%) and head assets (25%) provide supporting evidence of structural and technical stack changes.
 
+### Persistence Validation
+
+Before applying magnitude-weighted scoring, the algorithm validates that candidate redesigns persist over time to filter out temporary anomalies:
+
+-   **Anomaly Detection**: Checks if the "after" snapshot design remains consistent in the next 2 subsequent quarterly snapshots
+-   **Similarity Threshold**: Requires 70% average similarity (weighted: 70% CSS classes, 30% HTML tags) to pass validation
+-   **Filters Out**: Website defacements, server errors, maintenance pages, Wayback Machine capture errors
+-   **Recent Redesigns**: Cannot validate redesigns in the most recent 6 months (insufficient future snapshots), so they are automatically accepted
+
+This validation step significantly reduces false positives from transient anomalies that create high composite scores but aren't actual redesigns.
+
 ### Magnitude-Weighted Selection
 
-When multiple redesigns are detected above the statistical threshold, the algorithm uses magnitude-weighted scoring to select the best candidate:
+After persistence validation, the algorithm uses magnitude-weighted scoring to select the best candidate from valid redesigns:
 
 -   **Recency Factor**: Decays from 1.0 (current) to 0.5 (10 years old) at 5% per year
 -   **Magnitude Bonus**: Extra weight for scores significantly above threshold
