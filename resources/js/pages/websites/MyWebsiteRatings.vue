@@ -1,9 +1,10 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import moment from 'moment'
 import DefaultLayout from '@/layouts/DefaultLayout.vue'
 import Button from '@/components/ui/Button.vue'
 import api from '@/services/api'
+import auth from '@/services/auth'
 import { getRatingButtonClasses } from '@/utils/ratingStyles'
 import { formatAssets } from '@/composables/useNumberFormat'
 
@@ -14,6 +15,10 @@ const isLoading = ref(false)
 const isUpdating = ref(false)
 const error = ref(null)
 const columns = ref(2)
+const isAdmin = ref(auth.isAdmin())
+const users = ref([])
+const selectedUserId = ref(null)
+const isLoadingUsers = ref(false)
 
 const formatDate = (dateString) => {
     if (!dateString) return null
@@ -43,6 +48,19 @@ const loadRatingOptions = async () => {
     }
 }
 
+const loadUsers = async () => {
+    if (!isAdmin.value) return
+
+    isLoadingUsers.value = true
+    try {
+        users.value = await api.get('/users')
+    } catch (err) {
+        console.error('Failed to load users:', err)
+    } finally {
+        isLoadingUsers.value = false
+    }
+}
+
 const loadRatings = async () => {
     isLoading.value = true
     error.value = null
@@ -52,10 +70,13 @@ const loadRatings = async () => {
         if (selectedFilters.value.length > 0) {
             params.rating_option_ids = selectedFilters.value.join(',')
         }
+        if (selectedUserId.value) {
+            params.user_id = selectedUserId.value
+        }
 
         ratings.value = await api.get('/website-ratings', { params })
     } catch (err) {
-        error.value = err?.message || 'Failed to load your rated websites.'
+        error.value = err?.message || 'Failed to load rated websites.'
         console.error('Error fetching rated websites:', err)
     } finally {
         isLoading.value = false
@@ -114,8 +135,21 @@ const updateRating = async (rating, newOptionId) => {
 
 const filteredCount = computed(() => ratings.value.length)
 
+const selectedUserName = computed(() => {
+    if (!selectedUserId.value) return null
+    const user = users.value.find((u) => u.id === selectedUserId.value)
+    return user?.name || null
+})
+
+watch(selectedUserId, () => {
+    loadRatings()
+})
+
 onMounted(async () => {
     await loadRatingOptions()
+    if (isAdmin.value) {
+        await loadUsers()
+    }
     await loadRatings()
 })
 </script>
@@ -125,15 +159,30 @@ onMounted(async () => {
         <div class="py-6 sm:py-10">
             <div class="mb-8 flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
-                    <h1 class="text-3xl font-semibold text-neutral-900">Websites I've Rated</h1>
-                    <p class="mt-2 text-sm text-neutral-500">Review and update your website ratings. Filter by rating to find specific websites.</p>
+                    <h1 class="text-3xl font-semibold text-neutral-900">
+                        {{ selectedUserName ? `${selectedUserName}'s Rated Websites` : "Websites I've Rated" }}
+                    </h1>
+                    <p class="mt-2 text-sm text-neutral-500">Review and update website ratings. Filter by rating to find specific websites.</p>
                 </div>
-                <router-link
-                    :to="{ name: 'websites.ratings' }"
-                    class="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-100"
-                >
-                    Rate More Websites
-                </router-link>
+                <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                    <select
+                        v-if="isAdmin"
+                        v-model="selectedUserId"
+                        class="rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-neutral-300 focus:border-neutral-400 focus:outline-none focus:ring-2 focus:ring-neutral-200"
+                        :disabled="isLoadingUsers"
+                    >
+                        <option :value="null">My Ratings</option>
+                        <option v-for="user in users" :key="user.id" :value="user.id">
+                            {{ user.name }}
+                        </option>
+                    </select>
+                    <router-link
+                        :to="{ name: 'websites.ratings' }"
+                        class="inline-flex items-center justify-center rounded-full border border-neutral-200 bg-white px-4 py-2 text-sm font-medium text-neutral-700 shadow-sm transition hover:border-neutral-300 hover:bg-neutral-100"
+                    >
+                        Rate More Websites
+                    </router-link>
+                </div>
             </div>
 
             <div v-if="error" class="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">

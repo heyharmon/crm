@@ -17,8 +17,18 @@ class WebsiteRatingController extends Controller
 
     public function index(Request $request)
     {
+        $userId = Auth::id();
+
+        // Allow admins to view other users' ratings
+        if ($request->has('user_id') && $request->user_id != $userId) {
+            if (Auth::user()->role !== 'admin') {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+            $userId = $request->user_id;
+        }
+
         $query = OrganizationWebsiteRating::with(['organization', 'option'])
-            ->where('user_id', Auth::id())
+            ->where('user_id', $userId)
             ->whereHas('organization', function ($q) {
                 $q->whereNotNull('website');
             });
