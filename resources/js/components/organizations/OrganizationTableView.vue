@@ -213,6 +213,10 @@ const formatPercent = (value) => {
 
 const formatPagesCount = (organization) => {
     if (!organization?.website) return '-'
+    // Check for crawl error first
+    if (organization.website_crawl_status === 'failed') {
+        return 'Error'
+    }
     const count = organization.pages_count
     if (count === null || count === undefined) return '—'
     const numericCount = Number(count)

@@ -556,6 +556,31 @@ watch(selectedRedesignEvent, (value) => {
                 </div>
             </div>
 
+            <div v-if="org().website" class="bg-white rounded-lg border border-neutral-200 p-4">
+                <h3 class="font-semibold mb-3">Website Pages</h3>
+                <div class="space-y-2 text-sm text-neutral-700">
+                    <div v-if="org().website_crawl_status === 'failed'" class="space-y-2">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center rounded-full border border-red-200 bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700">
+                                Error
+                            </span>
+                        </div>
+                        <div v-if="org().website_crawl_message" class="text-sm text-red-600">
+                            {{ org().website_crawl_message }}
+                        </div>
+                    </div>
+                    <div v-else-if="org().website_crawl_status === 'success'" class="flex items-center gap-2">
+                        <span class="font-medium text-neutral-900">Pages found:</span>
+                        <span class="text-lg font-semibold text-neutral-900">
+                            {{ formatInteger(org().pages_count) }}
+                        </span>
+                    </div>
+                    <div v-else class="text-sm text-neutral-500">
+                        Crawl not yet performed. Use "Count pages" from the actions menu to crawl the website.
+                    </div>
+                </div>
+            </div>
+
             <div v-if="hasNcuaFinancialData" class="bg-white rounded-lg border border-neutral-200 p-4">
                 <h3 class="font-semibold mb-4">Financial Overview</h3>
                 <div class="flex flex-col gap-3">

@@ -32,6 +32,8 @@ class Organization extends Model
         'state',
         'country',
         'website',
+        'website_crawl_status',
+        'website_crawl_message',
         'redirects_to',
         'cms',
         'website_status',
