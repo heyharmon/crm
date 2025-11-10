@@ -2,6 +2,11 @@
 import { ref, onMounted, watch, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useOrganizationStore } from '@/stores/organizationStore'
+import { useOrganizationSelection } from '@/composables/useOrganizationSelection'
+import { useQueryFilters } from '@/composables/useQueryFilters'
+import { useSidebar } from '@/composables/useSidebar'
+import { useOrganizationActions } from '@/composables/useOrganizationActions'
+import { useMobileUI } from '@/composables/useMobileUI'
 import TwoColumnLayout from '@/layouts/TwoColumnLayout.vue'
 import Button from '@/components/ui/Button.vue'
 import OrganizationFilters from '@/components/organizations/OrganizationFilters.vue'
@@ -11,387 +16,42 @@ import OrganizationForm from '@/components/organizations/OrganizationForm.vue'
 import OrganizationDetails from '@/components/organizations/OrganizationDetails.vue'
 import OrganizationTableView from '@/components/organizations/OrganizationTableView.vue'
 import OrganizationGridView from '@/components/organizations/OrganizationGridView.vue'
-import { useOrganizationSelection } from '@/composables/useOrganizationSelection'
 
 const organizationStore = useOrganizationStore()
 const route = useRoute()
 const router = useRouter()
 const ratingOptions = ref([])
+
+// Selection composable
 const { selectedIds, selectedCount, allVisibleSelected, isIndeterminate, toggleRow, toggleAllVisible, clearSelection } = useOrganizationSelection(
     computed(() => organizationStore.organizations)
 )
+
+// Query/Filters composable
+const { initializeFilters, handleSearch, handlePageChange, handlePerPageChange } = useQueryFilters(organizationStore, {
+    onClearSelection: clearSelection
+})
+
+// Sidebar composable
+const { sidebarMode, sidebarOrgId, isDrawerOpen, selectedOrganization, openSidebar, closeSidebar, handleEditSubmit } = useSidebar(organizationStore)
+
+// Organization actions composable
+const {
+    deleteOrganization,
+    startWebScraping,
+    detectWebsiteRedesign,
+    detectWebsiteCms,
+    checkWebsiteStatus,
+    submitWebsiteRating,
+    clearWebsiteRating,
+    formatWebsite
+} = useOrganizationActions(organizationStore)
+
+// Mobile UI composable
+const { mobileFiltersOpen, mobileActionsOpen } = useMobileUI()
+
+// Batch actions
 const batchActionLoading = ref(null)
-
-// --- Query <-> Filters sync helpers ---
-const syncingQuery = ref(false)
-
-const parseFiltersFromQuery = (q) => {
-    const toStr = (v) => (typeof v === 'string' ? v : '')
-    const toArr = (v) => (Array.isArray(v) ? v : v ? [String(v)] : [])
-    return {
-        filters: {
-            search: toStr(q.search),
-            city: toStr(q.city),
-            state: toStr(q.state),
-            country: toStr(q.country),
-            category: toStr(q.category),
-            cms: toStr(q.cms),
-            website: toStr(q.website),
-            last_redesign: toStr(q.last_redesign),
-            last_redesign_actual: toStr(q.last_redesign_actual),
-            website_rating: toStr(q.website_rating),
-            website_status: toArr(q.website_status),
-            sort: toArr(q.sort),
-            assets_min: toStr(q.assets_min),
-            assets_max: toStr(q.assets_max),
-            asset_growth_min: toStr(q.asset_growth_min),
-            asset_growth_max: toStr(q.asset_growth_max)
-        },
-        page: q.page ? Number(q.page) || 1 : 1
-    }
-}
-
-const buildQueryFromFilters = (filters, page, base = {}) => {
-    const q = { ...base }
-    // drop existing filter keys so we can rebuild cleanly
-    delete q.search
-    delete q.city
-    delete q.state
-    delete q.country
-    delete q.category
-    delete q.cms
-    delete q.website
-    delete q.last_redesign
-    delete q.last_redesign_actual
-    delete q.website_rating
-    delete q.website_status
-    delete q.sort
-    delete q.page
-    delete q.assets_min
-    delete q.assets_max
-    delete q.asset_growth_min
-    delete q.asset_growth_max
-
-    if (filters.search) q.search = filters.search
-    if (filters.city) q.city = filters.city
-    if (filters.state) q.state = filters.state
-    if (filters.country) q.country = filters.country
-    if (filters.category) q.category = filters.category
-    if (filters.cms) q.cms = filters.cms
-    if (filters.website) q.website = filters.website
-    if (filters.last_redesign) q.last_redesign = filters.last_redesign
-    if (filters.last_redesign_actual) q.last_redesign_actual = filters.last_redesign_actual
-    if (filters.website_rating) q.website_rating = filters.website_rating
-    if (Array.isArray(filters.website_status) && filters.website_status.length) q.website_status = [...filters.website_status]
-    if (Array.isArray(filters.sort) && filters.sort.length) q.sort = [...filters.sort]
-    if (filters.assets_min) q.assets_min = filters.assets_min
-    if (filters.assets_max) q.assets_max = filters.assets_max
-    if (filters.asset_growth_min) q.asset_growth_min = filters.asset_growth_min
-    if (filters.asset_growth_max) q.asset_growth_max = filters.asset_growth_max
-    if (page && page > 1) q.page = String(page)
-    return q
-}
-
-const fetchRatingOptions = async () => {
-    try {
-        ratingOptions.value = await api.get('/website-rating-options')
-    } catch (error) {
-        console.error('Failed to load website rating options:', error)
-        ratingOptions.value = []
-    }
-}
-
-onMounted(async () => {
-    // Check if there are any query params
-    const hasQueryParams = Object.keys(route.query).length > 0
-
-    // Hydrate filters and page from the URL on load
-    const { filters, page } = parseFiltersFromQuery(route.query)
-
-    // If no query params exist, set default filters
-    if (!hasQueryParams) {
-        filters.website_status = ['up']
-    }
-
-    // prevent filter watcher from resetting page on initial load
-    syncingQuery.value = true
-    try {
-        if (filters) organizationStore.setFilters(filters)
-
-        // If we applied default filters, update the URL to reflect them
-        if (!hasQueryParams) {
-            const nextQuery = buildQueryFromFilters(filters, page)
-            await router.replace({ query: nextQuery })
-        }
-    } finally {
-        syncingQuery.value = false
-    }
-    await fetchRatingOptions()
-    await organizationStore.fetchOrganizations(page)
-})
-
-// Keep URL query in sync when filters change, and fetch
-watch(
-    () => organizationStore.filters,
-    async (newFilters, oldFilters) => {
-        if (syncingQuery.value) return
-        syncingQuery.value = true
-
-        // If filters changed, reset page to 1
-        const page = 1
-        const nextQuery = buildQueryFromFilters(newFilters, page, route.query)
-        try {
-            await router.replace({ query: nextQuery })
-        } finally {
-            syncingQuery.value = false
-        }
-        clearSelection()
-        await organizationStore.fetchOrganizations(page)
-    },
-    { deep: true }
-)
-
-const handleSearch = async () => {
-    // Force page reset and fetch using current filters
-    const q = buildQueryFromFilters(organizationStore.filters, 1, route.query)
-    syncingQuery.value = true
-    try {
-        await router.replace({ query: q })
-    } finally {
-        syncingQuery.value = false
-    }
-    clearSelection()
-    await organizationStore.fetchOrganizations(1)
-    mobileFiltersOpen.value = false
-}
-
-const handlePageChange = async (page) => {
-    // Persist page in query and let fetch run here
-    const q = buildQueryFromFilters(organizationStore.filters, page, route.query)
-    syncingQuery.value = true
-    try {
-        await router.replace({ query: q })
-    } finally {
-        syncingQuery.value = false
-    }
-    clearSelection()
-    await organizationStore.fetchOrganizations(page)
-}
-
-const handlePerPageChange = async (perPage) => {
-    // Reset to page 1 when changing per_page
-    const q = buildQueryFromFilters(organizationStore.filters, 1, route.query)
-    syncingQuery.value = true
-    try {
-        await router.replace({ query: q })
-    } finally {
-        syncingQuery.value = false
-    }
-    clearSelection()
-    await organizationStore.fetchOrganizations(1, perPage)
-}
-
-const deleteOrganization = async (id) => {
-    try {
-        await organizationStore.deleteOrganization(id)
-    } catch (error) {
-        console.error('Error deleting organization:', error)
-    }
-}
-
-const startWebScraping = async (organization) => {
-    if (!organization.website) {
-        alert('This organization does not have a website to scrape.')
-        return
-    }
-
-    try {
-        await api.post('/web-scraper/start', {
-            organization_id: organization.id
-        })
-    } catch (error) {
-        console.error('Error starting web scraping:', error)
-        alert('Failed to start web scraping. Please try again.')
-    }
-}
-
-// Ensure website links include protocol
-const formatWebsite = (url) => {
-    if (!url) return ''
-    return /^https?:\/\//i.test(url) ? url : `https://${url}`
-}
-
-// Unified view toggle (table/grid) synced with ?view=grid
-const view = ref(route.query.view === 'grid' ? 'grid' : 'table')
-const mobileFiltersOpen = ref(false)
-const mobileActionsOpen = ref(false)
-watch(
-    () => route.query.view,
-    (v) => {
-        view.value = v === 'grid' ? 'grid' : 'table'
-    }
-)
-watch(view, async (v) => {
-    mobileActionsOpen.value = false
-    const q = { ...route.query }
-    if (v === 'grid') q.view = 'grid'
-    else delete q.view
-    await router.replace({ query: q })
-    if (v !== 'table') {
-        clearSelection()
-    }
-})
-
-watch(mobileActionsOpen, (open) => {
-    if (open) {
-        mobileFiltersOpen.value = false
-    }
-})
-
-watch(mobileFiltersOpen, (open) => {
-    if (open) {
-        mobileActionsOpen.value = false
-    }
-})
-
-// Grid helpers
-const columns = ref(3)
-const submitWebsiteRating = async (organizationId, optionId) => {
-    try {
-        await organizationStore.setWebsiteRating(organizationId, optionId)
-    } catch (error) {
-        console.error('Error submitting website rating:', error)
-    }
-}
-
-const clearWebsiteRating = async (organizationId) => {
-    try {
-        await organizationStore.clearWebsiteRating(organizationId)
-    } catch (error) {
-        console.error('Error clearing website rating:', error)
-    }
-}
-
-const detectWebsiteRedesign = async (organization) => {
-    if (!organization?.id) return
-    try {
-        await organizationStore.detectWebsiteRedesign(organization.id)
-    } catch (error) {
-        console.error('Error queuing redesign detection:', error)
-    }
-}
-
-const detectWebsiteCms = async (organization) => {
-    if (!organization?.id) return
-
-    if (!organization.website) {
-        alert('This organization does not have a website to analyze.')
-        return
-    }
-
-    try {
-        const response = await organizationStore.detectOrganizationCms(organization.id)
-        const message = response?.message || 'CMS detection queued.'
-        alert(message)
-    } catch (error) {
-        console.error('Error queuing CMS detection:', error)
-        const errorMessage = error?.message || 'Failed to queue CMS detection. Please try again.'
-        alert(errorMessage)
-    }
-}
-
-const checkWebsiteStatus = async (organization) => {
-    if (!organization?.id) return
-
-    if (!organization.website) {
-        alert('This organization does not have a website to check.')
-        return
-    }
-
-    try {
-        const response = await organizationStore.checkWebsiteStatus(organization.id)
-        const message = response?.message || 'Website status check queued.'
-        alert(message)
-    } catch (error) {
-        console.error('Error queuing website status check:', error)
-        const errorMessage = error?.message || 'Failed to queue website status check. Please try again.'
-        alert(errorMessage)
-    }
-}
-
-// Taller screenshot heights for 1–2 column modes
-// Sidebar state synced with route query
-const sidebarMode = ref(null) // 'view' | 'edit' | null
-const sidebarOrgId = ref(null)
-const isDrawerOpen = computed(() => !!sidebarMode.value && !!sidebarOrgId.value)
-const filteredTotalLabel = computed(() => {
-    const total = organizationStore.pagination?.total
-    if (total === null || total === undefined) return null
-    return Number.isFinite(total) ? total.toLocaleString() : String(total)
-})
-
-const syncFromRoute = () => {
-    const { org, mode } = route.query
-    if (org && (mode === 'view' || mode === 'edit')) {
-        sidebarOrgId.value = org
-        sidebarMode.value = mode
-    } else {
-        sidebarOrgId.value = null
-        sidebarMode.value = null
-    }
-}
-
-onMounted(syncFromRoute)
-watch(() => route.query, syncFromRoute, { deep: true })
-
-// React to route query changes (e.g., browser nav/manual edits) for filters/page
-watch(
-    () => route.query,
-    async (q, prevQ) => {
-        if (syncingQuery.value) return
-        const keys = ['search', 'city', 'state', 'category', 'cms', 'sort', 'page']
-        const relevantChanged = keys.some((k) => JSON.stringify(q[k]) !== JSON.stringify(prevQ?.[k]))
-        if (!relevantChanged) return
-
-        const { filters, page } = parseFiltersFromQuery(q)
-        organizationStore.setFilters(filters)
-        clearSelection()
-        await organizationStore.fetchOrganizations(page)
-    },
-    { deep: true }
-)
-
-const openSidebar = async (mode, id) => {
-    const q = { ...route.query, org: String(id), mode }
-    await router.replace({ query: q })
-    // Ensure current organization is loaded for edit/details quickly
-    try {
-        await organizationStore.fetchOrganization(id)
-    } catch (e) {
-        // non-fatal; the nested components also handle loading
-    }
-}
-
-const closeSidebar = async () => {
-    const q = { ...route.query }
-    delete q.org
-    delete q.mode
-    await router.replace({ query: q })
-}
-
-const selectedOrganization = computed(() => {
-    const id = Number(sidebarOrgId.value)
-    return organizationStore.organizations.find((o) => o.id === id) || organizationStore.currentOrganization
-})
-
-const handleRowSelection = ({ organization, checked, shiftKey }) => {
-    if (!organization?.id) return
-    toggleRow(organization.id, checked, { shiftKey })
-}
-
-const handleSelectAllRows = (checked) => {
-    toggleAllVisible(checked)
-}
 
 const runBatchAction = async (actionKey) => {
     if (!selectedIds.value.length || batchActionLoading.value) return
@@ -424,20 +84,61 @@ const runBatchAction = async (actionKey) => {
     }
 }
 
-const handleEditSubmit = async (organizationData) => {
-    if (!sidebarOrgId.value) return
+// View toggle (table/grid)
+const view = ref(route.query.view === 'grid' ? 'grid' : 'table')
+const columns = ref(3)
+
+watch(
+    () => route.query.view,
+    (v) => {
+        view.value = v === 'grid' ? 'grid' : 'table'
+    }
+)
+
+watch(view, async (v) => {
+    mobileActionsOpen.value = false
+    const q = { ...route.query }
+    if (v === 'grid') q.view = 'grid'
+    else delete q.view
+    await router.replace({ query: q })
+    if (v !== 'table') {
+        clearSelection()
+    }
+})
+
+// Computed
+const filteredTotalLabel = computed(() => {
+    const total = organizationStore.pagination?.total
+    if (total === null || total === undefined) return null
+    return Number.isFinite(total) ? total.toLocaleString() : String(total)
+})
+
+// Event handlers
+const handleRowSelection = ({ organization, checked, shiftKey }) => {
+    if (!organization?.id) return
+    toggleRow(organization.id, checked, { shiftKey })
+}
+
+const handleSelectAllRows = (checked) => {
+    toggleAllVisible(checked)
+}
+
+const fetchRatingOptions = async () => {
     try {
-        await organizationStore.updateOrganization(Number(sidebarOrgId.value), organizationData)
-        await organizationStore.fetchOrganizations(organizationStore.pagination.current_page)
-        // After saving, switch to view mode to reflect changes
-        openSidebar('view', sidebarOrgId.value)
+        ratingOptions.value = await api.get('/website-rating-options')
     } catch (error) {
-        console.error('Error updating organization:', error)
+        console.error('Failed to load website rating options:', error)
+        ratingOptions.value = []
     }
 }
 
 // Ref for calling submit from the drawer footer
 const editFormRef = ref(null)
+
+onMounted(async () => {
+    await initializeFilters()
+    await fetchRatingOptions()
+})
 </script>
 
 <template>
@@ -448,7 +149,7 @@ const editFormRef = ref(null)
                 :rating-options="ratingOptions"
                 @update:filters="organizationStore.setFilters"
                 @reset-filters="organizationStore.resetFilters"
-                @search="handleSearch"
+                @search="handleSearch(() => (mobileFiltersOpen = false))"
             />
         </template>
 
@@ -578,7 +279,7 @@ const editFormRef = ref(null)
                                     mobileFiltersOpen = false
                                 }
                             "
-                            @search="handleSearch"
+                            @search="handleSearch(() => (mobileFiltersOpen = false))"
                         />
                     </div>
                 </transition>
@@ -596,10 +297,10 @@ const editFormRef = ref(null)
                 <div v-else class="flex flex-1 flex-col min-h-0">
                     <OrganizationTableView
                         v-if="view === 'table'"
+                        selectable
                         :organizations="organizationStore.organizations"
                         :pagination="organizationStore.pagination"
                         :format-website="formatWebsite"
-                        selectable
                         :selected-ids="selectedIds"
                         :select-all-checked="allVisibleSelected"
                         :select-all-indeterminate="isIndeterminate"
@@ -735,45 +436,3 @@ const editFormRef = ref(null)
         </RightDrawer>
     </TwoColumnLayout>
 </template>
-
-<style scoped>
-.collapse-enter-active,
-.collapse-leave-active {
-    transition: max-height 0.25s ease, opacity 0.2s ease;
-}
-.collapse-enter-from,
-.collapse-leave-to {
-    max-height: 0;
-    opacity: 0;
-}
-.collapse-enter-to,
-.collapse-leave-from {
-    max-height: 2000px;
-    opacity: 1;
-}
-.scale-fade-enter-active,
-.scale-fade-leave-active {
-    transition: opacity 0.15s ease, transform 0.2s ease;
-    transform-origin: top right;
-}
-.scale-fade-enter-from,
-.scale-fade-leave-to {
-    opacity: 0;
-    transform: scale(0.95);
-}
-
-.selection-actions-enter-active,
-.selection-actions-leave-active {
-    transition: opacity 0.2s ease, transform 0.2s ease;
-}
-.selection-actions-enter-from,
-.selection-actions-leave-to {
-    opacity: 0;
-    transform: translateY(8px);
-}
-.selection-actions-enter-to,
-.selection-actions-leave-from {
-    opacity: 1;
-    transform: translateY(0);
-}
-</style>

@@ -1,16 +1,54 @@
 @import 'tailwindcss';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
 @layer utilities {
     .no-scrollbar::-webkit-scrollbar {
-      display: none;
+        display: none;
     }
     .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+    .collapse-enter-active,
+    .collapse-leave-active {
+        transition: max-height 0.25s ease, opacity 0.2s ease;
+    }
+    .collapse-enter-from,
+    .collapse-leave-to {
+        max-height: 0;
+        opacity: 0;
+    }
+    .collapse-enter-to,
+    .collapse-leave-from {
+        max-height: 2000px;
+        opacity: 1;
+    }
+    .scale-fade-enter-active,
+    .scale-fade-leave-active {
+        transition: opacity 0.15s ease, transform 0.2s ease;
+        transform-origin: top right;
+    }
+    .scale-fade-enter-from,
+    .scale-fade-leave-to {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+
+    .selection-actions-enter-active,
+    .selection-actions-leave-active {
+        transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .selection-actions-enter-from,
+    .selection-actions-leave-to {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    .selection-actions-enter-to,
+    .selection-actions-leave-from {
+        opacity: 1;
+        transform: translateY(0);
     }
 }
