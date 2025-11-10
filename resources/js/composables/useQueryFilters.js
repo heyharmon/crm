@@ -27,7 +27,9 @@ export function useQueryFilters(store, options = {}) {
                 assets_min: toStr(q.assets_min),
                 assets_max: toStr(q.assets_max),
                 asset_growth_min: toStr(q.asset_growth_min),
-                asset_growth_max: toStr(q.asset_growth_max)
+                asset_growth_max: toStr(q.asset_growth_max),
+                pages_min: toStr(q.pages_min),
+                pages_max: toStr(q.pages_max)
             },
             page: q.page ? Number(q.page) || 1 : 1
         }
@@ -53,6 +55,8 @@ export function useQueryFilters(store, options = {}) {
         delete q.assets_max
         delete q.asset_growth_min
         delete q.asset_growth_max
+        delete q.pages_min
+        delete q.pages_max
 
         if (filters.search) q.search = filters.search
         if (filters.city) q.city = filters.city
@@ -70,6 +74,8 @@ export function useQueryFilters(store, options = {}) {
         if (filters.assets_max) q.assets_max = filters.assets_max
         if (filters.asset_growth_min) q.asset_growth_min = filters.asset_growth_min
         if (filters.asset_growth_max) q.asset_growth_max = filters.asset_growth_max
+        if (filters.pages_min) q.pages_min = filters.pages_min
+        if (filters.pages_max) q.pages_max = filters.pages_max
         if (page && page > 1) q.page = String(page)
         return q
     }
@@ -159,7 +165,7 @@ export function useQueryFilters(store, options = {}) {
         () => route.query,
         async (q, prevQ) => {
             if (syncingQuery.value) return
-            const keys = ['search', 'city', 'state', 'category', 'cms', 'sort', 'page']
+            const keys = ['search', 'city', 'state', 'category', 'cms', 'sort', 'page', 'pages_min', 'pages_max']
             const relevantChanged = keys.some((k) => JSON.stringify(q[k]) !== JSON.stringify(prevQ?.[k]))
             if (!relevantChanged) return
 
