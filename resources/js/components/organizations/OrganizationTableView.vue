@@ -69,7 +69,9 @@ const COLUMN_STORAGE_KEY = 'organization-table-column-visibility'
 const defaultColumnVisibility = {
     name: true,
     category: true,
-    location: true,
+    city: true,
+    state: true,
+    country: true,
     assets: true,
     assetGrowth: true,
     score: false, // Hidden by default
@@ -114,7 +116,9 @@ const toggleColumnVisibility = (columnKey) => {
 const columnLabels = {
     name: 'Name',
     category: 'Category',
-    location: 'Location',
+    city: 'City',
+    state: 'State',
+    country: 'Country',
     assets: 'Assets',
     assetGrowth: 'Asset Growth',
     score: 'Score',
@@ -318,7 +322,9 @@ const getRedesignDateClasses = (organization) => {
                         </th>
                         <th v-if="columnVisibility.name" class="border-b border-neutral-200 px-4 py-3 min-w-64 md:min-w-80">Name</th>
                         <th v-if="columnVisibility.category" class="border-b border-neutral-200 px-4 py-3">Category</th>
-                        <th v-if="columnVisibility.location" class="border-b border-neutral-200 px-4 py-3">Location</th>
+                        <th v-if="columnVisibility.city" class="border-b border-neutral-200 px-4 py-3">City</th>
+                        <th v-if="columnVisibility.state" class="border-b border-neutral-200 px-4 py-3">State</th>
+                        <th v-if="columnVisibility.country" class="border-b border-neutral-200 px-4 py-3">Country</th>
                         <th v-if="columnVisibility.assets" class="border-b border-neutral-200 px-4 py-3">Assets</th>
                         <th v-if="columnVisibility.assetGrowth" class="border-b border-neutral-200 px-4 py-3">Asset Growth</th>
                         <th v-if="columnVisibility.score" class="border-b border-neutral-200 px-4 py-3">Score</th>
@@ -388,9 +394,14 @@ const getRedesignDateClasses = (organization) => {
                         <td v-if="columnVisibility.category" class="px-4 py-3 whitespace-nowrap text-sm font-medium text-neutral-700">
                             {{ organization.category?.name || '-' }}
                         </td>
-                        <td v-if="columnVisibility.location" class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
-                            <div class="font-medium text-neutral-700">{{ organization.state || '-' }}</div>
-                            <div class="text-xs text-neutral-500">{{ organization.country || '-' }}</div>
+                        <td v-if="columnVisibility.city" class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
+                            {{ organization.city || '-' }}
+                        </td>
+                        <td v-if="columnVisibility.state" class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
+                            {{ organization.state || '-' }}
+                        </td>
+                        <td v-if="columnVisibility.country" class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
+                            {{ organization.country || '-' }}
                         </td>
                         <td v-if="columnVisibility.assets" class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             {{ formatCurrency(organization.assets) }}
