@@ -97,6 +97,14 @@ class OrganizationController extends Controller
             $cms = $request->get('cms');
             $query->where('organizations.cms', 'LIKE', '%' . $cms . '%');
         }
+        if ($request->filled('pages_min')) {
+            $pagesMin = (int) $request->get('pages_min');
+            $query->whereRaw('(SELECT COUNT(*) FROM pages WHERE pages.organization_id = organizations.id) >= ?', [$pagesMin]);
+        }
+        if ($request->filled('pages_max')) {
+            $pagesMax = (int) $request->get('pages_max');
+            $query->whereRaw('(SELECT COUNT(*) FROM pages WHERE pages.organization_id = organizations.id) <= ?', [$pagesMax]);
+        }
         if ($request->filled('assets_min')) {
             $query->where('organizations.assets', '>=', $request->get('assets_min'));
         }
@@ -142,7 +150,7 @@ class OrganizationController extends Controller
         }
 
         $randomize = $request->boolean('random');
-        $allowedSorts = ['name', 'city', 'state', 'country', 'category', 'cms', 'score', 'reviews', 'website_rating', 'website_rating_average', 'website_rating_weighted', 'created_at'];
+        $allowedSorts = ['name', 'city', 'state', 'country', 'category', 'cms', 'pages_count', 'score', 'reviews', 'website_rating', 'website_rating_average', 'website_rating_weighted', 'created_at'];
 
         if ($randomize) {
             $query->inRandomOrder();
@@ -167,6 +175,8 @@ class OrganizationController extends Controller
                             $query->orderBy('organizations.cms', $dir);
                         } elseif ($field === 'website_rating_weighted') {
                             $query->orderBy('organizations.website_rating_weighted', $dir);
+                        } elseif ($field === 'pages_count') {
+                            $query->orderBy('pages_count', $dir);
                         } else {
                             $query->orderBy('organizations.' . $field, $dir);
                         }
@@ -185,6 +195,8 @@ class OrganizationController extends Controller
                         $query->orderBy('organizations.cms', $sortDirection);
                     } elseif ($sortBy === 'website_rating_weighted') {
                         $query->orderBy('organizations.website_rating_weighted', $sortDirection);
+                    } elseif ($sortBy === 'pages_count') {
+                        $query->orderBy('pages_count', $sortDirection);
                     } else {
                         $query->orderBy('organizations.' . $sortBy, $sortDirection);
                     }

@@ -51,6 +51,7 @@ const setSweetSpot = () => {
 const locationAccordionOpen = ref(false)
 const categoryAccordionOpen = ref(false)
 const cmsAccordionOpen = ref(false)
+const pagesAccordionOpen = ref(false)
 const lastRedesignAccordionOpen = ref(false)
 const assetGrowthAccordionOpen = ref(false)
 
@@ -419,6 +420,48 @@ const getSortIcon = (column) => {
                         </div>
                     </transition>
                 </div>
+
+                <!-- Pages Accordion -->
+                <div class="border-t border-neutral-200 pt-4">
+                    <button
+                        type="button"
+                        @click="pagesAccordionOpen = !pagesAccordionOpen"
+                        class="flex w-full items-center justify-between text-xs font-medium uppercase tracking-wide text-neutral-500 transition hover:text-neutral-700"
+                    >
+                        <span>Pages</span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transition-transform"
+                            :class="{ 'rotate-180': pagesAccordionOpen }"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <transition name="accordion">
+                        <div v-if="pagesAccordionOpen" class="mt-4">
+                            <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Page Count Range</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <Input
+                                    :model-value="filters.pages_min"
+                                    @update:model-value="updateFilter('pages_min', $event)"
+                                    type="number"
+                                    placeholder="Min"
+                                    min="0"
+                                />
+                                <Input
+                                    :model-value="filters.pages_max"
+                                    @update:model-value="updateFilter('pages_max', $event)"
+                                    type="number"
+                                    placeholder="Max"
+                                    min="0"
+                                />
+                            </div>
+                        </div>
+                    </transition>
+                </div>
             </div>
 
             <div class="space-y-4">
@@ -535,6 +578,14 @@ const getSortIcon = (column) => {
                         class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                     >
                         CMS {{ getSortIcon('cms') }}
+                    </Button>
+                    <Button
+                        @click="handleSort('pages_count')"
+                        :variant="(filters.sort || []).some((s) => s.startsWith('pages_count:')) ? 'default' : 'outline'"
+                        size="sm"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                    >
+                        Pages {{ getSortIcon('pages_count') }}
                     </Button>
                     <Button
                         @click="handleSort('city')"
