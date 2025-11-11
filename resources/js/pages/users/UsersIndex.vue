@@ -9,6 +9,8 @@ const users = ref([])
 const invitations = ref([])
 const loading = ref(false)
 const error = ref(null)
+const currentUser = ref(null)
+const deletingUserId = ref(null)
 
 const showInviteModal = ref(false)
 const inviteForm = ref({
@@ -42,7 +44,11 @@ const fetchInvitations = async () => {
     }
 }
 
-onMounted(() => {
+onMounted(async () => {
+    const storedUser = localStorage.getItem('user')
+    if (storedUser) {
+        currentUser.value = JSON.parse(storedUser)
+    }
     fetchUsers()
     fetchInvitations()
 })
@@ -108,6 +114,26 @@ const formatDate = (date) => {
         day: 'numeric'
     })
 }
+
+const deleteUser = async (userId) => {
+    if (!confirm('Are you sure you want to delete this user? This will also delete all their website design reviews.')) {
+        return
+    }
+
+    deletingUserId.value = userId
+    try {
+        await api.delete(`/users/${userId}`)
+        await fetchUsers()
+    } catch (err) {
+        error.value = err?.message || 'Failed to delete user.'
+    } finally {
+        deletingUserId.value = null
+    }
+}
+
+const isAdmin = () => {
+    return currentUser.value?.role === 'admin'
+}
 </script>
 
 <template>
@@ -162,9 +188,21 @@ const formatDate = (date) => {
                                 </td>
                                 <td class="px-4 py-3 text-sm text-neutral-600">{{ formatDate(user.created_at) }}</td>
                                 <td class="px-4 py-3">
-                                    <Button size="sm" variant="outline" @click.stop="$router.push({ name: 'users.show', params: { id: user.id } })">
-                                        View
-                                    </Button>
+                                    <div class="flex items-center gap-2">
+                                        <Button size="sm" variant="outline" @click.stop="$router.push({ name: 'users.show', params: { id: user.id } })">
+                                            View
+                                        </Button>
+                                        <Button
+                                            v-if="isAdmin() && currentUser?.id !== user.id"
+                                            size="sm"
+                                            variant="outline"
+                                            class="text-red-600 hover:bg-red-50 hover:border-red-300"
+                                            :disabled="deletingUserId === user.id"
+                                            @click.stop="deleteUser(user.id)"
+                                        >
+                                            {{ deletingUserId === user.id ? 'Deleting...' : 'Delete' }}
+                                        </Button>
+                                    </div>
                                 </td>
                             </tr>
                             <tr v-if="!users.length && !loading">
@@ -195,9 +233,21 @@ const formatDate = (date) => {
                                 {{ user.role }}
                             </span>
                         </div>
-                        <div class="mt-3 flex items-center justify-between">
+                        <div class="mt-3 flex items-center justify-between gap-2">
                             <div class="text-xs text-neutral-500">Created {{ formatDate(user.created_at) }}</div>
-                            <Button size="sm" variant="outline" @click.stop="$router.push({ name: 'users.show', params: { id: user.id } })"> View </Button>
+                            <div class="flex items-center gap-2">
+                                <Button size="sm" variant="outline" @click.stop="$router.push({ name: 'users.show', params: { id: user.id } })"> View </Button>
+                                <Button
+                                    v-if="isAdmin() && currentUser?.id !== user.id"
+                                    size="sm"
+                                    variant="outline"
+                                    class="text-red-600 hover:bg-red-50 hover:border-red-300"
+                                    :disabled="deletingUserId === user.id"
+                                    @click.stop="deleteUser(user.id)"
+                                >
+                                    {{ deletingUserId === user.id ? 'Deleting...' : 'Delete' }}
+                                </Button>
+                            </div>
                         </div>
                     </div>
                     <div
