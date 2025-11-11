@@ -245,13 +245,14 @@ export const useOrganizationStore = defineStore('organization', {
             }
         },
 
-        async runBatchOrganizationAction(action, organizationIds) {
+        async runBatchOrganizationAction(action, organizationIds, payload = {}) {
             this.error = null
 
             try {
                 return await api.post('/organizations/batch/actions', {
                     action,
-                    organization_ids: organizationIds
+                    organization_ids: organizationIds,
+                    ...payload
                 })
             } catch (error) {
                 this.error = error.message || 'Failed to run batch organization action'

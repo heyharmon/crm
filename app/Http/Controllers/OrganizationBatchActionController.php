@@ -14,9 +14,10 @@ class OrganizationBatchActionController extends Controller
     public function __invoke(Request $request)
     {
         $validated = $request->validate([
-            'action' => 'required|string|in:count_pages,detect_redesign,detect_cms,check_website_status,archive',
+            'action' => 'required|string|in:count_pages,detect_redesign,detect_cms,check_website_status,archive,set_category',
             'organization_ids' => 'required|array|min:1',
             'organization_ids.*' => 'integer|exists:organizations,id',
+            'category_id' => 'nullable|exists:organization_categories,id',
         ]);
 
         $ids = collect($validated['organization_ids'])
@@ -56,6 +57,14 @@ class OrganizationBatchActionController extends Controller
                 continue;
             }
 
+            if ($validated['action'] === 'set_category') {
+                $organization->update([
+                    'organization_category_id' => $validated['category_id'] ?? null,
+                ]);
+                $queued[] = $organization->id;
+                continue;
+            }
+
             $requiresWebsite = in_array($validated['action'], [
                 'count_pages',
                 'detect_redesign',
@@ -85,6 +94,7 @@ class OrganizationBatchActionController extends Controller
             'detect_cms' => 'CMS detection queued.',
             'check_website_status' => 'Website status checks queued.',
             'archive' => 'Organizations archived.',
+            'set_category' => 'Category updated for selected organizations.',
         ];
 
         return response()->json([

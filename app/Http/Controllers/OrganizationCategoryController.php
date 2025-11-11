@@ -11,7 +11,9 @@ class OrganizationCategoryController extends Controller
 {
     public function index()
     {
-        return OrganizationCategory::orderBy('name')->get();
+        return OrganizationCategory::withCount('organizations')
+            ->orderBy('name')
+            ->get();
     }
 
     public function store(Request $request)

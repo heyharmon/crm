@@ -21,6 +21,7 @@ const organizationStore = useOrganizationStore()
 const route = useRoute()
 const router = useRouter()
 const ratingOptions = ref([])
+const categories = ref([])
 
 // Selection composable
 const { selectedIds, selectedCount, allVisibleSelected, isIndeterminate, toggleRow, toggleAllVisible, clearSelection } = useOrganizationSelection(
@@ -52,12 +53,13 @@ const { mobileFiltersOpen, mobileActionsOpen } = useMobileUI()
 
 // Batch actions
 const batchActionLoading = ref(null)
+const batchCategoryId = ref(null)
 
-const runBatchAction = async (actionKey) => {
+const runBatchAction = async (actionKey, payload = {}) => {
     if (!selectedIds.value.length || batchActionLoading.value) return
     batchActionLoading.value = actionKey
     try {
-        const response = await organizationStore.runBatchOrganizationAction(actionKey, selectedIds.value)
+        const response = await organizationStore.runBatchOrganizationAction(actionKey, selectedIds.value, payload)
         if (actionKey === 'archive') {
             await organizationStore.fetchOrganizations(organizationStore.pagination.current_page)
         }
@@ -76,11 +78,42 @@ const runBatchAction = async (actionKey) => {
         if (skipped) details.push(`${skipped} skipped`)
         alert(details.length ? `${message} (${details.join(', ')})` : message)
         clearSelection()
+        if (actionKey === 'set_category') {
+            batchCategoryId.value = null
+        }
     } catch (error) {
         const errorMessage = error?.message || 'Failed to run batch action. Please try again.'
         alert(errorMessage)
     } finally {
         batchActionLoading.value = null
+    }
+}
+
+const handleBatchCategoryUpdate = () => {
+    if (batchCategoryId.value === null) {
+        alert('Please select a category first.')
+        return
+    }
+    runBatchAction('set_category', { category_id: batchCategoryId.value })
+}
+
+const handleInlineCategoryUpdate = async ({ organizationId, categoryId }) => {
+    try {
+        const response = await organizationStore.updateOrganization(organizationId, {
+            organization_category_id: categoryId
+        })
+
+        // Update the organization in the local list to avoid full reload
+        const orgIndex = organizationStore.organizations.findIndex((org) => org.id === organizationId)
+        if (orgIndex !== -1) {
+            organizationStore.organizations[orgIndex] = {
+                ...organizationStore.organizations[orgIndex],
+                organization_category_id: categoryId,
+                category: categoryId ? categories.value.find((cat) => cat.id === categoryId) : null
+            }
+        }
+    } catch (error) {
+        alert(error?.message || 'Failed to update category.')
     }
 }
 
@@ -132,12 +165,22 @@ const fetchRatingOptions = async () => {
     }
 }
 
+const fetchCategories = async () => {
+    try {
+        categories.value = await api.get('/organization-categories')
+    } catch (error) {
+        console.error('Failed to load categories:', error)
+        categories.value = []
+    }
+}
+
 // Ref for calling submit from the drawer footer
 const editFormRef = ref(null)
 
 onMounted(async () => {
     await initializeFilters()
     await fetchRatingOptions()
+    await fetchCategories()
 })
 </script>
 
@@ -304,6 +347,7 @@ onMounted(async () => {
                         :selected-ids="selectedIds"
                         :select-all-checked="allVisibleSelected"
                         :select-all-indeterminate="isIndeterminate"
+                        :categories="categories"
                         @open-sidebar="({ mode, id }) => openSidebar(mode, id)"
                         @start-web-scraping="startWebScraping"
                         @detect-redesign="detectWebsiteRedesign"
@@ -312,6 +356,7 @@ onMounted(async () => {
                         @delete-organization="deleteOrganization"
                         @toggle-row-selection="handleRowSelection"
                         @toggle-select-all="handleSelectAllRows"
+                        @update-category="handleInlineCategoryUpdate"
                         @page-change="handlePageChange"
                         @per-page-change="handlePerPageChange"
                     />
@@ -337,19 +382,38 @@ onMounted(async () => {
         <Teleport to="body">
             <transition name="selection-actions">
                 <div v-if="view === 'table' && selectedCount" class="fixed bottom-6 left-4 right-4 z-40 sm:left-auto sm:right-6 sm:w-auto">
-                    <div class="rounded-2xl border border-neutral-200 bg-white px-4 py-4 shadow-xl sm:px-5">
+                    <div class="rounded-2xl border border-neutral-800 bg-neutral-900 px-4 py-4 shadow-xl sm:px-5">
                         <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                            <div class="space-y-1 text-neutral-900">
+                            <div class="space-y-1 text-white">
                                 <p class="text-sm font-semibold">{{ selectedCount }} selected</p>
                                 <button
                                     type="button"
-                                    class="text-xs font-medium text-neutral-500 underline decoration-neutral-300 underline-offset-4 transition hover:text-neutral-900 hover:decoration-neutral-400"
+                                    class="text-xs font-medium text-neutral-400 underline decoration-neutral-600 underline-offset-4 transition hover:text-neutral-200 hover:decoration-neutral-400"
                                     @click="clearSelection"
                                 >
                                     Clear selection
                                 </button>
                             </div>
                             <div class="flex flex-wrap items-center gap-2">
+                                <div class="flex items-center gap-2">
+                                    <select
+                                        v-model="batchCategoryId"
+                                        class="rounded-full border border-neutral-200 bg-white px-3 py-2 text-sm font-medium shadow-none focus:border-neutral-300 focus:outline-none focus:ring-1 focus:ring-neutral-300"
+                                    >
+                                        <option :value="null">Select category...</option>
+                                        <option :value="null">None</option>
+                                        <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+                                    </select>
+                                    <Button
+                                        variant="outline"
+                                        class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium shadow-none"
+                                        :disabled="batchActionLoading === 'set_category'"
+                                        @click="handleBatchCategoryUpdate"
+                                    >
+                                        <span v-if="batchActionLoading === 'set_category'">Setting...</span>
+                                        <span v-else>Set Category</span>
+                                    </Button>
+                                </div>
                                 <Button
                                     variant="outline"
                                     class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium shadow-none"

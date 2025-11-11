@@ -131,61 +131,78 @@ const confirmBulkDelete = async () => {
                     <Button class="ml-auto" :disabled="bulkAction === 'reassign' && !bulkReassignTo" @click="confirmBulkDelete">Confirm</Button>
                 </div>
                 <table class="min-w-full divide-y divide-neutral-200">
-                    <tbody class="divide-y divide-neutral-200">
-                        <tr class="bg-neutral-50/50">
-                            <td class="px-4 py-2">
+                    <thead class="bg-neutral-50">
+                        <tr>
+                            <th class="px-4 py-3 text-left">
                                 <input type="checkbox" v-model="allSelected" />
-                            </td>
-                            <td class="px-4 py-2 text-sm text-neutral-600" colspan="2">Select all</td>
+                            </th>
+                            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-neutral-500">Category</th>
+                            <th class="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-neutral-500">Organizations</th>
+                            <th class="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-neutral-500">Actions</th>
                         </tr>
-                        <tr v-for="cat in categories" :key="cat.id" class="hover:bg-neutral-50">
-                            <td class="px-4 py-3 align-top">
-                                <input type="checkbox" :value="cat.id" v-model="selectedIds" />
-                            </td>
-                            <td class="px-4 py-3" colspan="1">
-                                <div v-if="editingId === cat.id" class="flex space-x-2">
-                                    <Input v-model="editingName" />
-                                    <Button @click="updateCategory(cat.id)">Save</Button>
-                                    <Button variant="outline" @click="editingId = null">Cancel</Button>
-                                </div>
-                                <div v-else class="flex justify-between items-center">
-                                    <span>{{ cat.name }}</span>
-                                    <div class="space-x-2">
-                                        <Button variant="outline" @click="startEdit(cat)">Edit</Button>
-                                        <Button variant="outline" @click="toggleDeleteOptions(cat.id)">Delete</Button>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-200">
+                        <template v-for="cat in categories" :key="cat.id">
+                            <tr class="hover:bg-neutral-50">
+                                <td class="px-4 py-3 align-top">
+                                    <input type="checkbox" :value="cat.id" v-model="selectedIds" />
+                                </td>
+                                <td class="px-4 py-3">
+                                    <div v-if="editingId === cat.id" class="flex space-x-2">
+                                        <Input v-model="editingName" />
+                                        <Button @click="updateCategory(cat.id)">Save</Button>
+                                        <Button variant="outline" @click="editingId = null">Cancel</Button>
                                     </div>
-                                </div>
-                                <div v-if="showingDelete[cat.id]" class="mt-3 p-3 border rounded bg-neutral-50">
-                                    <div class="text-sm font-medium mb-2">Delete options</div>
-                                    <div class="space-y-2 text-sm">
-                                        <label class="flex items-center space-x-2">
-                                            <input type="radio" :name="`del-${cat.id}`" value="disassociate" v-model="deleteAction[cat.id]" />
-                                            <span>Disassociate from organizations (set to none)</span>
-                                        </label>
-                                        <label class="flex items-center space-x-2">
-                                            <input type="radio" :name="`del-${cat.id}`" value="reassign" v-model="deleteAction[cat.id]" />
-                                            <span>Reassign organizations to another category</span>
-                                        </label>
-                                        <div v-if="deleteAction[cat.id] === 'reassign'" class="pl-6">
-                                            <select class="border rounded px-2 py-1" v-model="reassignTo[cat.id]">
-                                                <option :value="null">Select category</option>
-                                                <option v-for="c in categories.filter((x) => x.id !== cat.id)" :key="c.id" :value="c.id">{{ c.name }}</option>
-                                            </select>
+                                    <div v-else>
+                                        <span class="font-medium">{{ cat.name }}</span>
+                                    </div>
+                                </td>
+                                <td class="px-4 py-3 text-sm text-neutral-600">
+                                    {{ cat.organizations_count || 0 }}
+                                </td>
+                                <td class="px-4 py-3 text-right">
+                                    <div v-if="editingId !== cat.id" class="space-x-2">
+                                        <Button variant="outline" size="sm" @click="startEdit(cat)">Edit</Button>
+                                        <Button variant="outline" size="sm" @click="toggleDeleteOptions(cat.id)">Delete</Button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <tr v-if="showingDelete[cat.id]">
+                                <td colspan="4" class="px-4 py-3">
+                                    <div class="p-3 border rounded bg-neutral-50">
+                                        <div class="text-sm font-medium mb-2">Delete options</div>
+                                        <div class="space-y-2 text-sm">
+                                            <label class="flex items-center space-x-2">
+                                                <input type="radio" :name="`del-${cat.id}`" value="disassociate" v-model="deleteAction[cat.id]" />
+                                                <span>Disassociate from organizations (set to none)</span>
+                                            </label>
+                                            <label class="flex items-center space-x-2">
+                                                <input type="radio" :name="`del-${cat.id}`" value="reassign" v-model="deleteAction[cat.id]" />
+                                                <span>Reassign organizations to another category</span>
+                                            </label>
+                                            <div v-if="deleteAction[cat.id] === 'reassign'" class="pl-6">
+                                                <select class="border rounded px-2 py-1" v-model="reassignTo[cat.id]">
+                                                    <option :value="null">Select category</option>
+                                                    <option v-for="c in categories.filter((x) => x.id !== cat.id)" :key="c.id" :value="c.id">
+                                                        {{ c.name }}
+                                                    </option>
+                                                </select>
+                                            </div>
+                                            <label class="flex items-center space-x-2">
+                                                <input type="radio" :name="`del-${cat.id}`" value="destroy" v-model="deleteAction[cat.id]" />
+                                                <span>Destroy organizations in this category</span>
+                                            </label>
                                         </div>
-                                        <label class="flex items-center space-x-2">
-                                            <input type="radio" :name="`del-${cat.id}`" value="destroy" v-model="deleteAction[cat.id]" />
-                                            <span>Destroy organizations in this category</span>
-                                        </label>
+                                        <div class="mt-3 space-x-2">
+                                            <Button variant="outline" @click="showingDelete[cat.id] = false">Cancel</Button>
+                                            <Button :disabled="deleteAction[cat.id] === 'reassign' && !reassignTo[cat.id]" @click="confirmDelete(cat)">
+                                                Confirm Delete
+                                            </Button>
+                                        </div>
                                     </div>
-                                    <div class="mt-3 space-x-2">
-                                        <Button variant="outline" @click="showingDelete[cat.id] = false">Cancel</Button>
-                                        <Button :disabled="deleteAction[cat.id] === 'reassign' && !reassignTo[cat.id]" @click="confirmDelete(cat)"
-                                            >Confirm Delete</Button
-                                        >
-                                    </div>
-                                </div>
-                            </td>
-                        </tr>
+                                </td>
+                            </tr>
+                        </template>
                     </tbody>
                 </table>
             </div>

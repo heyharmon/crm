@@ -34,6 +34,10 @@ const props = defineProps({
     selectAllIndeterminate: {
         type: Boolean,
         default: false
+    },
+    categories: {
+        type: Array,
+        default: () => []
     }
 })
 
@@ -46,7 +50,8 @@ const emit = defineEmits([
     'detect-cms',
     'page-change',
     'toggle-row-selection',
-    'toggle-select-all'
+    'toggle-select-all',
+    'update-category'
 ])
 const openMenuId = ref(null)
 const toggleMenu = (organizationId) => {
@@ -56,6 +61,12 @@ const closeMenu = () => {
     openMenuId.value = null
 }
 const handleDocumentClick = (event) => {
+    // Close category dropdown if clicking outside - do this first to prevent other actions
+    if (categoryDropdownOpen.value && !event.target.closest('.category-dropdown-container')) {
+        stopEditingCategory()
+        return // Stop here to prevent other actions
+    }
+
     closeMenu()
     // Close column dropdown if clicking outside
     if (showColumnDropdown.value && !event.target.closest('.column-visibility-dropdown')) {
@@ -269,6 +280,36 @@ const getRedesignDateClasses = (organization) => {
     const { dateClasses } = useRedesignAccuracy(org)
     return dateClasses.value
 }
+
+const editingCategoryId = ref(null)
+const categoryDropdownOpen = ref(null)
+
+const toggleCategoryDropdown = (organizationId) => {
+    if (categoryDropdownOpen.value === organizationId) {
+        stopEditingCategory()
+    } else {
+        editingCategoryId.value = organizationId
+        categoryDropdownOpen.value = organizationId
+    }
+}
+
+const stopEditingCategory = () => {
+    editingCategoryId.value = null
+    categoryDropdownOpen.value = null
+}
+
+const handleCategoryChange = (organization, categoryId) => {
+    emit('update-category', { organizationId: organization.id, categoryId })
+    stopEditingCategory()
+}
+
+const handleRowClick = (event, organization) => {
+    // Don't open sidebar if category dropdown is open
+    if (categoryDropdownOpen.value) {
+        return
+    }
+    emit('open-sidebar', { mode: 'view', id: organization.id })
+}
 </script>
 
 <template>
@@ -346,10 +387,10 @@ const getRedesignDateClasses = (organization) => {
                         :key="organization.id"
                         class="cursor-pointer border-b border-neutral-200 transition-colors hover:bg-neutral-50 focus-within:bg-neutral-50"
                         :class="props.selectable && rowIsSelected(organization.id) ? 'bg-neutral-50/80' : ''"
-                        @click="emit('open-sidebar', { mode: 'view', id: organization.id })"
+                        @click="handleRowClick($event, organization)"
                         tabindex="0"
-                        @keydown.enter="emit('open-sidebar', { mode: 'view', id: organization.id })"
-                        @keydown.space.prevent="emit('open-sidebar', { mode: 'view', id: organization.id })"
+                        @keydown.enter="handleRowClick($event, organization)"
+                        @keydown.space.prevent="handleRowClick($event, organization)"
                     >
                         <td v-if="props.selectable" class="px-4 py-3 align-top" @click.stop>
                             <input
@@ -397,8 +438,47 @@ const getRedesignDateClasses = (organization) => {
                         <td v-if="columnVisibility.type" class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             {{ organization.type || '-' }}
                         </td>
-                        <td v-if="columnVisibility.category" class="px-4 py-3 whitespace-nowrap text-sm font-medium text-neutral-700">
-                            {{ organization.category?.name || '-' }}
+                        <td v-if="columnVisibility.category" class="px-4 py-3 whitespace-nowrap text-sm font-medium text-neutral-700" @click.stop>
+                            <div class="relative category-dropdown-container">
+                                <button
+                                    type="button"
+                                    class="flex items-center gap-1 rounded px-2 py-1 text-left transition hover:bg-neutral-100"
+                                    @click.stop="toggleCategoryDropdown(organization.id)"
+                                >
+                                    <span>{{ organization.category?.name || '-' }}</span>
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3 text-neutral-400" viewBox="0 0 20 20" fill="currentColor">
+                                        <path
+                                            fill-rule="evenodd"
+                                            d="M5.23 7.21a.75.75 0 011.06.02L10 11.084l3.71-3.854a.75.75 0 011.08 1.04l-4.25 4.417a.75.75 0 01-1.08 0L5.21 8.27a.75.75 0 01.02-1.06z"
+                                            clip-rule="evenodd"
+                                        />
+                                    </svg>
+                                </button>
+                                <div
+                                    v-if="categoryDropdownOpen === organization.id"
+                                    class="absolute left-0 top-full z-30 mt-1 min-w-[12rem] max-w-xs rounded-lg border border-neutral-200 bg-white py-1 shadow-lg"
+                                    @click.stop
+                                >
+                                    <button
+                                        type="button"
+                                        class="flex w-full items-center px-3 py-2 text-sm text-neutral-700 transition hover:bg-neutral-50"
+                                        :class="{ 'bg-neutral-100 font-medium': !organization.category }"
+                                        @click="handleCategoryChange(organization, null)"
+                                    >
+                                        <span class="text-neutral-400">None</span>
+                                    </button>
+                                    <button
+                                        v-for="cat in props.categories"
+                                        :key="cat.id"
+                                        type="button"
+                                        class="flex w-full items-center px-3 py-2 text-sm text-neutral-700 transition hover:bg-neutral-50"
+                                        :class="{ 'bg-neutral-100 font-medium': organization.category?.id === cat.id }"
+                                        @click="handleCategoryChange(organization, cat.id)"
+                                    >
+                                        {{ cat.name }}
+                                    </button>
+                                </div>
+                            </div>
                         </td>
                         <td v-if="columnVisibility.city" class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
                             {{ organization.city || '-' }}
