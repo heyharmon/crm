@@ -22,6 +22,7 @@ class Organization extends Model
 
     protected $fillable = [
         'name',
+        'type',
         'google_place_id',
         'source',
         'banner',

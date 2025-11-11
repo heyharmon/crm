@@ -68,6 +68,7 @@ const COLUMN_STORAGE_KEY = 'organization-table-column-visibility'
 
 const defaultColumnVisibility = {
     name: true,
+    type: true,
     category: true,
     city: true,
     state: true,
@@ -115,6 +116,7 @@ const toggleColumnVisibility = (columnKey) => {
 
 const columnLabels = {
     name: 'Name',
+    type: 'Type',
     category: 'Category',
     city: 'City',
     state: 'State',
@@ -321,6 +323,7 @@ const getRedesignDateClasses = (organization) => {
                             />
                         </th>
                         <th v-if="columnVisibility.name" class="border-b border-neutral-200 px-4 py-3 min-w-64 md:min-w-80">Name</th>
+                        <th v-if="columnVisibility.type" class="border-b border-neutral-200 px-4 py-3">Type</th>
                         <th v-if="columnVisibility.category" class="border-b border-neutral-200 px-4 py-3">Category</th>
                         <th v-if="columnVisibility.city" class="border-b border-neutral-200 px-4 py-3">City</th>
                         <th v-if="columnVisibility.state" class="border-b border-neutral-200 px-4 py-3">State</th>
@@ -390,6 +393,9 @@ const getRedesignDateClasses = (organization) => {
                                     </a>
                                 </div>
                             </div>
+                        </td>
+                        <td v-if="columnVisibility.type" class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
+                            {{ organization.type || '-' }}
                         </td>
                         <td v-if="columnVisibility.category" class="px-4 py-3 whitespace-nowrap text-sm font-medium text-neutral-700">
                             {{ organization.category?.name || '-' }}

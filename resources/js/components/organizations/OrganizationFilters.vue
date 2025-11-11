@@ -49,11 +49,13 @@ const setSweetSpot = () => {
 
 // Accordion state
 const locationAccordionOpen = ref(false)
+const typeAccordionOpen = ref(false)
 const categoryAccordionOpen = ref(false)
 const cmsAccordionOpen = ref(false)
 const pagesAccordionOpen = ref(false)
 const lastRedesignAccordionOpen = ref(false)
 const assetGrowthAccordionOpen = ref(false)
+const assetsAccordionOpen = ref(false)
 
 const setWebsiteFilter = (value) => {
     // Clicking the active option should revert to "any"
@@ -162,10 +164,15 @@ const getSortIcon = (column) => {
 
         <div class="space-y-6">
             <div class="space-y-4">
-                <div>
-                    <div class="mb-2 flex items-center justify-between">
+                <!-- Assets Accordion -->
+                <div class="border-t border-neutral-200 pt-4">
+                    <button
+                        type="button"
+                        @click="assetsAccordionOpen = !assetsAccordionOpen"
+                        class="flex w-full items-center justify-between text-xs font-medium uppercase tracking-wide text-neutral-500 transition hover:text-neutral-700"
+                    >
                         <div class="flex items-center gap-1">
-                            <label class="text-xs font-medium uppercase tracking-wide text-neutral-500">Assets</label>
+                            <span>Assets</span>
                             <span class="group relative">
                                 <svg
                                     xmlns="http://www.w3.org/2000/svg"
@@ -188,12 +195,29 @@ const getSortIcon = (column) => {
                                 </span>
                             </span>
                         </div>
-                        <Button size="sm" variant="link" @click="setSweetSpot">Apply sweet spot</Button>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <Input :model-value="assetsMin.displayValue.value" @update:model-value="assetsMin.handleInput" type="text" placeholder="Min" />
-                        <Input :model-value="assetsMax.displayValue.value" @update:model-value="assetsMax.handleInput" type="text" placeholder="Max" />
-                    </div>
+                        <div class="flex items-center gap-2">
+                            <Button size="sm" variant="link" @click.stop="setSweetSpot">Apply sweet spot</Button>
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="h-4 w-4 transition-transform"
+                                :class="{ 'rotate-180': assetsAccordionOpen }"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </div>
+                    </button>
+                    <transition name="accordion">
+                        <div v-if="assetsAccordionOpen" class="mt-4">
+                            <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Asset Range</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <Input :model-value="assetsMin.displayValue.value" @update:model-value="assetsMin.handleInput" type="text" placeholder="Min" />
+                                <Input :model-value="assetsMax.displayValue.value" @update:model-value="assetsMax.handleInput" type="text" placeholder="Max" />
+                            </div>
+                        </div>
+                    </transition>
                 </div>
 
                 <!-- Asset Growth Accordion -->
@@ -365,6 +389,32 @@ const getSortIcon = (column) => {
                                 <label class="mb-2 block text-xs font-medium uppercase tracking-wide text-neutral-500">Country</label>
                                 <Input :model-value="filters.country" @update:model-value="updateFilter('country', $event)" placeholder="Filter by country" />
                             </div>
+                        </div>
+                    </transition>
+                </div>
+
+                <!-- Type Accordion -->
+                <div class="border-t border-neutral-200 pt-4">
+                    <button
+                        type="button"
+                        @click="typeAccordionOpen = !typeAccordionOpen"
+                        class="flex w-full items-center justify-between text-xs font-medium uppercase tracking-wide text-neutral-500 transition hover:text-neutral-700"
+                    >
+                        <span>Type</span>
+                        <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            class="h-4 w-4 transition-transform"
+                            :class="{ 'rotate-180': typeAccordionOpen }"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                        >
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <transition name="accordion">
+                        <div v-if="typeAccordionOpen" class="mt-4">
+                            <Input :model-value="filters.type" @update:model-value="updateFilter('type', $event)" placeholder="Filter by type" />
                         </div>
                     </transition>
                 </div>
@@ -562,6 +612,14 @@ const getSortIcon = (column) => {
                         class="rounded-full border-neutral-200 px-3 py-1 text-xs"
                     >
                         Name {{ getSortIcon('name') }}
+                    </Button>
+                    <Button
+                        @click="handleSort('type')"
+                        :variant="(filters.sort || []).some((s) => s.startsWith('type:')) ? 'default' : 'outline'"
+                        size="sm"
+                        class="rounded-full border-neutral-200 px-3 py-1 text-xs"
+                    >
+                        Type {{ getSortIcon('type') }}
                     </Button>
                     <Button
                         @click="handleSort('category')"

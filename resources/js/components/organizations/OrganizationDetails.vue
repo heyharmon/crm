@@ -513,6 +513,10 @@ watch(selectedRedesignEvent, (value) => {
             <div class="bg-white rounded-lg border border-neutral-200 p-4">
                 <h3 class="font-semibold mb-3">General Info</h3>
                 <div class="grid grid-cols-1 gap-2 text-sm">
+                    <div v-if="org().type">
+                        <span class="font-medium text-neutral-700">Type:</span>
+                        <span class="ml-1">{{ org().type }}</span>
+                    </div>
                     <div v-if="org().phone">
                         <span class="font-medium text-neutral-700">Phone:</span>
                         <a :href="`tel:${org().phone}`" class="ml-1 text-blue-600 hover:text-blue-800">{{ org().phone }}</a>
@@ -575,9 +579,7 @@ watch(selectedRedesignEvent, (value) => {
                             {{ formatInteger(org().pages_count) }}
                         </span>
                     </div>
-                    <div v-else class="text-sm text-neutral-500">
-                        Crawl not yet performed. Use "Count pages" from the actions menu to crawl the website.
-                    </div>
+                    <div v-else class="text-sm text-neutral-500">Crawl not yet performed. Use "Count pages" from the actions menu to crawl the website.</div>
                 </div>
             </div>
 

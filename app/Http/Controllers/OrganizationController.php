@@ -65,6 +65,9 @@ class OrganizationController extends Controller
         if ($request->filled('category')) {
             $query->where('organization_categories.name', 'LIKE', "%{$request->get('category')}%");
         }
+        if ($request->filled('type')) {
+            $query->where('organizations.type', 'LIKE', "%{$request->get('type')}%");
+        }
         if ($request->filled('website')) {
             $websiteFilter = $request->get('website');
             if ($websiteFilter === 'present') {
@@ -150,7 +153,7 @@ class OrganizationController extends Controller
         }
 
         $randomize = $request->boolean('random');
-        $allowedSorts = ['name', 'city', 'state', 'country', 'category', 'cms', 'pages_count', 'score', 'reviews', 'website_rating', 'website_rating_average', 'website_rating_weighted', 'created_at'];
+        $allowedSorts = ['name', 'type', 'city', 'state', 'country', 'category', 'cms', 'pages_count', 'score', 'reviews', 'website_rating', 'website_rating_average', 'website_rating_weighted', 'created_at'];
 
         if ($randomize) {
             $query->inRandomOrder();
@@ -169,6 +172,8 @@ class OrganizationController extends Controller
                     if (in_array($field, $allowedSorts)) {
                         if ($field === 'category') {
                             $query->orderBy('organization_categories.name', $dir);
+                        } elseif ($field === 'type') {
+                            $query->orderBy('organizations.type', $dir);
                         } elseif ($field === 'website_rating') {
                             $query->orderBy('organizations.website_rating_average', $dir);
                         } elseif ($field === 'cms') {
@@ -189,6 +194,8 @@ class OrganizationController extends Controller
                 if ($sortBy && in_array($sortBy, $allowedSorts)) {
                     if ($sortBy === 'category') {
                         $query->orderBy('organization_categories.name', $sortDirection);
+                    } elseif ($sortBy === 'type') {
+                        $query->orderBy('organizations.type', $sortDirection);
                     } elseif ($sortBy === 'website_rating') {
                         $query->orderBy('organizations.website_rating_average', $sortDirection);
                     } elseif ($sortBy === 'cms') {
@@ -237,6 +244,7 @@ class OrganizationController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'type' => 'nullable|string|max:255',
             'source' => 'nullable|string|max:255',
             'banner' => 'nullable|url|max:500',
             'score' => 'nullable|numeric|min:0|max:5',
@@ -261,6 +269,7 @@ class OrganizationController extends Controller
     {
         $validated = $request->validate([
             'name' => 'sometimes|required|string|max:255',
+            'type' => 'nullable|string|max:255',
             'source' => 'nullable|string|max:255',
             'banner' => 'nullable|url|max:500',
             'score' => 'nullable|numeric|min:0|max:5',

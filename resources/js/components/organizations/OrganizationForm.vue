@@ -23,6 +23,7 @@ const emit = defineEmits(['submit'])
 
 const form = ref({
     name: '',
+    type: '',
     source: '',
     banner: '',
     score: '',
@@ -93,6 +94,11 @@ defineExpose({ submitForm })
                     <label class="block text-sm font-medium text-neutral-700 mb-1">Organization Name *</label>
                     <Input v-model="form.name" required placeholder="Enter organization name" />
                     <span v-if="errors.name" class="text-red-500 text-sm">{{ errors.name[0] }}</span>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-neutral-700 mb-1">Type</label>
+                    <Input v-model="form.type" placeholder="e.g., private, corporate, non-profit" />
                 </div>
 
                 <div>
