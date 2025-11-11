@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\OrganizationWebsiteRatingService;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -21,9 +22,16 @@ class UserController extends Controller
         return response()->json($user);
     }
 
-    public function destroy(User $user)
+    public function destroy(User $user, OrganizationWebsiteRatingService $ratingService)
     {
+        // Get all organization IDs that this user has rated
+        $organizationIds = $user->websiteRatings()->pluck('organization_id')->unique();
+
+        // Delete the user (cascade will delete their ratings)
         $user->delete();
+
+        // Recalculate aggregates for all affected organizations
+        $ratingService->refreshAggregatesForOrganizations($organizationIds);
 
         return response()->json(null, 204);
     }
