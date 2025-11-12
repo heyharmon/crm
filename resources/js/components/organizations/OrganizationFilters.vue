@@ -12,6 +12,10 @@ const props = defineProps({
     ratingOptions: {
         type: Array,
         default: () => []
+    },
+    categories: {
+        type: Array,
+        default: () => []
     }
 })
 
@@ -91,6 +95,19 @@ const toggleWebsiteStatus = (value) => {
 
 const hasWebsiteStatus = (value) => Array.isArray(props.filters.website_status) && props.filters.website_status.includes(value)
 
+const toggleCategory = (categoryId) => {
+    const current = Array.isArray(props.filters.category_ids) ? [...props.filters.category_ids] : []
+    const index = current.indexOf(categoryId)
+    if (index >= 0) {
+        current.splice(index, 1)
+    } else {
+        current.push(categoryId)
+    }
+    emit('update:filters', { category_ids: current })
+}
+
+const hasCategory = (categoryId) => Array.isArray(props.filters.category_ids) && props.filters.category_ids.includes(categoryId)
+
 const handleSearch = () => {
     emit('search')
 }
@@ -102,7 +119,7 @@ const resetFilters = () => {
 const hasActiveFilters = computed(() => {
     const filterEntries = Object.entries(props.filters || {})
     return filterEntries.some(([key, value]) => {
-        if (['sort', 'website_status'].includes(key)) return Array.isArray(value) && value.length > 0
+        if (['sort', 'website_status', 'category_ids'].includes(key)) return Array.isArray(value) && value.length > 0
         return Boolean(value)
     })
 })
@@ -439,8 +456,26 @@ const getSortIcon = (column) => {
                         </svg>
                     </button>
                     <transition name="accordion">
-                        <div v-if="categoryAccordionOpen" class="mt-4">
-                            <Input :model-value="filters.category" @update:model-value="updateFilter('category', $event)" placeholder="Filter by category" />
+                        <div v-if="categoryAccordionOpen" class="mt-4 space-y-2">
+                            <label class="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    :checked="hasCategory(null)"
+                                    @change="toggleCategory(null)"
+                                    class="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-500"
+                                />
+                                <span class="text-sm text-neutral-700">No Category</span>
+                            </label>
+                            <label v-for="category in categories" :key="category.id" class="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="checkbox"
+                                    :checked="hasCategory(category.id)"
+                                    @change="toggleCategory(category.id)"
+                                    class="h-4 w-4 rounded border-neutral-300 text-neutral-900 focus:ring-neutral-500"
+                                />
+                                <span class="text-sm text-neutral-700">{{ category.name }}</span>
+                            </label>
+                            <div v-if="!categories.length" class="text-sm text-neutral-500">No categories available</div>
                         </div>
                     </transition>
                 </div>

@@ -97,6 +97,20 @@ const handleBatchCategoryUpdate = () => {
     runBatchAction('set_category', { category_id: batchCategoryId.value })
 }
 
+const handleExportOrganizations = async () => {
+    if (!selectedIds.value.length || batchActionLoading.value) return
+    batchActionLoading.value = 'export'
+    try {
+        await organizationStore.exportOrganizations(selectedIds.value)
+        alert(`Successfully exported ${selectedIds.value.length} organization(s).`)
+    } catch (error) {
+        const errorMessage = error?.message || 'Failed to export organizations. Please try again.'
+        alert(errorMessage)
+    } finally {
+        batchActionLoading.value = null
+    }
+}
+
 const handleInlineCategoryUpdate = async ({ organizationId, categoryId }) => {
     try {
         const response = await organizationStore.updateOrganization(organizationId, {
@@ -190,6 +204,7 @@ onMounted(async () => {
             <OrganizationFilters
                 :filters="organizationStore.filters"
                 :rating-options="ratingOptions"
+                :categories="categories"
                 @update:filters="organizationStore.setFilters"
                 @reset-filters="organizationStore.resetFilters"
                 @search="handleSearch(() => (mobileFiltersOpen = false))"
@@ -315,6 +330,7 @@ onMounted(async () => {
                         <OrganizationFilters
                             :filters="organizationStore.filters"
                             :rating-options="ratingOptions"
+                            :categories="categories"
                             @update:filters="organizationStore.setFilters"
                             @reset-filters="
                                 () => {
@@ -449,6 +465,15 @@ onMounted(async () => {
                                 >
                                     <span v-if="batchActionLoading === 'check_website_status'">Queuing...</span>
                                     <span v-else>Check website status</span>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    class="rounded-full border-neutral-200 bg-white px-3 py-2 text-sm font-medium shadow-none"
+                                    :disabled="batchActionLoading === 'export'"
+                                    @click="handleExportOrganizations"
+                                >
+                                    <span v-if="batchActionLoading === 'export'">Exporting...</span>
+                                    <span v-else>Export</span>
                                 </Button>
                                 <Button
                                     variant="outline"

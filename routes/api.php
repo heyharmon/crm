@@ -6,6 +6,7 @@ use App\Http\Controllers\InvitationController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\OrganizationBatchActionController;
+use App\Http\Controllers\OrganizationExportController;
 use App\Http\Controllers\OrganizationCategoryController;
 use App\Http\Controllers\WebsiteRatingController;
 use App\Http\Controllers\OrganizationGoogleMapsScraperController;
@@ -57,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('organizations/{organization}', [OrganizationController::class, 'destroy']);
         Route::post('organizations/{id}/restore', [OrganizationController::class, 'restore']);
         Route::post('organizations/batch/actions', OrganizationBatchActionController::class);
+        Route::post('organizations/export', OrganizationExportController::class);
 
         // Import routes
         Route::post('organizations/import/hubspot', [OrganizationHubspotImportController::class, 'store']);

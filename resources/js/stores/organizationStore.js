@@ -20,6 +20,7 @@ export const useOrganizationStore = defineStore('organization', {
             state: '',
             country: '',
             category: '',
+            category_ids: [],
             cms: '',
             pages_min: '',
             pages_max: '',
@@ -261,6 +262,38 @@ export const useOrganizationStore = defineStore('organization', {
             }
         },
 
+        async exportOrganizations(organizationIds) {
+            this.error = null
+
+            try {
+                const response = await api.post(
+                    '/organizations/export',
+                    {
+                        organization_ids: organizationIds
+                    },
+                    {
+                        responseType: 'blob'
+                    }
+                )
+
+                const blob = new Blob([response], { type: 'text/csv' })
+                const url = window.URL.createObjectURL(blob)
+                const link = document.createElement('a')
+                link.href = url
+                link.download = `organizations_export_${new Date().toISOString().slice(0, 10)}.csv`
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+                window.URL.revokeObjectURL(url)
+
+                return { success: true }
+            } catch (error) {
+                this.error = error.message || 'Failed to export organizations'
+                console.error('Error exporting organizations:', error)
+                throw error
+            }
+        },
+
         resetOrganizationRedesignData(organizationId) {
             const clearData = (org) => {
                 if (!org || org.id !== organizationId) return
@@ -288,6 +321,7 @@ export const useOrganizationStore = defineStore('organization', {
                 state: '',
                 country: '',
                 category: '',
+                category_ids: [],
                 cms: '',
                 pages_min: '',
                 pages_max: '',

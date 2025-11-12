@@ -10,6 +10,15 @@ export function useQueryFilters(store, options = {}) {
     const parseFiltersFromQuery = (q) => {
         const toStr = (v) => (typeof v === 'string' ? v : '')
         const toArr = (v) => (Array.isArray(v) ? v : v ? [String(v)] : [])
+        const toNumArr = (v) => {
+            if (!v) return []
+            const arr = Array.isArray(v) ? v : [v]
+            return arr.map((item) => {
+                if (item === 'null' || item === null) return null
+                const num = Number(item)
+                return isNaN(num) ? null : num
+            })
+        }
         return {
             filters: {
                 search: toStr(q.search),
@@ -17,6 +26,7 @@ export function useQueryFilters(store, options = {}) {
                 state: toStr(q.state),
                 country: toStr(q.country),
                 category: toStr(q.category),
+                category_ids: toNumArr(q.category_ids),
                 cms: toStr(q.cms),
                 website: toStr(q.website),
                 last_redesign: toStr(q.last_redesign),
@@ -29,7 +39,9 @@ export function useQueryFilters(store, options = {}) {
                 asset_growth_min: toStr(q.asset_growth_min),
                 asset_growth_max: toStr(q.asset_growth_max),
                 pages_min: toStr(q.pages_min),
-                pages_max: toStr(q.pages_max)
+                pages_max: toStr(q.pages_max),
+                last_redesign_year_min: toStr(q.last_redesign_year_min),
+                last_redesign_year_max: toStr(q.last_redesign_year_max)
             },
             page: q.page ? Number(q.page) || 1 : 1
         }
@@ -43,6 +55,7 @@ export function useQueryFilters(store, options = {}) {
         delete q.state
         delete q.country
         delete q.category
+        delete q.category_ids
         delete q.cms
         delete q.website
         delete q.last_redesign
@@ -57,12 +70,17 @@ export function useQueryFilters(store, options = {}) {
         delete q.asset_growth_max
         delete q.pages_min
         delete q.pages_max
+        delete q.last_redesign_year_min
+        delete q.last_redesign_year_max
 
         if (filters.search) q.search = filters.search
         if (filters.city) q.city = filters.city
         if (filters.state) q.state = filters.state
         if (filters.country) q.country = filters.country
         if (filters.category) q.category = filters.category
+        if (Array.isArray(filters.category_ids) && filters.category_ids.length) {
+            q.category_ids = filters.category_ids.map((id) => (id === null ? 'null' : String(id)))
+        }
         if (filters.cms) q.cms = filters.cms
         if (filters.website) q.website = filters.website
         if (filters.last_redesign) q.last_redesign = filters.last_redesign
@@ -76,6 +94,8 @@ export function useQueryFilters(store, options = {}) {
         if (filters.asset_growth_max) q.asset_growth_max = filters.asset_growth_max
         if (filters.pages_min) q.pages_min = filters.pages_min
         if (filters.pages_max) q.pages_max = filters.pages_max
+        if (filters.last_redesign_year_min) q.last_redesign_year_min = filters.last_redesign_year_min
+        if (filters.last_redesign_year_max) q.last_redesign_year_max = filters.last_redesign_year_max
         if (page && page > 1) q.page = String(page)
         return q
     }

@@ -62,8 +62,22 @@ class OrganizationController extends Controller
                 });
             }
         }
-        if ($request->filled('category')) {
-            $query->where('organization_categories.name', 'LIKE', "%{$request->get('category')}%");
+        if ($request->filled('category_ids')) {
+            $categoryIds = $request->input('category_ids');
+            if (is_array($categoryIds) && !empty($categoryIds)) {
+                $query->where(function ($q) use ($categoryIds) {
+                    // Check if null is in the array (for "No Category")
+                    if (in_array(null, $categoryIds, true)) {
+                        $q->whereNull('organizations.organization_category_id');
+                        // Remove null from array for the whereIn check
+                        $categoryIds = array_filter($categoryIds, fn($id) => $id !== null);
+                    }
+                    // If there are still category IDs after filtering out null
+                    if (!empty($categoryIds)) {
+                        $q->orWhereIn('organizations.organization_category_id', $categoryIds);
+                    }
+                });
+            }
         }
         if ($request->filled('type')) {
             $query->where('organizations.type', 'LIKE', "%{$request->get('type')}%");
