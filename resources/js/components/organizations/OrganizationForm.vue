@@ -73,7 +73,15 @@ onMounted(async () => {
 
 const submitForm = () => {
     errors.value = {}
-    emit('submit', { ...form.value })
+    // Convert empty date strings to null to avoid timezone issues
+    const data = { ...form.value }
+    if (data.last_major_redesign_at === '') {
+        data.last_major_redesign_at = null
+    }
+    if (data.last_major_redesign_at_actual === '') {
+        data.last_major_redesign_at_actual = null
+    }
+    emit('submit', data)
 }
 
 const validateWebsite = () => {

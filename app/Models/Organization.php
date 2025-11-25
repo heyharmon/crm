@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\OrganizationCategory;
 use App\Models\OrganizationWebsiteRating;
 use App\Models\OrganizationWebsiteRedesign;
+use Carbon\Carbon;
 
 class Organization extends Model
 {
@@ -146,5 +147,53 @@ class Organization extends Model
     public function websiteRedesigns(): HasMany
     {
         return $this->hasMany(OrganizationWebsiteRedesign::class)->orderByDesc('after_captured_at');
+    }
+
+    /**
+     * Get the value of date-only fields as date strings (YYYY-MM-DD) to avoid timezone issues.
+     */
+    public function getLastMajorRedesignAtAttribute($value)
+    {
+        if ($value === null) {
+            return null;
+        }
+        // If it's already a Carbon instance (from the cast), format it as date-only
+        if ($value instanceof Carbon) {
+            return $value->format('Y-m-d');
+        }
+        // If already a date string, return it
+        if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}/', $value)) {
+            return substr($value, 0, 10); // Take only YYYY-MM-DD part
+        }
+        // Otherwise try to parse and format
+        try {
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return $value;
+        }
+    }
+
+    /**
+     * Get the value of date-only fields as date strings (YYYY-MM-DD) to avoid timezone issues.
+     */
+    public function getLastMajorRedesignAtActualAttribute($value)
+    {
+        if ($value === null) {
+            return null;
+        }
+        // If it's already a Carbon instance (from the cast), format it as date-only
+        if ($value instanceof Carbon) {
+            return $value->format('Y-m-d');
+        }
+        // If already a date string, return it
+        if (is_string($value) && preg_match('/^\d{4}-\d{2}-\d{2}/', $value)) {
+            return substr($value, 0, 10); // Take only YYYY-MM-DD part
+        }
+        // Otherwise try to parse and format
+        try {
+            return Carbon::parse($value)->format('Y-m-d');
+        } catch (\Exception $e) {
+            return $value;
+        }
     }
 }
