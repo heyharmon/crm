@@ -495,6 +495,7 @@ onMounted(async () => {
         <RightDrawer
             :title="sidebarMode === 'edit' ? 'Edit Organization' : 'Organization Details'"
             :model-value="isDrawerOpen"
+            width-class="w-full sm:w-[40rem]"
             @update:modelValue="
                 (v) => {
                     if (!v) closeSidebar()

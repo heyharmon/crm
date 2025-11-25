@@ -297,6 +297,7 @@ class OrganizationController extends Controller
             'phone' => 'nullable|string|max:50',
             'organization_category_id' => 'nullable|exists:organization_categories,id',
             'notes' => 'nullable|string|max:2000',
+            'last_major_redesign_at' => 'nullable|date',
             'last_major_redesign_at_actual' => 'nullable|date',
         ]);
         $organization->update($validated);

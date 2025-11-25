@@ -36,6 +36,7 @@ const form = ref({
     phone: '',
     organization_category_id: '',
     notes: '',
+    last_major_redesign_at: '',
     last_major_redesign_at_actual: ''
 })
 
@@ -46,7 +47,7 @@ watch(
     (newOrg) => {
         if (newOrg) {
             Object.keys(form.value).forEach((key) => {
-                if (key === 'last_major_redesign_at_actual' && newOrg[key]) {
+                if ((key === 'last_major_redesign_at' || key === 'last_major_redesign_at_actual') && newOrg[key]) {
                     // Format date to yyyy-MM-dd for date input
                     form.value[key] = newOrg[key].split('T')[0]
                 } else {
@@ -147,9 +148,20 @@ defineExpose({ submitForm })
                     <label class="block text-sm font-medium text-neutral-700 mb-1">Website</label>
                     <Input v-model="form.website" type="url" @blur="validateWebsite" placeholder="https://example.com" />
                 </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-sm border border-neutral-200 p-6">
+            <h3 class="text-lg font-semibold mb-4">Redesign Dates</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-neutral-700 mb-1">Last Major Redesign (Predicted)</label>
+                    <Input v-model="form.last_major_redesign_at" type="date" placeholder="2018-07-11" />
+                </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-neutral-700 mb-1">Last Major Redesign Date</label>
+                    <label class="block text-sm font-medium text-neutral-700 mb-1">Last Major Redesign (Actual)</label>
                     <Input v-model="form.last_major_redesign_at_actual" type="date" placeholder="2018-07-11" />
                 </div>
             </div>

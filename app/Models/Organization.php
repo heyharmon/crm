@@ -58,6 +58,7 @@ class Organization extends Model
         'asset_growth',
         'member_growth',
         'net_worth_growth',
+        'last_major_redesign_at',
         'last_major_redesign_at_actual',
     ];
 

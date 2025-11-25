@@ -89,6 +89,7 @@ const defaultColumnVisibility = {
     score: false, // Hidden by default
     reviews: false, // Hidden by default
     lastRedesign: true,
+    lastRedesignActual: false, // Hidden by default
     websiteRating: true,
     websiteStatus: true,
     cms: true,
@@ -137,6 +138,7 @@ const columnLabels = {
     score: 'Score',
     reviews: 'Reviews',
     lastRedesign: 'Last Redesign',
+    lastRedesignActual: 'Last Redesign (Actual)',
     websiteRating: 'Website Rating',
     websiteStatus: 'Website Status',
     cms: 'CMS',
@@ -374,6 +376,7 @@ const handleRowClick = (event, organization) => {
                         <th v-if="columnVisibility.score" class="border-b border-neutral-200 px-4 py-3">Score</th>
                         <th v-if="columnVisibility.reviews" class="border-b border-neutral-200 px-4 py-3">Reviews</th>
                         <th v-if="columnVisibility.lastRedesign" class="border-b border-neutral-200 px-4 py-3">Last Redesign</th>
+                        <th v-if="columnVisibility.lastRedesignActual" class="border-b border-neutral-200 px-4 py-3">Last Redesign (Actual)</th>
                         <th v-if="columnVisibility.websiteRating" class="border-b border-neutral-200 px-4 py-3">Website Rating</th>
                         <th v-if="columnVisibility.websiteStatus" class="border-b border-neutral-200 px-4 py-3">Website Status</th>
                         <th v-if="columnVisibility.cms" class="border-b border-neutral-200 px-4 py-3 w-32 max-w-32">CMS</th>
@@ -520,6 +523,12 @@ const handleRowClick = (event, organization) => {
                             </div>
                             <span v-else-if="organization.last_major_redesign_at" :class="getRedesignDateClasses(organization)">
                                 {{ formatDisplayDate(organization.last_major_redesign_at) }}
+                            </span>
+                            <span v-else class="text-neutral-400">—</span>
+                        </td>
+                        <td v-if="columnVisibility.lastRedesignActual" class="px-4 py-3 whitespace-nowrap text-sm text-neutral-700">
+                            <span v-if="organization.last_major_redesign_at_actual">
+                                {{ formatDisplayDate(organization.last_major_redesign_at_actual) }}
                             </span>
                             <span v-else class="text-neutral-400">—</span>
                         </td>
