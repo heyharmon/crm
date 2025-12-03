@@ -48,6 +48,12 @@ export const useOrganizationStore = defineStore('organization', {
                     ...this.filters
                 }
 
+                // Convert null values in category_ids to 'null' string for proper serialization
+                // (axios skips null values in arrays, so we use 'null' string as sentinel)
+                if (Array.isArray(params.category_ids) && params.category_ids.length) {
+                    params.category_ids = params.category_ids.map((id) => (id === null ? 'null' : id))
+                }
+
                 const response = await api.get('/organizations', { params })
 
                 this.organizations = response.data

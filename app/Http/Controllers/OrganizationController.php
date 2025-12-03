@@ -62,19 +62,28 @@ class OrganizationController extends Controller
                 });
             }
         }
-        if ($request->filled('category_ids')) {
+        if ($request->has('category_ids')) {
             $categoryIds = $request->input('category_ids');
             if (is_array($categoryIds) && !empty($categoryIds)) {
-                $query->where(function ($q) use ($categoryIds) {
-                    // Check if null is in the array (for "No Category")
-                    if (in_array(null, $categoryIds, true)) {
+                // Check for "no category" filter - JavaScript null becomes string "null" or empty string in query params
+                $hasNoCategory = collect($categoryIds)->contains(fn($id) => $id === null || $id === 'null' || $id === '');
+                // Filter out the "no category" sentinel values to get actual category IDs
+                $actualCategoryIds = collect($categoryIds)
+                    ->filter(fn($id) => $id !== null && $id !== 'null' && $id !== '' && is_numeric($id))
+                    ->map(fn($id) => (int) $id)
+                    ->values()
+                    ->all();
+
+                $query->where(function ($q) use ($hasNoCategory, $actualCategoryIds) {
+                    if ($hasNoCategory) {
                         $q->whereNull('organizations.organization_category_id');
-                        // Remove null from array for the whereIn check
-                        $categoryIds = array_filter($categoryIds, fn($id) => $id !== null);
                     }
-                    // If there are still category IDs after filtering out null
-                    if (!empty($categoryIds)) {
-                        $q->orWhereIn('organizations.organization_category_id', $categoryIds);
+                    if (!empty($actualCategoryIds)) {
+                        if ($hasNoCategory) {
+                            $q->orWhereIn('organizations.organization_category_id', $actualCategoryIds);
+                        } else {
+                            $q->whereIn('organizations.organization_category_id', $actualCategoryIds);
+                        }
                     }
                 });
             }
